@@ -23,6 +23,7 @@ Pipeline:
 import tkinter as tk
 from tkinter import ttk
 import random
+from typing import Optional
 
 # ---------------------------------------------------------------------------
 # 1. Feature Definitions
@@ -49,6 +50,8 @@ REFLEX_RULES = [
 
 LEARNING_RATE = 0.01
 TOP_K_MEMORIES = 5
+PRIOR_MIN = 0.4   # lower bound for weak action-reward prior (no memory)
+PRIOR_MAX = 0.6   # upper bound for weak action-reward prior (no memory)
 
 # ---------------------------------------------------------------------------
 # 2. Afferent Structure
@@ -73,7 +76,7 @@ class AfferentObject:
 # ---------------------------------------------------------------------------
 # 3. Internal State (self-made parameters)
 # ---------------------------------------------------------------------------
-def init_state(seed: int | None = None) -> dict:
+def init_state(seed: Optional[int] = None) -> dict:
     """Return a fresh internal state, optionally seeded for reproducibility."""
     rng = random.Random(seed)
     return {
@@ -114,7 +117,16 @@ class MemorySystem:
 # 5. Similarity Function (symbolic, no ML)
 # ---------------------------------------------------------------------------
 def similarity(s1: tuple, s2: tuple) -> int:
-    """Count matching feature values between two summaries."""
+    """
+    Count matching feature values between two summaries.
+
+    Both summaries must originate from the same feature schema
+    (same keys in the same sorted order) as produced by
+    ``AfferentObject._create_summary()``.  ``zip`` is used intentionally:
+    if the schemas ever differ the shorter sequence limits the score,
+    which is safe because all summaries are built from the global
+    ``VISION_FEATURES`` / ``AUDIO_FEATURES`` dictionaries.
+    """
     score = 0
     for (_, v1), (_, v2) in zip(s1[0], s2[0]):  # vision
         if v1 == v2:
@@ -127,7 +139,7 @@ def similarity(s1: tuple, s2: tuple) -> int:
 # ---------------------------------------------------------------------------
 # 6. Reflexive Layer (fast thinking)
 # ---------------------------------------------------------------------------
-def reflexive_decision(afferent: AfferentObject) -> str | None:
+def reflexive_decision(afferent: AfferentObject) -> Optional[str]:
     """
     Evaluate reflex rules and return an action immediately if triggered.
     Returns None when no rule fires (→ deliberation required).
@@ -147,11 +159,11 @@ def simulate_action(action: str, past_cases: list[dict]) -> float:
     given the retrieved memory cases.
     """
     if not past_cases:
-        return random.uniform(0.4, 0.6)  # weak prior
+        return random.uniform(PRIOR_MIN, PRIOR_MAX)  # weak prior when no history
     rewards = [m["reward"] for m in past_cases if m["action"] == action]
     return sum(rewards) / len(rewards) if rewards else 0.5
 
-def deliberate(afferent: AfferentObject, memory: MemorySystem) -> tuple[str, dict[str, float], list[dict]]:
+def deliberate(afferent: AfferentObject, memory: MemorySystem) -> tuple:
     """
     Retrieve similar memories, simulate each action, return best action.
 
@@ -160,6 +172,8 @@ def deliberate(afferent: AfferentObject, memory: MemorySystem) -> tuple[str, dic
     """
     cases = memory.retrieve(afferent.summary)
     scores = {action: simulate_action(action, cases) for action in ACTIONS}
+    if not scores:
+        return ACTIONS[0], scores, cases
     best = max(scores, key=scores.get)
     return best, scores, cases
 
@@ -181,9 +195,19 @@ def cognitive_step(
     step: int,
     state: dict,
     memory: MemorySystem,
+    manual_reward: Optional[float] = None,
 ) -> dict:
     """
     Execute one full cognitive cycle and return a result dict for display.
+
+    Args:
+        vision: vision feature dict.
+        audio: audio feature dict.
+        step: current step count.
+        state: mutable internal state dict (updated in-place).
+        memory: MemorySystem instance (updated in-place).
+        manual_reward: explicit reward value in [0, 1].  When *None* a random
+            reward is sampled (autonomous operation).
     """
     aff = AfferentObject(vision, audio, time=step, state=state)
 
@@ -203,8 +227,11 @@ def cognitive_step(
         mode = "DELIBERATIVE"
         sim_scores_str = ", ".join(f"{a}={v:.2f}" for a, v in scores.items())
 
-    # --- Assign reward (random for autonomous operation) ---
-    reward = random.uniform(0.0, 1.0)
+    # --- Assign reward (manual override or random for autonomous operation) ---
+    if manual_reward is not None:
+        reward = max(0.0, min(1.0, manual_reward))
+    else:
+        reward = random.uniform(0.0, 1.0)
 
     # --- Memory & state update ---
     memory.store(aff.summary, action, reward)
@@ -223,6 +250,7 @@ def cognitive_step(
         "action":       action,
         "mode":         mode,
         "reward":       reward,
+        "reward_manual": manual_reward is not None,
         "memory_size":  len(memory),
         "scores":       scores,
         "sim_scores_str": sim_scores_str,
@@ -283,6 +311,16 @@ class CognitiveUI:
         )
         ttk.Button(ctrl_frame, text="⟳  Reset", command=self._reset).pack(
             side="left", **pad
+        )
+
+        # Manual reward entry (optional; leave blank for random)
+        ttk.Label(ctrl_frame, text="Reward (0–1):").pack(side="left", padx=(12, 2))
+        self._reward_var = tk.StringVar(value="")
+        ttk.Entry(ctrl_frame, textvariable=self._reward_var, width=6).pack(
+            side="left", padx=(0, 8)
+        )
+        ttk.Label(ctrl_frame, text="(blank = random)", foreground="gray").pack(
+            side="left"
         )
 
         # ── Output frame ───────────────────────────────────────────────
@@ -353,7 +391,19 @@ class CognitiveUI:
         vision = {k: self._vars[k].get() for k in VISION_FEATURES}
         audio  = {k: self._vars[k].get() for k in AUDIO_FEATURES}
 
-        result = cognitive_step(vision, audio, self.step, self.state, self.memory)
+        # Parse manual reward if provided
+        manual_reward: Optional[float] = None
+        raw = self._reward_var.get().strip()
+        if raw:
+            try:
+                manual_reward = float(raw)
+            except ValueError:
+                pass  # invalid input → fall back to random
+
+        result = cognitive_step(
+            vision, audio, self.step, self.state, self.memory,
+            manual_reward=manual_reward,
+        )
 
         # Update summary labels
         self.action_label.config(text=f"Action: {result['action'].upper()}")
@@ -361,7 +411,10 @@ class CognitiveUI:
             text=f"Mode: {result['mode']}",
             foreground=("firebrick" if result["mode"] == "REFLEXIVE" else "darkblue"),
         )
-        self.reward_label.config(text=f"Reward: {result['reward']:.3f}")
+        self.reward_label.config(
+            text=f"Reward: {result['reward']:.3f}"
+                 f"{'  (manual)' if result['reward_manual'] else '  (random)'}"
+        )
         self.memory_label.config(text=f"Memory size: {result['memory_size']}")
 
         # Action scores
@@ -398,7 +451,7 @@ class CognitiveUI:
         self.log_text.configure(state="normal")
         self.log_text.delete("1.0", tk.END)
         self.log_text.configure(state="disabled")
-        self._log("System reset — new internal state initialised.\n")
+        self._log("System reset — new internal state initialized.\n")
 
     def _log_step(self, result: dict):
         lines = [
