@@ -50,8 +50,9 @@ REFLEX_RULES = [
 
 LEARNING_RATE = 0.01
 TOP_K_MEMORIES = 5
-PRIOR_MIN = 0.4   # lower bound for weak action-reward prior (no memory)
-PRIOR_MAX = 0.6   # upper bound for weak action-reward prior (no memory)
+PRIOR_MIN = 0.4            # lower bound for weak action-reward prior (no memory)
+PRIOR_MAX = 0.6            # upper bound for weak action-reward prior (no memory)
+DEFAULT_ACTION_SCORE = 0.5 # fallback score when an action has no matching memories
 
 # ---------------------------------------------------------------------------
 # 2. Afferent Structure
@@ -161,7 +162,7 @@ def simulate_action(action: str, past_cases: list[dict]) -> float:
     if not past_cases:
         return random.uniform(PRIOR_MIN, PRIOR_MAX)  # weak prior when no history
     rewards = [m["reward"] for m in past_cases if m["action"] == action]
-    return sum(rewards) / len(rewards) if rewards else 0.5
+    return sum(rewards) / len(rewards) if rewards else DEFAULT_ACTION_SCORE
 
 def deliberate(afferent: AfferentObject, memory: MemorySystem) -> tuple:
     """
@@ -172,18 +173,21 @@ def deliberate(afferent: AfferentObject, memory: MemorySystem) -> tuple:
     """
     cases = memory.retrieve(afferent.summary)
     scores = {action: simulate_action(action, cases) for action in ACTIONS}
-    if not scores:
-        return ACTIONS[0], scores, cases
     best = max(scores, key=scores.get)
     return best, scores, cases
 
 # ---------------------------------------------------------------------------
 # 8. Learning Update
 # ---------------------------------------------------------------------------
+def clamp_reward(value: float) -> float:
+    """Return *value* clamped to [0.0, 1.0]."""
+    return max(0.0, min(1.0, value))
+
+
 def update_state(state: dict, reward: float) -> None:
     """Adapt internal parameters based on reward signal."""
-    state["action_threshold"] = max(
-        0.0, min(1.0, state["action_threshold"] + LEARNING_RATE * (reward - 0.5))
+    state["action_threshold"] = clamp_reward(
+        state["action_threshold"] + LEARNING_RATE * (reward - 0.5)
     )
 
 # ---------------------------------------------------------------------------
@@ -229,7 +233,7 @@ def cognitive_step(
 
     # --- Assign reward (manual override or random for autonomous operation) ---
     if manual_reward is not None:
-        reward = max(0.0, min(1.0, manual_reward))
+        reward = clamp_reward(manual_reward)
     else:
         reward = random.uniform(0.0, 1.0)
 
