@@ -1,0 +1,1489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MPCS – Malleable Perceptual-Cognitive System</title>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1815;
+    --ink2: #3d3830;
+    --ink3: #6b6258;
+    --page: #f9f7f3;
+    --surface: #f2ede5;
+    --border: #e0d8cc;
+    --accent: #2b4c7e;
+    --accent2: #1e6e5b;
+    --accent3: #8b3a1a;
+    --accent-pale: #e8eef6;
+    --accent2-pale: #e4f0ec;
+    --accent3-pale: #f4ede8;
+    --amber: #b07a12;
+    --amber-pale: #fdf3e0;
+    --purple: #5a3d8a;
+    --purple-pale: #ede9f6;
+    --rule: #cfc7b8;
+    --mono: 'DM Mono', monospace;
+    --serif: 'EB Garamond', Georgia, serif;
+    --sans: 'Outfit', sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { font-size: 16px; }
+
+  body {
+    background: var(--page);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 1.0625rem;
+    line-height: 1.78;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Layout ── */
+  .page-wrap {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 2.5rem 6rem;
+  }
+
+  /* ── Cover ── */
+  .cover {
+    padding: 5rem 0 4rem;
+    border-bottom: 1.5px solid var(--ink);
+    margin-bottom: 3.5rem;
+  }
+  .cover-badge {
+    font-family: var(--sans);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    margin-bottom: 1.5rem;
+  }
+  .cover h1 {
+    font-family: var(--serif);
+    font-size: 3.1rem;
+    font-weight: 500;
+    line-height: 1.12;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    margin-bottom: 0.4rem;
+    max-width: 680px;
+  }
+  .cover-sub {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 1.35rem;
+    color: var(--ink3);
+    margin-bottom: 2.5rem;
+  }
+  .cover-meta {
+    font-family: var(--sans);
+    font-size: 0.8rem;
+    color: var(--ink3);
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+  .cover-meta span { display: flex; align-items: center; gap: 0.4rem; }
+
+  /* ── Abstract ── */
+  .abstract {
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+    padding: 1.5rem 2rem;
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 3.5rem;
+  }
+  .abstract-label {
+    font-family: var(--sans);
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.6rem;
+  }
+  .abstract p {
+    font-size: 0.96rem;
+    line-height: 1.7;
+    color: var(--ink2);
+  }
+
+  /* ── TOC ── */
+  .toc {
+    margin-bottom: 4rem;
+  }
+  .toc-title {
+    font-family: var(--sans);
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .toc ol {
+    list-style: none;
+    counter-reset: toc;
+    column-count: 2;
+    column-gap: 2rem;
+  }
+  .toc ol li {
+    counter-increment: toc;
+    font-family: var(--sans);
+    font-size: 0.83rem;
+    color: var(--ink3);
+    padding: 0.22rem 0;
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    break-inside: avoid;
+  }
+  .toc ol li::before {
+    content: counter(toc, decimal-leading-zero);
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--rule);
+    min-width: 1.8rem;
+  }
+
+  /* ── Sections ── */
+  section {
+    margin-bottom: 4rem;
+  }
+  .section-num {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--rule);
+    letter-spacing: 0.08em;
+    display: block;
+    margin-bottom: 0.25rem;
+  }
+  h2 {
+    font-family: var(--serif);
+    font-size: 2rem;
+    font-weight: 500;
+    line-height: 1.15;
+    color: var(--ink);
+    margin-bottom: 1.4rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  h3 {
+    font-family: var(--sans);
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--ink2);
+    margin: 2rem 0 0.75rem;
+    text-transform: none;
+  }
+  h4 {
+    font-family: var(--sans);
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    margin: 1.5rem 0 0.5rem;
+  }
+  p { margin-bottom: 1rem; }
+  p:last-child { margin-bottom: 0; }
+
+  /* ── Diagrams ── */
+  .diagram-wrap {
+    margin: 2.2rem 0;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .diagram-label {
+    font-family: var(--sans);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    padding: 0.6rem 1.2rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .diagram-label::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: inline-block;
+  }
+  .diagram-body {
+    padding: 1.5rem;
+    overflow-x: auto;
+  }
+  svg.diag { width: 100%; height: auto; display: block; }
+
+  /* ── Info boxes ── */
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+  .info-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.1rem;
+  }
+  .info-card-label {
+    font-family: var(--sans);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    margin-bottom: 0.35rem;
+  }
+  .info-card-title {
+    font-family: var(--serif);
+    font-size: 1.05rem;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 0.3rem;
+  }
+  .info-card-text {
+    font-family: var(--sans);
+    font-size: 0.8rem;
+    line-height: 1.55;
+    color: var(--ink3);
+  }
+  .info-card.blue { border-left: 3px solid var(--accent); }
+  .info-card.green { border-left: 3px solid var(--accent2); }
+  .info-card.orange { border-left: 3px solid var(--accent3); }
+  .info-card.purple { border-left: 3px solid var(--purple); }
+  .info-card.amber { border-left: 3px solid var(--amber); }
+
+  /* ── Formula ── */
+  .formula {
+    background: var(--ink);
+    color: #e8e2d8;
+    font-family: var(--mono);
+    font-size: 0.88rem;
+    padding: 1.1rem 1.5rem;
+    border-radius: 8px;
+    margin: 1.2rem 0;
+    line-height: 1.65;
+    overflow-x: auto;
+    white-space: pre;
+  }
+  .formula .comment { color: #7a7060; }
+  .formula .key { color: #8ecfb0; }
+  .formula .val { color: #d4a96a; }
+
+  /* ── Table ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--sans);
+    font-size: 0.84rem;
+    margin: 1.2rem 0;
+  }
+  th {
+    background: var(--surface);
+    color: var(--ink2);
+    font-weight: 600;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-align: left;
+    padding: 0.55rem 0.9rem;
+    border-bottom: 1.5px solid var(--border);
+  }
+  td {
+    padding: 0.5rem 0.9rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--ink2);
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface); }
+
+  /* ── Callout ── */
+  .callout {
+    border-left: 3px solid var(--amber);
+    background: var(--amber-pale);
+    padding: 1rem 1.25rem;
+    border-radius: 0 8px 8px 0;
+    margin: 1.5rem 0;
+  }
+  .callout.purple {
+    border-color: var(--purple);
+    background: var(--purple-pale);
+  }
+  .callout.green {
+    border-color: var(--accent2);
+    background: var(--accent2-pale);
+  }
+  .callout .callout-label {
+    font-family: var(--sans);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 0.35rem;
+  }
+  .callout.purple .callout-label { color: var(--purple); }
+  .callout.green .callout-label { color: var(--accent2); }
+  .callout p {
+    font-family: var(--sans);
+    font-size: 0.86rem;
+    color: var(--ink2);
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  /* ── Contributions ── */
+  .contrib-list {
+    list-style: none;
+    margin: 1rem 0;
+  }
+  .contrib-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.9rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--sans);
+    font-size: 0.86rem;
+    color: var(--ink2);
+    line-height: 1.55;
+  }
+  .contrib-list li::before {
+    content: '→';
+    font-family: var(--mono);
+    color: var(--accent);
+    font-size: 0.9rem;
+    flex-shrink: 0;
+    margin-top: 0.05rem;
+  }
+  .contrib-list li strong {
+    font-family: var(--sans);
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  /* ── Steps ── */
+  .pipeline-steps {
+    counter-reset: step;
+    list-style: none;
+    margin: 1rem 0;
+  }
+  .pipeline-steps li {
+    counter-increment: step;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .pipeline-steps li::before {
+    content: counter(step);
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    font-weight: 500;
+    background: var(--accent);
+    color: #fff;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 0.15rem;
+  }
+  .pipeline-steps li span {
+    font-family: var(--sans);
+    font-size: 0.86rem;
+    color: var(--ink2);
+    line-height: 1.55;
+  }
+
+  /* ── Footer ── */
+  .doc-footer {
+    border-top: 1px solid var(--border);
+    padding-top: 2rem;
+    margin-top: 4rem;
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--sans);
+    font-size: 0.72rem;
+    color: var(--rule);
+    letter-spacing: 0.04em;
+  }
+
+  @media print {
+    body { background: #fff; }
+    .diagram-wrap { break-inside: avoid; }
+    section { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+<!-- ══════════════════════════════════════════
+     COVER
+══════════════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-badge">Technical Research Report · System Design</div>
+  <h1>Malleable Perceptual-Cognitive System</h1>
+  <div class="cover-sub">A dual-process AI framework for adaptive perception, salience-driven reasoning, and experience-based learning</div>
+  <div class="cover-meta">
+    <span>📄 Research Paper</span>
+    <span>🔬 AI Architecture</span>
+    <span>📅 2025</span>
+    <span>🏷 MPCS · Dual-Process · Cognitive AI</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     ABSTRACT
+══════════════════════════════════════════ -->
+<div class="abstract">
+  <div class="abstract-label">Abstract</div>
+  <p>
+    We present the <em>Malleable Perceptual-Cognitive System</em> (MPCS), a unified AI framework that mirrors how biological minds selectively allocate cognitive resources. MPCS addresses a fundamental gap in conventional AI: the inability to distinguish between situations demanding instant reflexive action and those warranting careful deliberation. The system integrates multisensory, malleable input representations, a salience-and-threshold routing mechanism, dual processing pathways (reflex and deliberative), a two-layer memory architecture, and an experience-driven adaptive learning loop. The central design principle is captured in a single idea: <em>not all stimuli require equal thinking</em>. We describe the system's architecture, constituent components, processing pipeline, and avenues for future extension.
+  </p>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TABLE OF CONTENTS
+══════════════════════════════════════════ -->
+<div class="toc">
+  <div class="toc-title">Contents</div>
+  <ol>
+    <li>Introduction</li>
+    <li>Background Concepts</li>
+    <li>The MPCS Framework</li>
+    <li>System Architecture</li>
+    <li>Malleable Sensory Input</li>
+    <li>Salience &amp; Threshold Mechanism</li>
+    <li>Reflex Pathway</li>
+    <li>Deliberative Pathway</li>
+    <li>Memory System Design</li>
+    <li>Experience Encoding &amp; Learning</li>
+    <li>End-to-End Pipeline</li>
+    <li>Key Contributions</li>
+    <li>Discussion &amp; Future Work</li>
+    <li>Conclusion</li>
+  </ol>
+</div>
+
+<!-- ══════════════════════════════════════════
+     §1 INTRODUCTION
+══════════════════════════════════════════ -->
+<section id="intro">
+  <span class="section-num">§ 01</span>
+  <h2>Introduction</h2>
+
+  <p>
+    When a person hears a sudden loud bang, they flinch before consciously registering the sound. When the same person encounters an unfamiliar object in a dark room, they slow down, look carefully, and reason through the situation. These two behaviors reveal a profound architectural truth about intelligent systems: <em>cognition is not uniform</em>. The brain operates across a spectrum, from near-instantaneous reflex arcs to slow, deliberate reasoning chains.
+  </p>
+
+  <p>
+    Conventional AI systems process all inputs through a single, uniform pipeline. A neural network applies the same forward-pass computation to a trivial query and a safety-critical decision alike. There is no notion of urgency, no reflexive short-circuit, no emotional context shaping how much attention the system pays. This uniformity is not merely inefficient — it is architecturally misaligned with how intelligent biological systems actually work.
+  </p>
+
+  <h3>The core problem</h3>
+  <p>
+    Traditional AI architectures lack three capabilities that define biological intelligence:
+  </p>
+
+  <div class="info-grid">
+    <div class="info-card blue">
+      <div class="info-card-label">Gap 1</div>
+      <div class="info-card-title">No reflexive pathways</div>
+      <div class="info-card-text">Every input goes through full computation regardless of urgency. There is no fast lane for high-stakes, time-sensitive stimuli.</div>
+    </div>
+    <div class="info-card green">
+      <div class="info-card-label">Gap 2</div>
+      <div class="info-card-title">No emotional context</div>
+      <div class="info-card-text">Systems ignore valence, arousal, and emotional significance — the very signals that determine priority in biological perception.</div>
+    </div>
+    <div class="info-card orange">
+      <div class="info-card-label">Gap 3</div>
+      <div class="info-card-title">No adaptive memory</div>
+      <div class="info-card-text">Responses do not improve from experience within the same perceptual context. Memory is static, not experientially updated.</div>
+    </div>
+  </div>
+
+  <h3>Objective</h3>
+  <p>
+    MPCS is designed to fill all three gaps. It provides a principled architecture that perceives the world in a rich, multimodal way, evaluates how urgent each stimulus is, routes it appropriately — either to a fast reflex response or a slow deliberative reasoning process — and then learns from the outcome to improve future responses.
+  </p>
+
+  <div class="formula"><span class="key">System objective:</span>
+
+  Perceive → Evaluate Salience → Route (Reflex | Deliberation) → Act → Learn</div>
+
+  <p>
+    This pipeline is not a metaphor — each stage corresponds to a concrete computational module described in detail throughout this report.
+  </p>
+</section>
+
+<!-- ══════════════════════════════════════════
+     §2 BACKGROUND
+══════════════════════════════════════════ -->
+<section id="background">
+  <span class="section-num">§ 02</span>
+  <h2>Background Concepts</h2>
+
+  <p>MPCS draws on four conceptual building blocks from computer science and cognitive science. Understanding each of them provides the foundation for understanding the system as a whole.</p>
+
+  <h3>2.1 Bloom Filters — efficient memory</h3>
+  <p>
+    A Bloom filter is a probabilistic data structure that answers the question: <em>have I seen this before?</em> It does so in constant time and with minimal memory by hashing an item across multiple bit arrays. It has one important asymmetry: it can have false positives (claiming to have seen something it has not), but it produces no false negatives (it never claims something is unseen when it was actually seen).
+  </p>
+
+  <div class="callout">
+    <div class="callout-label">Intuition</div>
+    <p>Think of a Bloom filter as a very fast, very compact bouncer at the door of memory: it can definitively say "no, I've never seen that" but its "yes, I've seen that" might occasionally be wrong. For perception systems, a false positive (treating something familiar as novel) is much less harmful than a false negative (treating something novel as familiar).</p>
+  </div>
+
+  <p>In MPCS, Bloom-filter-style lookup is used in the <em>fast membership layer</em> of the memory system to rapidly determine whether an incoming stimulus has been encountered before — a prerequisite for computing the novelty component of salience.</p>
+
+  <h3>2.2 Neural data structures — novelty detection</h3>
+  <p>
+    Biological nervous systems encode sensory experience not as raw data, but as <em>compressed signatures</em> — highly reduced representations that capture the most discriminative features of a stimulus. These signatures enable rapid comparison: is this new stimulus similar to anything in memory? Neural data structures in the MPCS context follow the same principle: stimuli are embedded into a compact feature space, and novelty is measured as distance from the nearest stored signature.
+  </p>
+
+  <h3>2.3 Multisensory data structures</h3>
+  <p>
+    Real-world perception is inherently multimodal. A threat is perceived not just visually, but through sound, body tension, environmental context, and past experience. A multisensory data structure bundles all these modalities into a single structured unit — a perception record — together with derived features (intensity, emotional tag, confidence) and metadata (time, location, context). This unification is what enables the system to reason holistically about a stimulus rather than treating each sensory channel in isolation.
+  </p>
+
+  <h3>2.4 Z* numbers — emotion and uncertainty</h3>
+  <p>
+    Z* numbers extend classical fuzzy sets to represent both <em>uncertainty</em> and <em>emotional confidence</em> simultaneously. In MPCS, they provide the mathematical idiom for encoding a percept:
+  </p>
+
+  <div class="formula"><span class="key">Z*(S)</span> = ⟨ <span class="val">Context</span>, <span class="val">Time</span>, <span class="val">Subject</span>, <span class="val">Belief</span>, <span class="val">Emotion</span> ⟩
+
+<span class="comment">→ Belief: how confident the system is about what it perceives</span>
+<span class="comment">→ Emotion: the affective valence and arousal attached to the percept</span></div>
+
+  <p>
+    This formalism is what allows the MPCS salience evaluator to incorporate emotional significance — not just raw intensity — into its routing decision.
+  </p>
+</section>
+
+<!-- ══════════════════════════════════════════
+     §3 THE MPCS FRAMEWORK
+══════════════════════════════════════════ -->
+<section id="framework">
+  <span class="section-num">§ 03</span>
+  <h2>The MPCS Framework</h2>
+
+  <p>
+    MPCS is a unified architecture that integrates all four background concepts into a coherent cognitive processing loop. Its defining insight is borrowed from dual-process theory in cognitive psychology: System 1 is fast, automatic, and emotionally driven; System 2 is slow, deliberate, and analytical. MPCS provides both in a single, interoperable framework.
+  </p>
+
+  <p>
+    The five pillars of MPCS are:
+  </p>
+
+  <div class="info-grid">
+    <div class="info-card blue">
+      <div class="info-card-label">Pillar 1</div>
+      <div class="info-card-title">Malleable input</div>
+      <div class="info-card-text">Structured perception that works even with missing modalities.</div>
+    </div>
+    <div class="info-card purple">
+      <div class="info-card-label">Pillar 2</div>
+      <div class="info-card-title">Salience routing</div>
+      <div class="info-card-text">Dynamic threshold that decides how much cognition to allocate.</div>
+    </div>
+    <div class="info-card orange">
+      <div class="info-card-label">Pillar 3</div>
+      <div class="info-card-title">Dual processing</div>
+      <div class="info-card-text">A reflex path and a deliberative path, both feeding a shared output.</div>
+    </div>
+    <div class="info-card green">
+      <div class="info-card-label">Pillar 4</div>
+      <div class="info-card-title">Unified memory</div>
+      <div class="info-card-text">Fast membership layer + rich structured experience store.</div>
+    </div>
+    <div class="info-card amber">
+      <div class="info-card-label">Pillar 5</div>
+      <div class="info-card-title">Adaptive learning</div>
+      <div class="info-card-text">Outcomes update memory, improving future routing and decisions.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     §4 SYSTEM ARCHITECTURE
+══════════════════════════════════════════ -->
+<section id="architecture">
+  <span class="section-num">§ 04</span>
+  <h2>System Architecture Overview</h2>
+
+  <p>
+    The diagram below presents the full MPCS architecture. Sensory inputs enter at the top, flow through salience evaluation, branch into one of two processing pathways, produce an action, and then feed back into the memory and learning system. The feedback loop is what transforms MPCS from a static processor into an adaptive agent.
+  </p>
+
+  <!-- DIAGRAM 1: Full Architecture -->
+  <div class="diagram-wrap">
+    <div class="diagram-label">Diagram 1 — Overall System Architecture</div>
+    <div class="diagram-body">
+      <svg class="diag" viewBox="0 0 780 560" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#2b4c7e" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+          <marker id="arr-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#1e6e5b" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+          <marker id="arr-o" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#8b3a1a" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+          <marker id="arr-p" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#5a3d8a" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+          <marker id="arr-dash" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#b07a12" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+        </defs>
+
+        <!-- Sensory Input -->
+        <rect x="260" y="20" width="260" height="52" rx="8" fill="#e8eef6" stroke="#2b4c7e" stroke-width="1.2"/>
+        <text x="390" y="42" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="13" font-weight="600" fill="#2b4c7e">Malleable Sensory Input</text>
+        <text x="390" y="59" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="11" fill="#5a7aaa">Vision · Audio · Touch · Internal state</text>
+
+        <!-- Arrow down -->
+        <line x1="390" y1="72" x2="390" y2="110" stroke="#2b4c7e" stroke-width="1.2" marker-end="url(#arr)"/>
+
+        <!-- Salience Evaluation -->
+        <rect x="240" y="112" width="300" height="52" rx="8" fill="#ede9f6" stroke="#5a3d8a" stroke-width="1.2"/>
+        <text x="390" y="134" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="13" font-weight="600" fill="#5a3d8a">Salience Evaluation Module</text>
+        <text x="390" y="151" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="11" fill="#7b5fb0">Intensity · Arousal · Valence · Novelty</text>
+
+        <!-- Arrow down to diamond -->
+        <line x1="390" y1="164" x2="390" y2="204" stroke="#5a3d8a" stroke-width="1.2" marker-end="url(#arr-p)"/>
+
+        <!-- Decision diamond -->
+        <polygon points="390,210 450,242 390,274 330,242" fill="#fdf3e0" stroke="#b07a12" stroke-width="1.2"/>
+        <text x="390" y="238" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="11.5" font-weight="600" fill="#7a540d">Threshold</text>
+        <text x="390" y="254" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#9a7020">Salience &gt; θ ?</text>
+
+        <!-- Reflex label on left -->
+        <text x="292" y="237" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#8b3a1a" font-weight="600">YES</text>
+
+        <!-- Deliberative label on right -->
+        <text x="488" y="237" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#1e6e5b" font-weight="600">NO</text>
+
+        <!-- Left arrow to Reflex -->
+        <line x1="330" y1="242" x2="190" y2="242" stroke="#8b3a1a" stroke-width="1.2" marker-end="url(#arr-o)"/>
+        <line x1="190" y1="242" x2="190" y2="300" stroke="#8b3a1a" stroke-width="1.2" marker-end="url(#arr-o)"/>
+
+        <!-- Right arrow to Deliberative -->
+        <line x1="450" y1="242" x2="590" y2="242" stroke="#1e6e5b" stroke-width="1.2" marker-end="url(#arr-g)"/>
+        <line x1="590" y1="242" x2="590" y2="300" stroke="#1e6e5b" stroke-width="1.2" marker-end="url(#arr-g)"/>
+
+        <!-- Reflex box -->
+        <rect x="80" y="302" width="220" height="80" rx="8" fill="#f4ede8" stroke="#8b3a1a" stroke-width="1.2"/>
+        <text x="190" y="332" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="13" font-weight="600" fill="#8b3a1a">Reflex Pathway</text>
+        <text x="190" y="350" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="11" fill="#aa5a30">Predefined stimulus→action</text>
+        <text x="190" y="367" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="11" fill="#aa5a30">Fast · Low computation</text>
+
+        <!-- Deliberative box -->
+        <rect x="480" y="302" width="220" height="80" rx="8" fill="#e4f0ec" stroke="#1e6e5b" stroke-width="1.2"/>
+        <text x="590" y="332" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="13" font-weight="600" fill="#1e6e5b">Deliberative Pathway</text>
+        <text x="590" y="350" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="11" fill="#2a8060">Semantic · Memory · Reasoning</text>
+        <text x="590" y="367" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="11" fill="#2a8060">Slow · Context-aware</text>
+
+        <!-- Both converge to action -->
+        <line x1="190" y1="382" x2="190" y2="432" stroke="#8b3a1a" stroke-width="1.2" marker-end="url(#arr-o)"/>
+        <line x1="590" y1="382" x2="590" y2="432" stroke="#1e6e5b" stroke-width="1.2" marker-end="url(#arr-g)"/>
+        <line x1="190" y1="432" x2="355" y2="432" stroke="#6b6258" stroke-width="1.2"/>
+        <line x1="590" y1="432" x2="425" y2="432" stroke="#6b6258" stroke-width="1.2"/>
+
+        <!-- Action box -->
+        <rect x="285" y="408" width="210" height="48" rx="8" fill="#f2ede5" stroke="#6b6258" stroke-width="1.2"/>
+        <text x="390" y="430" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="13" font-weight="600" fill="#3d3830">Action / Response</text>
+        <text x="390" y="447" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="11" fill="#6b6258">System output to environment</text>
+
+        <!-- Arrow to Memory -->
+        <line x1="390" y1="456" x2="390" y2="494" stroke="#b07a12" stroke-width="1.2" stroke-dasharray="5,3" marker-end="url(#arr-dash)"/>
+
+        <!-- Memory / Learning box -->
+        <rect x="240" y="496" width="300" height="50" rx="8" fill="#faeeda" stroke="#b07a12" stroke-width="1.2"/>
+        <text x="390" y="518" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="13" font-weight="600" fill="#7a5410">Experience Storage &amp; Learning</text>
+        <text x="390" y="535" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="11" fill="#9a7020">Encode outcome · Update memory · Adapt</text>
+
+        <!-- Feedback arrow back up to Salience -->
+        <path d="M240 521 L36 521 L36 138 L240 138" fill="none" stroke="#b07a12" stroke-width="1" stroke-dasharray="5,3" marker-end="url(#arr-dash)"/>
+        <text x="28" y="340" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#b07a12" transform="rotate(-90,28,340)">Learning feedback</text>
+
+        <!-- Memory connects to deliberative box (dashed) -->
+        <path d="M540 496 L540 420 L700 420 L700 344 L700 342" fill="none" stroke="#b07a12" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arr-dash)"/>
+        <text x="718" y="420" font-family="'Outfit',sans-serif" font-size="10" fill="#b07a12">Memory</text>
+        <text x="718" y="432" font-family="'Outfit',sans-serif" font-size="10" fill="#b07a12">retrieval</text>
+      </svg>
+    </div>
+  </div>
+
+  <p>
+    The feedback arrows running from the Experience Storage module back to the Salience Evaluator represent the learning signal: as the system accumulates experience, its thresholds and weights evolve. A stimulus type that previously caused harmful outcomes raises its salience weight; familiar, low-risk patterns lower their urgency.
+  </p>
+</section>
+
+<!-- ══════════════════════════════════════════
+     §5 MALLEABLE SENSORY INPUT
+══════════════════════════════════════════ -->
+<section id="sensory">
+  <span class="section-num">§ 05</span>
+  <h2>Malleable Sensory Input Design</h2>
+
+  <h3>What it is and why it matters</h3>
+  <p>
+    The first stage of MPCS transforms raw environmental signals into a structured, normalized perception record. The word <em>malleable</em> is the key: the input format is designed to remain functional even when some modalities are missing or corrupted — just as a person can still perceive danger when visibility is low, using sound and body tension alone.
+  </p>
+
+  <p>
+    Each percept is represented as a compound record with three layers: raw sensory modalities, derived cognitive features, and contextual metadata.
+  </p>
+
+  <!-- DIAGRAM 2: Sensory Input Structure -->
+  <div class="diagram-wrap">
+    <div class="diagram-label">Diagram 2 — Sensory Input Structure</div>
+    <div class="diagram-body">
+      <svg class="diag" viewBox="0 0 780 380" xmlns="http://www.w3.org/2000/svg">
+        <!-- Outer container -->
+        <rect x="20" y="20" width="740" height="340" rx="12" fill="none" stroke="#cfc7b8" stroke-width="1" stroke-dasharray="6,3"/>
+        <text x="390" y="44" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="12" font-weight="600" fill="#6b6258" letter-spacing="0.08em">SENSORY INPUT RECORD S</text>
+
+        <!-- Layer 1: Modalities -->
+        <rect x="40" y="58" width="210" height="280" rx="8" fill="#e8eef6" stroke="#2b4c7e" stroke-width="1"/>
+        <text x="145" y="78" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="11" font-weight="600" fill="#2b4c7e" letter-spacing="0.06em">MODALITIES</text>
+
+        <rect x="58" y="90" width="174" height="30" rx="5" fill="#fff" stroke="#b5c8e8" stroke-width="0.8"/>
+        <text x="145" y="110" text-anchor="middle" font-family="'DM Mono',monospace" font-size="11" fill="#2b4c7e">vision</text>
+
+        <rect x="58" y="130" width="174" height="30" rx="5" fill="#fff" stroke="#b5c8e8" stroke-width="0.8"/>
+        <text x="145" y="150" text-anchor="middle" font-family="'DM Mono',monospace" font-size="11" fill="#2b4c7e">audio</text>
+
+        <rect x="58" y="170" width="174" height="30" rx="5" fill="#fff" stroke="#b5c8e8" stroke-width="0.8"/>
+        <text x="145" y="190" text-anchor="middle" font-family="'DM Mono',monospace" font-size="11" fill="#2b4c7e">touch</text>
+
+        <rect x="58" y="210" width="174" height="30" rx="5" fill="#fff" stroke="#b5c8e8" stroke-width="0.8"/>
+        <text x="145" y="230" text-anchor="middle" font-family="'DM Mono',monospace" font-size="11" fill="#2b4c7e">smell</text>
+
+        <rect x="58" y="250" width="174" height="30" rx="5" fill="#fff" stroke="#b5c8e8" stroke-width="0.8"/>
+        <text x="145" y="270" text-anchor="middle" font-family="'DM Mono',monospace" font-size="11" fill="#2b4c7e">internal_state</text>
+
+        <text x="145" y="308" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#5a7aaa">Any subset may be absent</text>
+        <text x="145" y="322" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#5a7aaa">(malleability property)</text>
+
+        <!-- Layer 2: Derived Features -->
+        <rect x="270" y="58" width="220" height="280" rx="8" fill="#ede9f6" stroke="#5a3d8a" stroke-width="1"/>
+        <text x="380" y="78" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="11" font-weight="600" fill="#5a3d8a" letter-spacing="0.06em">DERIVED FEATURES</text>
+
+        <rect x="288" y="90" width="184" height="30" rx="5" fill="#fff" stroke="#c8b8e8" stroke-width="0.8"/>
+        <text x="380" y="106" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10.5" fill="#5a3d8a">intensity</text>
+        <text x="380" y="116" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="9.5" fill="#8b70c0">raw signal magnitude</text>
+
+        <rect x="288" y="130" width="184" height="30" rx="5" fill="#fff" stroke="#c8b8e8" stroke-width="0.8"/>
+        <text x="380" y="146" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10.5" fill="#5a3d8a">valence</text>
+        <text x="380" y="156" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="9.5" fill="#8b70c0">positive / negative affect</text>
+
+        <rect x="288" y="170" width="184" height="30" rx="5" fill="#fff" stroke="#c8b8e8" stroke-width="0.8"/>
+        <text x="380" y="186" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10.5" fill="#5a3d8a">arousal</text>
+        <text x="380" y="196" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="9.5" fill="#8b70c0">calm ↔ highly excited</text>
+
+        <rect x="288" y="210" width="184" height="30" rx="5" fill="#fff" stroke="#c8b8e8" stroke-width="0.8"/>
+        <text x="380" y="226" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10.5" fill="#5a3d8a">novelty</text>
+        <text x="380" y="236" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="9.5" fill="#8b70c0">distance from memory</text>
+
+        <rect x="288" y="250" width="184" height="30" rx="5" fill="#fff" stroke="#c8b8e8" stroke-width="0.8"/>
+        <text x="380" y="266" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10.5" fill="#5a3d8a">confidence</text>
+        <text x="380" y="276" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="9.5" fill="#8b70c0">perceptual certainty</text>
+
+        <!-- Layer 3: Metadata -->
+        <rect x="510" y="58" width="230" height="280" rx="8" fill="#e4f0ec" stroke="#1e6e5b" stroke-width="1"/>
+        <text x="625" y="78" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="11" font-weight="600" fill="#1e6e5b" letter-spacing="0.06em">METADATA</text>
+
+        <rect x="528" y="90" width="194" height="30" rx="5" fill="#fff" stroke="#a8d8c8" stroke-width="0.8"/>
+        <text x="625" y="106" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10.5" fill="#1e6e5b">time</text>
+        <text x="625" y="116" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="9.5" fill="#2a8060">timestamp of perception</text>
+
+        <rect x="528" y="130" width="194" height="30" rx="5" fill="#fff" stroke="#a8d8c8" stroke-width="0.8"/>
+        <text x="625" y="146" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10.5" fill="#1e6e5b">context</text>
+        <text x="625" y="156" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="9.5" fill="#2a8060">environmental situation</text>
+
+        <rect x="528" y="170" width="194" height="30" rx="5" fill="#fff" stroke="#a8d8c8" stroke-width="0.8"/>
+        <text x="625" y="186" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10.5" fill="#1e6e5b">location</text>
+        <text x="625" y="196" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="9.5" fill="#2a8060">spatial position</text>
+
+        <!-- Z* encoding note -->
+        <rect x="528" y="215" width="194" height="80" rx="5" fill="#faeeda" stroke="#b07a12" stroke-width="0.8"/>
+        <text x="625" y="234" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" font-weight="600" fill="#7a5410">Z* Encoding (Emotion + Belief)</text>
+        <text x="625" y="250" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9.5" fill="#9a7020">⟨S, Context,</text>
+        <text x="625" y="264" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9.5" fill="#9a7020"> Confidence,</text>
+        <text x="625" y="278" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9.5" fill="#9a7020"> Emotion⟩</text>
+      </svg>
+    </div>
+  </div>
+
+  <h3>The malleability property</h3>
+  <p>
+    The defining property of MPCS sensory input is that it degrades gracefully. If a fire alarm sounds in complete darkness, the vision modality is empty — but the audio modality carries extreme intensity and high arousal, which is sufficient to trigger a high-salience reflex response. The system does not fail; it adapts. This mirrors how biological organisms respond: a person with impaired vision still reacts appropriately to sudden loud sounds.
+  </p>
+
+  <h3>Multisensory encoding format</h3>
+  <p>Each individual modality reading is stored as a triple:</p>
+  <div class="formula">( <span class="val">feature</span>, <span class="val">value</span>, <span class="val">emotional_tag</span> )
+
+<span class="comment">Example (audio channel):  ("amplitude", 0.94, "startle")</span>
+<span class="comment">Example (vision channel):  ("object_class", "fire", "threat")</span></div>
+
+  <p>This encoding ensures that emotional significance is bound to the feature at the lowest level, not inferred only at a higher stage — enabling faster and more accurate salience computation.</p>
+</section>
+
+<!-- ══════════════════════════════════════════
+     §6 SALIENCE & THRESHOLD
+══════════════════════════════════════════ -->
+<section id="salience">
+  <span class="section-num">§ 06</span>
+  <h2>Salience &amp; Threshold Mechanism</h2>
+
+  <h3>What is salience?</h3>
+  <p>
+    Salience is the system's measure of <em>how much attention a stimulus deserves</em>. Not all incoming stimuli are equal: a background hum deserves little attention; a sudden scream deserves immediate full focus. The salience score aggregates four independent signals into a single priority value.
+  </p>
+
+  <h3>The four salience components</h3>
+
+  <table>
+    <thead>
+      <tr><th>Component</th><th>What it measures</th><th>Biological analogue</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Intensity</strong></td><td>Raw magnitude of the stimulus (volume, brightness, pressure)</td><td>Loudness triggering the acoustic startle reflex</td></tr>
+      <tr><td><strong>Arousal</strong></td><td>The degree to which the stimulus activates or excites the system</td><td>Adrenaline response to perceived threat</td></tr>
+      <tr><td><strong>|Valence|</strong></td><td>Absolute emotional significance (strongly positive or strongly negative)</td><td>Fear or euphoria — both demand attention</td></tr>
+      <tr><td><strong>Novelty</strong></td><td>How different this stimulus is from anything previously encountered</td><td>Orienting response to an unfamiliar stimulus</td></tr>
+    </tbody>
+  </table>
+
+  <h3>The salience formula</h3>
+  <div class="formula"><span class="key">Salience</span> = <span class="val">w₁</span>·Intensity + <span class="val">w₂</span>·Arousal + <span class="val">w₃</span>·|Valence| + <span class="val">w₄</span>·Novelty
+
+<span class="comment">where w₁ + w₂ + w₃ + w₄ = 1, and weights are learned from experience</span></div>
+
+  <p>
+    Note the use of absolute value on valence: both strong fear and strong joy are highly salient. A wedding announcement is not an emergency, but it is unusual and emotionally loaded — the system should pay attention, though not reflexively. This is captured correctly only by using |Valence| rather than Valence.
+  </p>
+
+  <h3>Threshold and routing</h3>
+  <p>
+    Once salience is computed, it is compared against a learned threshold θ. This threshold is not fixed — it adapts based on experience and context. In a high-risk environment (a construction site), θ lowers, making the system more trigger-happy for reflex responses. In a safe context (a library), θ rises, sending more stimuli through deliberative reasoning.
+  </p>
+
+  <!-- DIAGRAM 3: Salience Decision Flow -->
+  <div class="diagram-wrap">
+    <div class="diagram-label">Diagram 3 — Salience Decision Flow</div>
+    <div class="diagram-body">
+      <svg class="diag" viewBox="0 0 780 320" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="a3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#6b6258" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+          <marker id="a3r" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#8b3a1a" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+          <marker id="a3g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#1e6e5b" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+        </defs>
+
+        <!-- Input components flowing in -->
+        <rect x="20" y="50" width="120" height="34" rx="6" fill="#e8eef6" stroke="#2b4c7e" stroke-width="0.8"/>
+        <text x="80" y="72" text-anchor="middle" font-family="'DM Mono',monospace" font-size="11" fill="#2b4c7e">Intensity</text>
+
+        <rect x="20" y="100" width="120" height="34" rx="6" fill="#ede9f6" stroke="#5a3d8a" stroke-width="0.8"/>
+        <text x="80" y="122" text-anchor="middle" font-family="'DM Mono',monospace" font-size="11" fill="#5a3d8a">Arousal</text>
+
+        <rect x="20" y="150" width="120" height="34" rx="6" fill="#f4ede8" stroke="#8b3a1a" stroke-width="0.8"/>
+        <text x="80" y="172" text-anchor="middle" font-family="'DM Mono',monospace" font-size="11" fill="#8b3a1a">|Valence|</text>
+
+        <rect x="20" y="200" width="120" height="34" rx="6" fill="#e4f0ec" stroke="#1e6e5b" stroke-width="0.8"/>
+        <text x="80" y="222" text-anchor="middle" font-family="'DM Mono',monospace" font-size="11" fill="#1e6e5b">Novelty</text>
+
+        <!-- Arrows from components to aggregator -->
+        <line x1="140" y1="67" x2="230" y2="130" stroke="#6b6258" stroke-width="0.9" marker-end="url(#a3)"/>
+        <line x1="140" y1="117" x2="230" y2="140" stroke="#6b6258" stroke-width="0.9" marker-end="url(#a3)"/>
+        <line x1="140" y1="167" x2="230" y2="150" stroke="#6b6258" stroke-width="0.9" marker-end="url(#a3)"/>
+        <line x1="140" y1="217" x2="230" y2="160" stroke="#6b6258" stroke-width="0.9" marker-end="url(#a3)"/>
+
+        <!-- Weight labels -->
+        <text x="172" y="102" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#b07a12">w₁</text>
+        <text x="178" y="128" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#b07a12">w₂</text>
+        <text x="180" y="158" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#b07a12">w₃</text>
+        <text x="172" y="192" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#b07a12">w₄</text>
+
+        <!-- Aggregator -->
+        <rect x="230" y="110" width="140" height="60" rx="8" fill="#faeeda" stroke="#b07a12" stroke-width="1.2"/>
+        <text x="300" y="135" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="12" font-weight="600" fill="#7a5410">Weighted Sum</text>
+        <text x="300" y="152" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10.5" fill="#9a7020">Σ wᵢ · cᵢ</text>
+
+        <!-- Arrow to comparator -->
+        <line x1="370" y1="140" x2="430" y2="140" stroke="#b07a12" stroke-width="1.2" marker-end="url(#a3)"/>
+
+        <!-- Comparator diamond -->
+        <polygon points="490,110 550,140 490,170 430,140" fill="#f2ede5" stroke="#6b6258" stroke-width="1.2"/>
+        <text x="490" y="136" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="11" font-weight="600" fill="#3d3830">S &gt; θ</text>
+        <text x="490" y="150" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#6b6258">threshold?</text>
+
+        <!-- Threshold annotation -->
+        <line x1="490" y1="180" x2="490" y2="230" stroke="#cfc7b8" stroke-width="0.8" stroke-dasharray="4,2"/>
+        <rect x="430" y="232" width="120" height="28" rx="5" fill="#f2ede5" stroke="#cfc7b8" stroke-width="0.8"/>
+        <text x="490" y="250" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#6b6258">θ = f(context)</text>
+
+        <!-- YES path -->
+        <line x1="550" y1="140" x2="640" y2="60" stroke="#8b3a1a" stroke-width="1.2" marker-end="url(#a3r)"/>
+        <text x="612" y="88" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" font-weight="600" fill="#8b3a1a">HIGH</text>
+
+        <rect x="640" y="30" width="120" height="50" rx="7" fill="#f4ede8" stroke="#8b3a1a" stroke-width="1.2"/>
+        <text x="700" y="52" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="12" font-weight="600" fill="#8b3a1a">Reflex</text>
+        <text x="700" y="68" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#aa5a30">Fast response</text>
+
+        <!-- NO path -->
+        <line x1="550" y1="140" x2="640" y2="210" stroke="#1e6e5b" stroke-width="1.2" marker-end="url(#a3g)"/>
+        <text x="612" y="192" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" font-weight="600" fill="#1e6e5b">LOW</text>
+
+        <rect x="640" y="186" width="120" height="50" rx="7" fill="#e4f0ec" stroke="#1e6e5b" stroke-width="1.2"/>
+        <text x="700" y="208" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="12" font-weight="600" fill="#1e6e5b">Deliberate</text>
+        <text x="700" y="224" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#2a8060">Reasoned response</text>
+      </svg>
+    </div>
+  </div>
+
+  <div class="callout green">
+    <div class="callout-label">Key design insight</div>
+    <p>The threshold θ is a learned, context-sensitive parameter — not a static constant. In dangerous environments, it decreases (more stimuli trigger reflex responses). In safe, familiar environments, it increases (more stimuli flow to deliberative reasoning). This adaptability is what makes MPCS genuinely responsive to environmental context.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     §7 REFLEX PATHWAY
+══════════════════════════════════════════ -->
+<section id="reflex">
+  <span class="section-num">§ 07</span>
+  <h2>Reflex Pathway</h2>
+
+  <h3>Purpose</h3>
+  <p>
+    The reflex pathway handles the high-salience, time-critical subset of stimuli. Its design philosophy is speed over precision: when something demands immediate action — a threat, an extreme pain signal, a sudden collision — the cost of deliberation is too high. The system must act before it finishes thinking.
+  </p>
+
+  <p>
+    Biologically, this corresponds to subcortical reflex arcs: the spinal cord can trigger a withdrawal response to burning heat before the signal even reaches the cortex for conscious processing. MPCS implements the computational equivalent.
+  </p>
+
+  <h3>Mechanism</h3>
+  <p>
+    Reflex responses are <em>predefined stimulus-action mappings</em>. Rather than querying memory or reasoning through context, the system looks up a pre-established table of high-urgency stimulus patterns and their corresponding immediate responses.
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Stimulus type</th><th>Reflex response</th><th>Properties</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Sudden loud noise (intensity &gt; 0.9)</td><td>Startle response, alert posture</td><td>~2ms latency, no reasoning</td></tr>
+      <tr><td>Heat/pain signal (internal state critical)</td><td>Immediate withdrawal from source</td><td>Sub-cortical equivalent</td></tr>
+      <tr><td>High-speed approaching object (visual threat)</td><td>Evasive movement initiation</td><td>Bypasses semantic analysis</td></tr>
+      <tr><td>System anomaly (critical error state)</td><td>Safe shutdown or failsafe mode</td><td>Priority interrupt</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Properties of the reflex path</h3>
+  <div class="info-grid">
+    <div class="info-card orange">
+      <div class="info-card-label">Speed</div>
+      <div class="info-card-title">Minimal latency</div>
+      <div class="info-card-text">Fixed lookup table — O(1) response time. No iterative reasoning.</div>
+    </div>
+    <div class="info-card orange">
+      <div class="info-card-label">Computation</div>
+      <div class="info-card-title">Low overhead</div>
+      <div class="info-card-text">No semantic matching, no memory retrieval, no probabilistic inference.</div>
+    </div>
+    <div class="info-card orange">
+      <div class="info-card-label">Tradeoff</div>
+      <div class="info-card-title">Reduced precision</div>
+      <div class="info-card-text">Responses may be sub-optimal for edge cases — this is acceptable given that safety takes precedence.</div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <div class="callout-label">Design note</div>
+    <p>The reflex pathway still feeds into the Experience Storage system after the response is executed. This means that even fast, automatic responses become part of the learning signal. Over time, the system can detect whether its reflexes are well-calibrated — and flag cases where more deliberation would have led to better outcomes, potentially adjusting the threshold θ.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     §8 DELIBERATIVE PATHWAY
+══════════════════════════════════════════ -->
+<section id="deliberative">
+  <span class="section-num">§ 08</span>
+  <h2>Deliberative Pathway</h2>
+
+  <h3>When deliberation is triggered</h3>
+  <p>
+    The deliberative path is activated for stimuli that are ambiguous, moderately novel, or below the reflex threshold. These are the situations where fast heuristics are unreliable and considered reasoning produces a better outcome. The deliberative pathway is the MPCS equivalent of System 2 cognition — slow, effortful, and context-sensitive.
+  </p>
+
+  <!-- DIAGRAM 4: Deliberative Pathway Steps -->
+  <div class="diagram-wrap">
+    <div class="diagram-label">Diagram 4 — Deliberative Pathway: Processing Steps</div>
+    <div class="diagram-body">
+      <svg class="diag" viewBox="0 0 780 120" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="a4" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#1e6e5b" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+        </defs>
+
+        <!-- Step boxes -->
+        <rect x="10" y="38" width="108" height="44" rx="7" fill="#e4f0ec" stroke="#1e6e5b" stroke-width="1"/>
+        <text x="64" y="57" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="11" font-weight="600" fill="#1e6e5b">Semantic</text>
+        <text x="64" y="72" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#2a8060">Matching</text>
+
+        <line x1="118" y1="60" x2="136" y2="60" stroke="#1e6e5b" stroke-width="1.1" marker-end="url(#a4)"/>
+
+        <rect x="136" y="38" width="108" height="44" rx="7" fill="#e4f0ec" stroke="#1e6e5b" stroke-width="1"/>
+        <text x="190" y="57" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="11" font-weight="600" fill="#1e6e5b">Emotional</text>
+        <text x="190" y="72" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#2a8060">Alignment</text>
+
+        <line x1="244" y1="60" x2="262" y2="60" stroke="#1e6e5b" stroke-width="1.1" marker-end="url(#a4)"/>
+
+        <rect x="262" y="38" width="108" height="44" rx="7" fill="#e4f0ec" stroke="#1e6e5b" stroke-width="1"/>
+        <text x="316" y="57" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="11" font-weight="600" fill="#1e6e5b">Memory</text>
+        <text x="316" y="72" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#2a8060">Retrieval</text>
+
+        <line x1="370" y1="60" x2="388" y2="60" stroke="#1e6e5b" stroke-width="1.1" marker-end="url(#a4)"/>
+
+        <rect x="388" y="38" width="108" height="44" rx="7" fill="#e4f0ec" stroke="#1e6e5b" stroke-width="1"/>
+        <text x="442" y="57" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="11" font-weight="600" fill="#1e6e5b">Memory</text>
+        <text x="442" y="72" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#2a8060">Borrowing</text>
+
+        <line x1="496" y1="60" x2="514" y2="60" stroke="#1e6e5b" stroke-width="1.1" marker-end="url(#a4)"/>
+
+        <rect x="514" y="38" width="116" height="44" rx="7" fill="#e4f0ec" stroke="#1e6e5b" stroke-width="1"/>
+        <text x="572" y="57" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="11" font-weight="600" fill="#1e6e5b">Contextual</text>
+        <text x="572" y="72" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#2a8060">Reasoning</text>
+
+        <line x1="630" y1="60" x2="648" y2="60" stroke="#1e6e5b" stroke-width="1.1" marker-end="url(#a4)"/>
+
+        <rect x="648" y="38" width="118" height="44" rx="7" fill="#1e6e5b" stroke="#0f4438" stroke-width="1"/>
+        <text x="707" y="57" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="11" font-weight="600" fill="#fff">Decision</text>
+        <text x="707" y="72" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#a8d8c8">Best action selected</text>
+
+        <!-- Step numbers -->
+        <text x="64" y="25" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#6b6258">①</text>
+        <text x="190" y="25" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#6b6258">②</text>
+        <text x="316" y="25" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#6b6258">③</text>
+        <text x="442" y="25" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#6b6258">④</text>
+        <text x="572" y="25" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#6b6258">⑤</text>
+        <text x="707" y="25" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#6b6258">⑥</text>
+      </svg>
+    </div>
+  </div>
+
+  <h3>Step-by-step breakdown</h3>
+
+  <h4>Step 1 — Semantic matching</h4>
+  <p>The incoming stimulus is compared against known concept representations. This is not just pattern matching — it draws on a semantic embedding that encodes meaning, not just surface features. A hissing sound is compared against concepts like "kettle", "snake", "deflating tire" and ranked by embedding similarity.</p>
+
+  <h4>Step 2 — Emotional alignment</h4>
+  <p>The stimulus's valence and arousal profile is compared against emotional patterns stored in memory. Prior experiences with high-arousal, negative-valence outcomes make the system more cautious about similarly profiled stimuli.</p>
+
+  <h4>Step 3 — Memory retrieval</h4>
+  <p>The structured memory layer is queried for past experiences that share similar sensory fingerprints, semantic labels, and emotional profiles.</p>
+
+  <h4>Step 4 — Memory borrowing</h4>
+  <p>Rather than relying on a single best-matching memory, MPCS uses the top-K most similar experiences and combines their outcomes using a weighted vote:</p>
+
+  <div class="formula"><span class="key">Action estimate</span> = Σᵢ <span class="val">sim(S, Eᵢ)</span> · <span class="val">outcome(Eᵢ)</span>
+
+<span class="comment">for i in top-K similar experiences</span>
+<span class="comment">sim(·,·) = cosine similarity in embedding space</span></div>
+
+  <h4>Step 5 — Contextual reasoning</h4>
+  <p>The belief, context, and emotional state (encoded as Z* numbers) are integrated with the memory estimates to produce a final probabilistic assessment of the best action.</p>
+
+  <h4>Step 6 — Decision</h4>
+  <p>The action with the highest expected utility, given the reasoning above, is selected and executed.</p>
+</section>
+
+<!-- ══════════════════════════════════════════
+     §9 MEMORY SYSTEM
+══════════════════════════════════════════ -->
+<section id="memory">
+  <span class="section-num">§ 09</span>
+  <h2>Memory System Design</h2>
+
+  <p>
+    MPCS employs a two-layer memory architecture that mirrors the complementary memory systems found in biological organisms: a fast, coarse recognition layer and a rich, detailed associative store.
+  </p>
+
+  <!-- DIAGRAM 5: Memory Architecture -->
+  <div class="diagram-wrap">
+    <div class="diagram-label">Diagram 5 — Memory Architecture (Two-Layer)</div>
+    <div class="diagram-body">
+      <svg class="diag" viewBox="0 0 780 330" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="a5" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#6b6258" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+          <marker id="a5b" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#2b4c7e" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+          <marker id="a5p" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#5a3d8a" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+        </defs>
+
+        <!-- Incoming stimulus -->
+        <rect x="298" y="18" width="184" height="38" rx="7" fill="#f2ede5" stroke="#cfc7b8" stroke-width="1"/>
+        <text x="390" y="42" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="12" fill="#6b6258">Incoming stimulus</text>
+
+        <!-- Arrow down -->
+        <line x1="390" y1="56" x2="390" y2="82" stroke="#6b6258" stroke-width="1.1" marker-end="url(#a5)"/>
+
+        <!-- Fast layer -->
+        <rect x="160" y="84" width="460" height="76" rx="9" fill="#e8eef6" stroke="#2b4c7e" stroke-width="1.2"/>
+        <text x="390" y="108" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="13" font-weight="600" fill="#2b4c7e">Layer 1 — Fast Membership</text>
+        <text x="390" y="126" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="11" fill="#5a7aaa">Bloom filter / neural hash lookup</text>
+        <text x="390" y="144" text-anchor="middle" font-family="'DM Mono',monospace" font-size="11" fill="#5a7aaa">Query: "Have I seen this before?"  →  Yes | No</text>
+
+        <!-- Two paths after fast layer -->
+        <!-- NO → novelty high → continue to deliberative -->
+        <line x1="280" y1="160" x2="180" y2="202" stroke="#8b3a1a" stroke-width="1.1" stroke-dasharray="5,3" marker-end="url(#a5)"/>
+        <text x="214" y="188" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#8b3a1a">Novel (not seen)</text>
+
+        <!-- YES → retrieve from Layer 2 -->
+        <line x1="500" y1="160" x2="600" y2="202" stroke="#2b4c7e" stroke-width="1.1" marker-end="url(#a5b)"/>
+        <text x="567" y="188" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#2b4c7e">Familiar (seen before)</text>
+
+        <!-- Novel box -->
+        <rect x="60" y="204" width="200" height="60" rx="8" fill="#f4ede8" stroke="#8b3a1a" stroke-width="1"/>
+        <text x="160" y="228" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="11.5" font-weight="600" fill="#8b3a1a">High novelty flagged</text>
+        <text x="160" y="246" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#aa5a30">Triggers deliberative path</text>
+        <text x="160" y="260" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#aa5a30">Adds to Bloom filter</text>
+
+        <!-- Structured memory layer -->
+        <rect x="460" y="204" width="290" height="100" rx="9" fill="#ede9f6" stroke="#5a3d8a" stroke-width="1.2"/>
+        <text x="605" y="226" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="13" font-weight="600" fill="#5a3d8a">Layer 2 — Structured Store</text>
+        <text x="605" y="244" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#7b5fb0">Experience records:</text>
+        <text x="605" y="260" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#7b5fb0">{ fingerprint, label, valence,</text>
+        <text x="605" y="276" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#7b5fb0">  arousal, context, action, outcome }</text>
+        <text x="605" y="292" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#7b5fb0">Top-K retrieval via embedding similarity</text>
+
+        <!-- Arrow from Layer 2 to deliberative -->
+        <line x1="605" y1="304" x2="605" y2="316" stroke="#5a3d8a" stroke-width="1" marker-end="url(#a5p)"/>
+        <text x="605" y="326" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#5a3d8a">→ Feeds deliberative reasoning</text>
+      </svg>
+    </div>
+  </div>
+
+  <h3>Layer 1 — Fast membership</h3>
+  <p>
+    The fast membership layer answers a binary question with near-zero latency: has this stimulus been encountered before? It uses a Bloom-filter-style hash structure to map incoming stimuli to a compact bit array. If the answer is "no", the system flags this as a novel stimulus and raises its novelty component in the salience formula. If the answer is "yes", the system proceeds to the structured store for richer retrieval.
+  </p>
+  <p>This layer operates in constant time and requires minimal memory — it is designed to be the first port of call for every single incoming percept, so it must be as fast as possible.</p>
+
+  <h3>Layer 2 — Structured experience store</h3>
+  <p>Each entry in the structured store is a rich experience record:</p>
+
+  <div class="formula"><span class="key">Experience E</span> = {
+  <span class="val">sensory_pattern</span>:  compressed embedding / fingerprint,
+  <span class="val">semantic_label</span>:   what this stimulus was identified as,
+  <span class="val">valence</span>:          emotional polarity at time of encounter,
+  <span class="val">arousal</span>:          activation level at time of encounter,
+  <span class="val">context</span>:          environmental situation during encoding,
+  <span class="val">action</span>:           what the system did in response,
+  <span class="val">outcome</span>:          the result of that action (reward/punishment)
+}</div>
+
+  <p>
+    Raw sensory data is never stored directly — only compressed fingerprints and embeddings. This dramatically reduces memory consumption and, importantly, enables fast semantic similarity search: to find the top-K experiences most similar to a new stimulus, the system compares embedding vectors rather than pixel arrays.
+  </p>
+</section>
+
+<!-- ══════════════════════════════════════════
+     §10 EXPERIENCE ENCODING & LEARNING
+══════════════════════════════════════════ -->
+<section id="learning">
+  <span class="section-num">§ 10</span>
+  <h2>Experience Encoding &amp; Learning</h2>
+
+  <p>
+    The learning loop is what distinguishes MPCS from a static perception system. After every action — whether reflex or deliberative — the system encodes the experience and uses the outcome to update its internal state.
+  </p>
+
+  <h3>The encoding loop</h3>
+  <div class="formula"><span class="key">Loop:</span>  Input → Process → Action → Outcome → Memory Update → (repeat)</div>
+
+  <h3>Learning signals</h3>
+
+  <table>
+    <thead>
+      <tr><th>Signal type</th><th>System response</th><th>Long-term effect</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Reward</strong> (positive outcome)</td><td>Reinforce the action policy</td><td>Increases probability of same action in similar context</td></tr>
+      <tr><td><strong>Punishment</strong> (negative outcome)</td><td>Penalize the action policy</td><td>Decreases probability; considers alternatives</td></tr>
+      <tr><td><strong>Novelty</strong> (unseen stimulus)</td><td>Triggers exploration mode</td><td>Adds new experience to the structured store</td></tr>
+      <tr><td><strong>Repetition</strong> (seen many times)</td><td>Strengthens existing memory trace</td><td>Faster retrieval; reduces deliberation time for familiar patterns</td></tr>
+    </tbody>
+  </table>
+
+  <h3>What updates</h3>
+  <p>The learning loop modifies three things simultaneously:</p>
+  <ul style="font-family:'Outfit',sans-serif;font-size:0.88rem;color:#3d3830;padding-left:1.4rem;line-height:1.7;">
+    <li>The <strong>structured memory store</strong> — new experiences are added; existing ones are updated with outcome data.</li>
+    <li>The <strong>salience weights</strong> (w₁–w₄) — weights are adjusted based on which components were most predictive of good/bad outcomes.</li>
+    <li>The <strong>threshold θ</strong> — recalibrated based on the frequency and severity of misrouting events (e.g., stimuli that should have been reflexive but went through deliberation, or vice versa).</li>
+  </ul>
+
+  <div class="callout purple">
+    <div class="callout-label">Adaptive intelligence</div>
+    <p>This triple-update mechanism means that MPCS becomes more efficient over time: familiar situations are handled faster (lower deliberation cost), novel situations trigger appropriate exploration, and dangerous situations become more reliably routed to the reflex path. The system learns not just <em>what</em> to do, but <em>how urgently</em> to do it.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     §11 END-TO-END PIPELINE
+══════════════════════════════════════════ -->
+<section id="pipeline">
+  <span class="section-num">§ 11</span>
+  <h2>End-to-End Processing Pipeline</h2>
+
+  <p>The complete MPCS processing cycle, from raw sensation to stored experience, proceeds in seven stages.</p>
+
+  <!-- DIAGRAM 6: Full Pipeline -->
+  <div class="diagram-wrap">
+    <div class="diagram-label">Diagram 6 — End-to-End Processing Pipeline</div>
+    <div class="diagram-body">
+      <svg class="diag" viewBox="0 0 780 480" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="a6" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#6b6258" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+          <marker id="a6b" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#b07a12" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+        </defs>
+
+        <!-- Step 1 -->
+        <rect x="20" y="20" width="35" height="35" rx="18" fill="#2b4c7e"/>
+        <text x="37" y="43" text-anchor="middle" font-family="'DM Mono',monospace" font-size="14" font-weight="600" fill="#fff">1</text>
+        <rect x="72" y="22" width="320" height="30" rx="6" fill="#e8eef6" stroke="#2b4c7e" stroke-width="0.8"/>
+        <text x="232" y="41" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="12" fill="#2b4c7e">Capture raw sensory input (all available modalities)</text>
+        <line x1="37" y1="55" x2="37" y2="82" stroke="#cfc7b8" stroke-width="1" marker-end="url(#a6)"/>
+
+        <!-- Step 2 -->
+        <rect x="20" y="84" width="35" height="35" rx="18" fill="#5a3d8a"/>
+        <text x="37" y="107" text-anchor="middle" font-family="'DM Mono',monospace" font-size="14" font-weight="600" fill="#fff">2</text>
+        <rect x="72" y="86" width="380" height="30" rx="6" fill="#ede9f6" stroke="#5a3d8a" stroke-width="0.8"/>
+        <text x="262" y="105" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="12" fill="#5a3d8a">Convert to structured SensoryInput record (modalities + features + metadata)</text>
+        <line x1="37" y1="119" x2="37" y2="146" stroke="#cfc7b8" stroke-width="1" marker-end="url(#a6)"/>
+
+        <!-- Step 3 -->
+        <rect x="20" y="148" width="35" height="35" rx="18" fill="#b07a12"/>
+        <text x="37" y="171" text-anchor="middle" font-family="'DM Mono',monospace" font-size="14" font-weight="600" fill="#fff">3</text>
+        <rect x="72" y="150" width="400" height="30" rx="6" fill="#faeeda" stroke="#b07a12" stroke-width="0.8"/>
+        <text x="272" y="169" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="12" fill="#7a5410">Compute salience score S = Σ wᵢ·cᵢ  (novelty via fast membership check)</text>
+        <line x1="37" y1="183" x2="37" y2="210" stroke="#cfc7b8" stroke-width="1" marker-end="url(#a6)"/>
+
+        <!-- Step 4 -->
+        <rect x="20" y="212" width="35" height="35" rx="18" fill="#8b3a1a"/>
+        <text x="37" y="235" text-anchor="middle" font-family="'DM Mono',monospace" font-size="14" font-weight="600" fill="#fff">4</text>
+        <rect x="72" y="214" width="340" height="30" rx="6" fill="#f4ede8" stroke="#8b3a1a" stroke-width="0.8"/>
+        <text x="242" y="233" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="12" fill="#8b3a1a">Threshold decision: S &gt; θ → Reflex path  |  S ≤ θ → Deliberative path</text>
+        <line x1="37" y1="247" x2="37" y2="274" stroke="#cfc7b8" stroke-width="1" marker-end="url(#a6)"/>
+
+        <!-- Step 5a and 5b -->
+        <rect x="20" y="276" width="35" height="35" rx="18" fill="#1e6e5b"/>
+        <text x="37" y="299" text-anchor="middle" font-family="'DM Mono',monospace" font-size="14" font-weight="600" fill="#fff">5</text>
+        <rect x="72" y="278" width="220" height="30" rx="6" fill="#f4ede8" stroke="#8b3a1a" stroke-width="0.8"/>
+        <text x="182" y="297" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="12" fill="#8b3a1a">Reflex: lookup → fast action</text>
+        <text x="302" y="293" font-family="'Outfit',sans-serif" font-size="12" fill="#6b6258">or</text>
+        <rect x="322" y="278" width="280" height="30" rx="6" fill="#e4f0ec" stroke="#1e6e5b" stroke-width="0.8"/>
+        <text x="462" y="297" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="12" fill="#1e6e5b">Deliberate: reason → select action</text>
+        <line x1="37" y1="311" x2="37" y2="338" stroke="#cfc7b8" stroke-width="1" marker-end="url(#a6)"/>
+
+        <!-- Step 6 -->
+        <rect x="20" y="340" width="35" height="35" rx="18" fill="#6b6258"/>
+        <text x="37" y="363" text-anchor="middle" font-family="'DM Mono',monospace" font-size="14" font-weight="600" fill="#fff">6</text>
+        <rect x="72" y="342" width="280" height="30" rx="6" fill="#f2ede5" stroke="#6b6258" stroke-width="0.8"/>
+        <text x="212" y="361" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="12" fill="#3d3830">Execute selected action → environment</text>
+        <line x1="37" y1="375" x2="37" y2="402" stroke="#b07a12" stroke-width="1" stroke-dasharray="5,3" marker-end="url(#a6b)"/>
+
+        <!-- Step 7 -->
+        <rect x="20" y="404" width="35" height="35" rx="18" fill="#b07a12"/>
+        <text x="37" y="427" text-anchor="middle" font-family="'DM Mono',monospace" font-size="14" font-weight="600" fill="#fff">7</text>
+        <rect x="72" y="406" width="430" height="30" rx="6" fill="#faeeda" stroke="#b07a12" stroke-width="0.8"/>
+        <text x="287" y="425" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="12" fill="#7a5410">Encode outcome → update memory, weights, threshold θ</text>
+
+        <!-- Feedback arc -->
+        <path d="M540 421 L700 421 L700 37 L410 37" fill="none" stroke="#b07a12" stroke-width="1" stroke-dasharray="5,3" marker-end="url(#a6b)"/>
+        <text x="713" y="230" text-anchor="start" font-family="'Outfit',sans-serif" font-size="10.5" fill="#b07a12" transform="rotate(90,713,230)">Learning feedback to salience</text>
+      </svg>
+    </div>
+  </div>
+
+  <ol class="pipeline-steps">
+    <li><span><strong>Capture</strong> — Raw sensory signals are sampled across all available modalities. Missing modalities leave their slots as null without breaking the pipeline.</span></li>
+    <li><span><strong>Structure</strong> — Raw signals are normalized, tagged with emotional annotations, and assembled into the SensoryInput record format.</span></li>
+    <li><span><strong>Score</strong> — The salience formula is evaluated. The fast membership layer simultaneously answers the novelty query.</span></li>
+    <li><span><strong>Route</strong> — The salience score is compared against the learned threshold θ to determine which processing pathway is engaged.</span></li>
+    <li><span><strong>Process</strong> — Either the reflex table is consulted for a fast action, or the deliberative pathway executes its multi-step reasoning chain.</span></li>
+    <li><span><strong>Act</strong> — The selected action is executed in the environment.</span></li>
+    <li><span><strong>Learn</strong> — The outcome is observed, the experience is encoded in the structured store, and the salience weights and threshold are updated.</span></li>
+  </ol>
+</section>
+
+<!-- ══════════════════════════════════════════
+     §12 KEY CONTRIBUTIONS
+══════════════════════════════════════════ -->
+<section id="contributions">
+  <span class="section-num">§ 12</span>
+  <h2>Key Contributions</h2>
+
+  <p>MPCS makes five primary technical contributions to the design of cognitive AI systems:</p>
+
+  <ul class="contrib-list">
+    <li>
+      <div><strong>Malleable multisensory input representation.</strong> A unified, fault-tolerant input format that gracefully handles missing or degraded modalities. Each modality is encoded with its own emotional tag, enabling bottom-up emotional integration rather than post-hoc inference.</div>
+    </li>
+    <li>
+      <div><strong>Salience-based dual-path routing.</strong> A principled, learnable mechanism that dynamically allocates cognitive resources. The threshold θ is not a hyperparameter — it is a learned, context-sensitive quantity that adapts to the system's operational environment. This is the first explicit formalization of such a routing mechanism in the context of unified AI cognition.</div>
+    </li>
+    <li>
+      <div><strong>Emotion, novelty, and context as first-class signals.</strong> Conventional AI systems treat emotional valence and novelty as secondary outputs of reasoning. MPCS treats them as primary inputs to the routing decision. This reflects what neuroscience tells us about the amygdala's role in prioritizing emotionally significant stimuli for fast processing.</div>
+    </li>
+    <li>
+      <div><strong>Two-layer memory architecture.</strong> The combination of a fast Bloom-filter membership layer and a rich structured experience store allows the system to answer "have I seen this?" in O(1) time and "what should I do about it?" through semantic retrieval. These two operations are decoupled, making the system scalable.</div>
+    </li>
+    <li>
+      <div><strong>Experience-driven adaptive learning.</strong> Every action — reflex or deliberative — produces a learning signal that updates three aspects of the system simultaneously: the memory store, the salience weights, and the routing threshold. This triple-update mechanism creates a feedback loop that improves both accuracy and efficiency over time.</div>
+    </li>
+  </ul>
+</section>
+
+<!-- ══════════════════════════════════════════
+     §13 DISCUSSION & FUTURE WORK
+══════════════════════════════════════════ -->
+<section id="discussion">
+  <span class="section-num">§ 13</span>
+  <h2>Discussion &amp; Future Work</h2>
+
+  <h3>Limitations of the current framework</h3>
+  <p>
+    The current MPCS framework is a design-level specification. Several implementation challenges remain unresolved:
+  </p>
+  <p>
+    The salience weights w₁–w₄ require initialization before learning can begin, and a poor initialization may lead to suboptimal routing early in the system's lifetime. The threshold θ update rule has not been formally specified — a reinforcement learning formulation would be a natural fit, but the reward signal for routing decisions is non-trivially defined (how do you know a routing decision was wrong before you observe a long-term outcome?).
+  </p>
+  <p>
+    The deliberative pathway's memory borrowing step assumes a meaningful embedding space exists. For modalities like olfaction or proprioception, standard embedding methods are underdeveloped.
+  </p>
+
+  <h3>Future extensions</h3>
+
+  <div class="info-grid">
+    <div class="info-card blue">
+      <div class="info-card-label">Extension 1</div>
+      <div class="info-card-title">Multi-modal deep learning</div>
+      <div class="info-card-text">Replace handcrafted feature extraction with learned multimodal encoders (e.g., vision-language models extended to touch and proprioception).</div>
+    </div>
+    <div class="info-card green">
+      <div class="info-card-label">Extension 2</div>
+      <div class="info-card-title">RL-based policy optimization</div>
+      <div class="info-card-text">Replace the memory borrowing heuristic with a full reinforcement learning policy, where the deliberative path learns to select actions via gradient updates.</div>
+    </div>
+    <div class="info-card purple">
+      <div class="info-card-label">Extension 3</div>
+      <div class="info-card-title">Memory decay mechanisms</div>
+      <div class="info-card-text">Implement Ebbinghaus-style forgetting curves so that old, low-utility experiences fade over time, preventing memory saturation.</div>
+    </div>
+    <div class="info-card amber">
+      <div class="info-card-label">Extension 4</div>
+      <div class="info-card-title">Attention-based filtering</div>
+      <div class="info-card-text">Use transformer-style attention over the experience store to weight retrieved memories by contextual relevance rather than raw embedding similarity.</div>
+    </div>
+    <div class="info-card orange">
+      <div class="info-card-label">Extension 5</div>
+      <div class="info-card-title">Extended emotional dimensions</div>
+      <div class="info-card-text">Move beyond valence/arousal to a richer emotional representation (Plutchik's wheel or PAD model) to capture nuanced affective states like disgust, surprise, or anticipation.</div>
+    </div>
+  </div>
+
+  <h3>Relationship to existing architectures</h3>
+  <p>
+    MPCS shares conceptual lineage with Global Workspace Theory (Baars, 1988), which posits a "global workspace" that broadcasts information to specialized processors. The salience module plays an analogous role. It also relates to the ACT-R cognitive architecture (Anderson, 2004), particularly the distinction between procedural memory (analogous to the reflex table) and declarative memory (analogous to the structured experience store). However, MPCS is distinctive in its explicit formalization of the routing decision as a learnable, context-sensitive threshold function — a feature absent from prior cognitive architectures.
+  </p>
+</section>
+
+<!-- ══════════════════════════════════════════
+     §14 CONCLUSION
+══════════════════════════════════════════ -->
+<section id="conclusion">
+  <span class="section-num">§ 14</span>
+  <h2>Conclusion</h2>
+
+  <p>
+    The Malleable Perceptual-Cognitive System presents a unified answer to a fundamental question in AI design: how should an intelligent system decide how much to think?
+  </p>
+
+  <p>
+    The answer MPCS proposes is principled and biologically grounded. By computing a salience score that combines raw intensity, emotional arousal, affective significance, and novelty, and comparing it against a learned, context-sensitive threshold, the system routes each percept to the processing pathway most appropriate to its urgency. High-stakes, time-critical stimuli bypass deliberation and trigger fast reflex responses. Ambiguous, moderately novel stimuli are routed to a multi-step reasoning chain that draws on memory, semantic matching, and contextual inference. All outcomes — from both paths — are recorded and used to continuously calibrate the system's sensitivity, efficiency, and decision quality.
+  </p>
+
+  <p>
+    The central design principle of MPCS is worth restating plainly:
+  </p>
+
+  <blockquote style="font-family:'EB Garamond',serif;font-style:italic;font-size:1.3rem;color:#3d3830;border-left:3px solid #2b4c7e;padding:0.8rem 1.5rem;margin:1.5rem 0;background:#e8eef6;border-radius:0 8px 8px 0;">
+    Not all stimuli require equal thinking. Intelligent systems must decide how much cognition to allocate — and that decision itself must be learned, adaptive, and emotionally informed.
+  </blockquote>
+
+  <p>
+    MPCS operationalizes this principle into a concrete, implementable framework. It does not merely describe dual-process cognition — it provides the architectural machinery to realize it in an AI system that perceives, evaluates, acts, and learns.
+  </p>
+</section>
+
+<!-- Footer -->
+<div class="doc-footer">
+  <span>Malleable Perceptual-Cognitive System (MPCS)</span>
+  <span>Technical Research Report · 2025</span>
+</div>
+
+</div>
+</body>
+</html>
