@@ -53,6 +53,7 @@ TOP_K_MEMORIES = 5
 PRIOR_MIN = 0.4            # lower bound for weak action-reward prior (no memory)
 PRIOR_MAX = 0.6            # upper bound for weak action-reward prior (no memory)
 DEFAULT_ACTION_SCORE = 0.5 # fallback score when an action has no matching memories
+TIME_DECAY_BASE = 0.99     # decay factor applied to older memories
 
 # ---------------------------------------------------------------------------
 # 2. Afferent Structure
@@ -95,11 +96,12 @@ class MemorySystem:
     def __init__(self):
         self._store: list[dict] = []
 
-    def store(self, summary: tuple, action: str, reward: float) -> None:
+    def store(self, summary: tuple, action: str, reward: float, step: int) -> None:
         self._store.append({
             "summary": summary,
             "action":  action,
             "reward":  reward,
+            "step":    step,
         })
 
     def retrieve(self, summary: tuple, k: int = TOP_K_MEMORIES) -> list[dict]:
@@ -137,6 +139,30 @@ def similarity(s1: tuple, s2: tuple) -> int:
             score += 1
     return score
 
+
+def total_features(summary: tuple) -> int:
+    """Return total number of comparable features in a summary tuple."""
+    return len(summary[0]) + len(summary[1])
+
+
+def normalized_similarity(s1: tuple, s2: tuple) -> float:
+    """Return similarity normalized to [0.0, 1.0]."""
+    denom = total_features(s1)
+    return (similarity(s1, s2) / denom) if denom else 0.0
+
+
+def compute_novelty(summary: tuple, memory: MemorySystem) -> float:
+    """
+    Compute novelty as inverse max similarity to stored experiences.
+
+    Returns:
+        float in [0, 1], where 1 is fully novel and 0 is highly familiar.
+    """
+    if len(memory) == 0:
+        return 1.0
+    max_sim = max(normalized_similarity(summary, m["summary"]) for m in memory._store)
+    return 1.0 - max_sim
+
 # ---------------------------------------------------------------------------
 # 6. Reflexive Layer (fast thinking)
 # ---------------------------------------------------------------------------
@@ -154,17 +180,38 @@ def reflexive_decision(afferent: AfferentObject) -> Optional[str]:
 # ---------------------------------------------------------------------------
 # 7. Deliberative Layer (slow thinking + counterfactuals)
 # ---------------------------------------------------------------------------
-def simulate_action(action: str, past_cases: list[dict]) -> float:
+def simulate_action(
+    action: str,
+    past_cases: list[dict],
+    summary: tuple,
+    current_step: int,
+) -> float:
     """
     Counterfactual simulation: estimate expected reward for *action*
     given the retrieved memory cases.
     """
     if not past_cases:
         return random.uniform(PRIOR_MIN, PRIOR_MAX)  # weak prior when no history
-    rewards = [m["reward"] for m in past_cases if m["action"] == action]
-    return sum(rewards) / len(rewards) if rewards else DEFAULT_ACTION_SCORE
 
-def deliberate(afferent: AfferentObject, memory: MemorySystem) -> tuple:
+    weighted_sum = 0.0
+    total_weight = 0.0
+    for m in past_cases:
+        if m["action"] != action:
+            continue
+        sim_w = normalized_similarity(summary, m["summary"])
+        age = max(0, current_step - m.get("step", current_step))
+        decay_w = TIME_DECAY_BASE ** age
+        w = sim_w * decay_w
+        weighted_sum += w * m["reward"]
+        total_weight += w
+
+    return (weighted_sum / total_weight) if total_weight else DEFAULT_ACTION_SCORE
+
+def deliberate(
+    afferent: AfferentObject,
+    memory: MemorySystem,
+    novelty: float,
+) -> tuple:
     """
     Retrieve similar memories, simulate each action, return best action.
 
@@ -172,9 +219,22 @@ def deliberate(afferent: AfferentObject, memory: MemorySystem) -> tuple:
         (chosen_action, score_per_action, retrieved_cases)
     """
     cases = memory.retrieve(afferent.summary)
-    scores = {action: simulate_action(action, cases) for action in ACTIONS}
+    scores = {
+        action: simulate_action(action, cases, afferent.summary, afferent.time)
+        for action in ACTIONS
+    }
     best = max(scores, key=scores.get)
-    return best, scores, cases
+
+    # Novelty increases exploration pressure, while risk_bias acts as base epsilon.
+    epsilon = clamp_reward(afferent.state["risk_bias"] * (0.6 + 0.4 * novelty))
+    if random.random() < epsilon:
+        chosen = random.choice(ACTIONS)
+        policy = "EXPLORE"
+    else:
+        chosen = best
+        policy = "EXPLOIT"
+
+    return chosen, scores, cases, policy, best, epsilon
 
 # ---------------------------------------------------------------------------
 # 8. Learning Update
@@ -184,10 +244,11 @@ def clamp_reward(value: float) -> float:
     return max(0.0, min(1.0, value))
 
 
-def update_state(state: dict, reward: float) -> None:
-    """Adapt internal parameters based on reward signal."""
+def update_state(state: dict, reward: float, novelty: float) -> None:
+    """Adapt internal parameters based on reward and novelty."""
+    novelty_gain = 0.5 + novelty
     state["action_threshold"] = clamp_reward(
-        state["action_threshold"] + LEARNING_RATE * (reward - 0.5)
+        state["action_threshold"] + LEARNING_RATE * novelty_gain * (reward - 0.5)
     )
 
 # ---------------------------------------------------------------------------
@@ -214,6 +275,7 @@ def cognitive_step(
             reward is sampled (autonomous operation).
     """
     aff = AfferentObject(vision, audio, time=step, state=state)
+    novelty = compute_novelty(aff.summary, memory)
 
     # --- Reflexive layer ---
     reflex_action = reflexive_decision(aff)
@@ -224,10 +286,15 @@ def cognitive_step(
         scores      = {a: "—" for a in ACTIONS}
         scores[action] = "triggered"
         cases       = []
+        policy      = "REFLEX"
+        best_action = action
+        epsilon     = 0.0
         sim_scores_str = "N/A (reflex triggered)"
     else:
         # --- Deliberative layer ---
-        action, scores, cases = deliberate(aff, memory)
+        action, scores, cases, policy, best_action, epsilon = deliberate(
+            aff, memory, novelty
+        )
         mode = "DELIBERATIVE"
         sim_scores_str = ", ".join(f"{a}={v:.2f}" for a, v in scores.items())
 
@@ -238,21 +305,34 @@ def cognitive_step(
         reward = random.uniform(0.0, 1.0)
 
     # --- Memory & state update ---
-    memory.store(aff.summary, action, reward)
-    update_state(state, reward)
+    memory.store(aff.summary, action, reward, step)
+    update_state(state, reward, novelty)
 
     # Build similarity details for top cases
     case_details = []
     for c in cases:
         sim = similarity(aff.summary, c["summary"])
+        age = max(0, step - c.get("step", step))
+        decay = TIME_DECAY_BASE ** age
+        sim_norm = normalized_similarity(aff.summary, c["summary"])
         case_details.append(
-            f"  sim={sim}  action={c['action']}  reward={c['reward']:.2f}"
+            "  "
+            f"sim={sim} ({sim_norm:.2f})  "
+            f"decay={decay:.3f}  "
+            f"action={c['action']}  reward={c['reward']:.2f}"
         )
+
+    rejected_actions = [a for a in ACTIONS if a != action]
 
     return {
         "step":         step,
         "action":       action,
         "mode":         mode,
+        "policy":       policy,
+        "best_action":  best_action,
+        "epsilon":      epsilon,
+        "novelty":      novelty,
+        "rejected_actions": rejected_actions,
         "reward":       reward,
         "reward_manual": manual_reward is not None,
         "memory_size":  len(memory),
@@ -412,7 +492,7 @@ class CognitiveUI:
         # Update summary labels
         self.action_label.config(text=f"Action: {result['action'].upper()}")
         self.mode_label.config(
-            text=f"Mode: {result['mode']}",
+            text=f"Mode: {result['mode']}  [{result['policy']}]",
             foreground=("firebrick" if result["mode"] == "REFLEXIVE" else "darkblue"),
         )
         self.reward_label.config(
@@ -462,6 +542,12 @@ class CognitiveUI:
             f"─── Step {result['step']} ───────────────────────────────────────",
             f"  Action : {result['action'].upper()}  [{result['mode']}]",
             f"  Reward : {result['reward']:.3f}   Memory size: {result['memory_size']}",
+            (
+                f"  Policy : {result['policy']}  "
+                f"best={result['best_action']}  "
+                f"eps={result['epsilon']:.2f}  novelty={result['novelty']:.2f}"
+            ),
+            f"  Reject : {', '.join(result['rejected_actions'])}",
             f"  Scores : {result['sim_scores_str']}",
         ]
         if result["case_details"]:
