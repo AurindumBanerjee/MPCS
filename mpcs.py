@@ -1,8 +1,8 @@
 """
-MPCS — Malleable Perceptual-Cognitive System
+MPCS - Malleable Perceptual-Cognitive System
 =============================================
 A minimal cognitive architecture simulation that mimics core aspects of
-cognition: perception → reasoning → action → learning.
+cognition: perception -> reasoning -> action -> learning.
 
 Pipeline:
     Manual Input (UI)
@@ -55,6 +55,28 @@ PRIOR_MAX = 0.6            # upper bound for weak action-reward prior (no memory
 DEFAULT_ACTION_SCORE = 0.5 # fallback score when an action has no matching memories
 TIME_DECAY_BASE = 0.99     # decay factor applied to older memories
 
+# Behavior profiles for state and reward shaping
+PROFILE_CONFIGS = {
+    "balanced": {
+        "state": {},
+        "description": "No bias added.",
+    },
+    "cautious": {
+        "state": {
+            "risk_bias": 0.20,
+            "action_threshold": 0.62,
+        },
+        "description": "Conservative: low exploration, favors observe/ignore.",
+    },
+    "exploratory": {
+        "state": {
+            "risk_bias": 0.82,
+            "action_threshold": 0.40,
+        },
+        "description": "Adventurous: high exploration, favors approach/observe.",
+    },
+}
+
 # ---------------------------------------------------------------------------
 # 2. Afferent Structure
 # ---------------------------------------------------------------------------
@@ -103,6 +125,14 @@ class MemorySystem:
             "reward":  reward,
             "step":    step,
         })
+
+    def update_reward(self, step: int, reward: float) -> bool:
+        """Update the stored reward for the experience at *step*."""
+        for item in reversed(self._store):
+            if item.get("step") == step:
+                item["reward"] = reward
+                return True
+        return False
 
     def retrieve(self, summary: tuple, k: int = TOP_K_MEMORIES) -> list[dict]:
         """Return top-k most similar past experiences."""
@@ -283,7 +313,7 @@ def cognitive_step(
     if reflex_action is not None:
         action      = reflex_action
         mode        = "REFLEXIVE"
-        scores      = {a: "—" for a in ACTIONS}
+        scores      = {a: "-" for a in ACTIONS}
         scores[action] = "triggered"
         cases       = []
         policy      = "REFLEX"
@@ -348,12 +378,14 @@ def cognitive_step(
 class CognitiveUI:
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("MPCS — Malleable Perceptual-Cognitive System")
+        self.root.title("MPCS - Malleable Perceptual-Cognitive System")
         self.root.resizable(False, False)
 
         self.state  = init_state()
         self.memory = MemorySystem()
         self.step   = 0
+        self.current_profile = "balanced"
+        self.last_result: Optional[dict] = None
 
         self._build_ui()
 
@@ -393,9 +425,27 @@ class CognitiveUI:
         ttk.Button(ctrl_frame, text="▶  Run Step", command=self._run_step).pack(
             side="left", **pad
         )
+        ttk.Button(
+            ctrl_frame,
+            text="↩  Apply Reward",
+            command=self._apply_reward_to_last_action,
+        ).pack(side="left", **pad)
         ttk.Button(ctrl_frame, text="⟳  Reset", command=self._reset).pack(
             side="left", **pad
         )
+
+        # Profile selector
+        ttk.Label(ctrl_frame, text="Profile:").pack(side="left", padx=(12, 2))
+        self._profile_var = tk.StringVar(value="balanced")
+        profile_cb = ttk.Combobox(
+            ctrl_frame,
+            textvariable=self._profile_var,
+            values=tuple(PROFILE_CONFIGS.keys()),
+            state="readonly",
+            width=12,
+        )
+        profile_cb.pack(side="left", padx=(0, 8))
+        profile_cb.bind("<<ComboboxSelected>>", lambda e: self._apply_profile())
 
         # Manual reward entry (optional; leave blank for random)
         ttk.Label(ctrl_frame, text="Reward (0–1):").pack(side="left", padx=(12, 2))
@@ -412,14 +462,14 @@ class CognitiveUI:
         out_frame.grid(row=0, column=1, rowspan=2, sticky="nsew", **pad)
 
         self.action_label = ttk.Label(
-            out_frame, text="Action: —", font=("", 12, "bold")
+            out_frame, text="Action: -", font=("", 12, "bold")
         )
         self.action_label.grid(row=0, column=0, columnspan=2, sticky="w", **pad)
 
-        self.mode_label = ttk.Label(out_frame, text="Mode: —")
+        self.mode_label = ttk.Label(out_frame, text="Mode: -")
         self.mode_label.grid(row=1, column=0, columnspan=2, sticky="w", **pad)
 
-        self.reward_label = ttk.Label(out_frame, text="Reward: —")
+        self.reward_label = ttk.Label(out_frame, text="Reward: -")
         self.reward_label.grid(row=2, column=0, columnspan=2, sticky="w", **pad)
 
         self.memory_label = ttk.Label(out_frame, text="Memory size: 0")
@@ -432,13 +482,13 @@ class CognitiveUI:
         ttk.Label(out_frame, text="Action scores:", font=("", 9, "bold")).grid(
             row=5, column=0, columnspan=2, sticky="w", **pad
         )
-        self.scores_label = ttk.Label(out_frame, text="—", foreground="navy")
+        self.scores_label = ttk.Label(out_frame, text="-", foreground="navy")
         self.scores_label.grid(row=6, column=0, columnspan=2, sticky="w", **pad)
 
         ttk.Label(out_frame, text="Internal state:", font=("", 9, "bold")).grid(
             row=7, column=0, columnspan=2, sticky="w", **pad
         )
-        self.state_label = ttk.Label(out_frame, text="—", foreground="darkgreen")
+        self.state_label = ttk.Label(out_frame, text="-", foreground="darkgreen")
         self.state_label.grid(row=8, column=0, columnspan=2, sticky="w", **pad)
 
         # ── History log ───────────────────────────────────────────────
@@ -466,6 +516,30 @@ class CognitiveUI:
         )
         cb.grid(row=row, column=1, sticky="w", padx=8, pady=2)
 
+    def _apply_profile(self):
+        """Apply selected profile to internal state and log the change."""
+        profile_name = self._profile_var.get()
+        if profile_name == self.current_profile:
+            return
+
+        profile_cfg = PROFILE_CONFIGS[profile_name]
+        for key, value in profile_cfg["state"].items():
+            self.state[key] = value
+
+        self.current_profile = profile_name
+
+        # Update display
+        s = self.state
+        state_text = (
+            f"novelty_thr={s['novelty_threshold']:.3f}  "
+            f"action_thr={s['action_threshold']:.3f}  "
+            f"risk_bias={s['risk_bias']:.3f}"
+        )
+        self.state_label.config(text=state_text)
+        self._log(
+            f"Profile changed: {self.current_profile} - {profile_cfg['description']}\n"
+        )
+
     # ------------------------------------------------------------------
     # Button handlers
     # ------------------------------------------------------------------
@@ -488,6 +562,7 @@ class CognitiveUI:
             vision, audio, self.step, self.state, self.memory,
             manual_reward=manual_reward,
         )
+        self.last_result = result
 
         # Update summary labels
         self.action_label.config(text=f"Action: {result['action'].upper()}")
@@ -522,20 +597,68 @@ class CognitiveUI:
         # Append to history log
         self._log_step(result)
 
+    def _apply_reward_to_last_action(self):
+        """Apply the entered reward to the most recently executed action."""
+        if self.last_result is None:
+            self._log("No prior action to reward yet. Run a step first.\n")
+            return
+
+        raw = self._reward_var.get().strip()
+        if not raw:
+            self._log("Enter a reward value before applying it to the last action.\n")
+            return
+
+        try:
+            reward = clamp_reward(float(raw))
+        except ValueError:
+            self._log("Reward must be a number between 0 and 1.\n")
+            return
+
+        previous_reward = self.last_result["reward"]
+        step = self.last_result["step"]
+        novelty = self.last_result["novelty"]
+
+        if not self.memory.update_reward(step, reward):
+            self._log(f"Could not find step {step} in memory to update reward.\n")
+            return
+
+        novelty_gain = 0.5 + novelty
+        delta = LEARNING_RATE * novelty_gain * (reward - previous_reward)
+        self.state["action_threshold"] = clamp_reward(
+            self.state["action_threshold"] + delta
+        )
+
+        self.last_result["reward"] = reward
+        self.last_result["reward_manual"] = True
+
+        self.reward_label.config(text=f"Reward: {reward:.3f}  (applied to last action)")
+        self.state_label.config(
+            text=(
+                f"novelty_thr={self.state['novelty_threshold']:.3f}  "
+                f"action_thr={self.state['action_threshold']:.3f}  "
+                f"risk_bias={self.state['risk_bias']:.3f}"
+            )
+        )
+        self._log(
+            f"Applied reward {reward:.3f} to step {step} "
+            f"(replaced {previous_reward:.3f}).\n"
+        )
+
     def _reset(self):
         self.state  = init_state()
         self.memory = MemorySystem()
         self.step   = 0
-        self.action_label.config(text="Action: —")
-        self.mode_label.config(text="Mode: —", foreground="black")
-        self.reward_label.config(text="Reward: —")
+        self.last_result = None
+        self.action_label.config(text="Action: -")
+        self.mode_label.config(text="Mode: -", foreground="black")
+        self.reward_label.config(text="Reward: -")
         self.memory_label.config(text="Memory size: 0")
-        self.scores_label.config(text="—")
-        self.state_label.config(text="—")
+        self.scores_label.config(text="-")
+        self.state_label.config(text="-")
         self.log_text.configure(state="normal")
         self.log_text.delete("1.0", tk.END)
         self.log_text.configure(state="disabled")
-        self._log("System reset — new internal state initialized.\n")
+        self._log("System reset - new internal state initialized.\n")
 
     def _log_step(self, result: dict):
         lines = [
