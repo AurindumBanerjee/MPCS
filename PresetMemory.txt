@@ -1,0 +1,333 @@
+================================================================================
+MPCS PRESET MEMORY BANK BREAKDOWN
+================================================================================
+
+Total Memories: 30 (20 Novel + 10 Repeated Variants)
+Generated for: Decision-making simulation with contextual learning
+
+================================================================================
+SECTION A: ALERT CONTEXTS (Danger/Emergency Detection)
+================================================================================
+
+[MEMORY 1] Static Human in Blue with Loud Alarm
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Step: 1 | Action: ALERT | Reward: 0.95
+Vision:  object_type=human, motion=static, color=blue
+Audio:   sound_type=alarm, intensity=high
+Purpose: High-alert scenario - human subject + maximum alarm signal
+Learn:   Loud alarms demand immediate alert response
+
+
+[MEMORY 2] Slow Vehicle in Dark with Medium Alarm
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Step: 2 | Action: ALERT | Reward: 0.90
+Vision:  object_type=vehicle, motion=slow, color=dark
+Audio:   sound_type=alarm, intensity=medium
+Purpose: Vehicle alert - slower alarm but still danger signal
+Learn:   Vehicles with alarms are high-priority threats
+
+
+[MEMORY 10] Fast Human in Red with Loud Speech
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Step: 10 | Action: ALERT | Reward: 0.86
+Vision:  object_type=human, motion=fast, color=red
+Audio:   sound_type=speech, intensity=high
+Purpose: Rapid human with loud speech - aggressive interaction
+Learn:   Fast moving humans + loud speech = alertable threat
+
+
+[MEMORY 17] Fast Unknown Object in Red with Loud Alarm
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Step: 17 | Action: ALERT | Reward: 0.93
+Vision:  object_type=unknown, motion=fast, color=red
+Audio:   sound_type=alarm, intensity=high
+Purpose: Unidentified fast object + maximum alarm = highest alert priority
+Learn:   Unknown fast + loud alarm is strongest alert trigger
+
+
+[MEMORY 19] Fast Animal in Bright with Medium Alarm
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Step: 19 | Action: ALERT | Reward: 0.89
+Vision:  object_type=animal, motion=fast, color=bright
+Audio:   sound_type=alarm, intensity=medium
+Purpose: Fast animal + medium alarm signal
+Learn:   Rapid animals with alarms warrant alerting
+
+
+[MEMORY 21] Static Human in Red with Loud Alarm (Variant)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Step: 21 | Action: ALERT | Reward: 0.92
+Vision:  object_type=human, motion=static, color=red
+Audio:   sound_type=alarm, intensity=high
+Purpose: Variant on Memory 1 (different color, same high reward)
+Learn:   Static humans with loud alarms → consistent alert response
+
+
+[MEMORY 22] Slow Vehicle in Dark with Loud Alarm (Variant)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Step: 22 | Action: ALERT | Reward: 0.91
+Vision:  object_type=vehicle, motion=slow, color=dark
+Audio:   sound_type=alarm, intensity=high
+Purpose: Variant on Memory 2 (increased alarm intensity)
+Learn:   Higher alarm intensity strengthens alert decision
+
+
+================================================================================
+SECTION B: OBSERVE CONTEXTS (Information Gathering & Assessment)
+================================================================================
+
+[MEMORY 3] Fast Animal in Red with Medium Noise
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Step: 3 | Action: OBSERVE | Reward: 0.82
+Vision:  object_type=animal, motion=fast, color=red
+Audio:   sound_type=noise, intensity=medium
+Purpose: Fast movement + noise warrants careful observation
+Learn:   Fast animals with noise = gather information via observe
+
+
+[MEMORY 4] Fast Unknown in Bright with No Sound
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Step: 4 | Action: OBSERVE | Reward: 0.78
+Vision:  object_type=unknown, motion=fast, color=bright
+Audio:   sound_type=none, intensity=low
+Purpose: Unknown fast object, silent - needs observation before action
+Learn:   Unidentified fast stimuli benefit from observation
+
+
+[MEMORY 9] Slow Unknown in Dark with Medium Noise
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Step: 9 | Action: OBSERVE | Reward: 0.70
+Vision:  object_type=unknown, motion=slow, color=dark
+Audio:   sound_type=noise, intensity=medium
+Purpose: Ambiguous context - safe to observe rather than approach/ignore
+Learn:   Unknown slow + moderate noise → observe for clarity
+
+
+[MEMORY 12] Fast Vehicle in Dark with High Noise
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Step: 12 | Action: OBSERVE | Reward: 0.83
+Vision:  object_type=vehicle, motion=fast, color=dark
+Audio:   sound_type=noise, intensity=high
+Purpose: Fast vehicle with high noise - monitor before reacting
+Learn:   Fast vehicles + loud noise = high-value observation target
+
+
+[MEMORY 13] Static Unknown in Blue with Low Speech
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Step: 13 | Action: OBSERVE | Reward: 0.64
+Vision:  object_type=unknown, motion=static, color=blue
+Audio:   sound_type=speech, intensity=low
+Purpose: Unclear object with subtle speech cues
+Learn:   Static unknowns warrant observation even with low signals
+
+
+[MEMORY 16] Slow Vehicle in Blue with Medium Noise
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Step: 16 | Action: OBSERVE | Reward: 0.66
+Vision:  object_type=vehicle, motion=slow, color=blue
+Audio:   sound_type=noise, intensity=medium
+Purpose: Slow-moving vehicle making noise - safe to observe
+Learn:   Slow vehicles + noise = moderate observation value
+
+
+[MEMORY 23] Fast Animal in Red with High Noise (Variant)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Step: 23 | Action: OBSERVE | Reward: 0.80
+Vision:  object_type=animal, motion=fast, color=red
+Audio:   sound_type=noise, intensity=high
+Purpose: Variant on Memory 3 (increased noise intensity)
+Learn:   Higher intensity noise increases observation priority
+
+
+[MEMORY 24] Fast Unknown in Dark with No Sound (Variant)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Step: 24 | Action: OBSERVE | Reward: 0.76
+Vision:  object_type=unknown, motion=fast, color=dark
+Audio:   sound_type=none, intensity=low
+Purpose: Variant on Memory 4 (darker color, silent)
+Learn:   Silent fast objects still warrant observation
+
+
+[MEMORY 29] Slow Unknown in Dark with High Noise (Variant)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Step: 29 | Action: OBSERVE | Reward: 0.68
+Vision:  object_type=unknown, motion=slow, color=dark
+Audio:   sound_type=noise, intensity=high
+Purpose: Variant on Memory 9 (increased noise intensity)
+Learn:   Loud noise from unknown sources compels observation
+
+
+================================================================================
+SECTION C: APPROACH CONTEXTS (Social Engagement & Interaction)
+================================================================================
+
+[MEMORY 5] Slow Human in Bright with Low Speech
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Step: 5 | Action: APPROACH | Reward: 0.88
+Vision:  object_type=human, motion=slow, color=bright
+Audio:   sound_type=speech, intensity=low
+Purpose: Calm human speaking quietly - safe to approach
+Learn:   Slow bright humans with gentle speech = high approach reward
+
+
+[MEMORY 6] Slow Human in Blue with Medium Speech
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Step: 6 | Action: APPROACH | Reward: 0.84
+Vision:  object_type=human, motion=slow, color=blue
+Audio:   sound_type=speech, intensity=medium
+Purpose: Calm human, normal speech volume
+Learn:   Slow humans speaking at normal volume are approachable
+
+
+[MEMORY 14] Static Human in Bright with Medium No-Sound
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Step: 14 | Action: APPROACH | Reward: 0.73
+Vision:  object_type=human, motion=static, color=bright
+Audio:   sound_type=none, intensity=medium
+Purpose: Static calm human, no audio signal
+Learn:   Still bright humans are moderately safe to approach
+
+
+[MEMORY 15] Slow Animal in Red with Low Speech
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Step: 15 | Action: APPROACH | Reward: 0.77
+Vision:  object_type=animal, motion=slow, color=red
+Audio:   sound_type=speech, intensity=low
+Purpose: Slow animal responding to voice - social engagement signal
+Learn:   Slow animals with speech indicators are approachable
+
+
+[MEMORY 20] Static Vehicle in Bright with Medium Speech
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Step: 20 | Action: APPROACH | Reward: 0.74
+Vision:  object_type=vehicle, motion=static, color=bright
+Audio:   sound_type=speech, intensity=medium
+Purpose: Stationary vehicle with speech (e.g., driver interaction)
+Learn:   Vehicles with social cues are safe to approach
+
+
+[MEMORY 25] Slow Human in Bright with Medium Speech (Variant)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Step: 25 | Action: APPROACH | Reward: 0.85
+Vision:  object_type=human, motion=slow, color=bright
+Audio:   sound_type=speech, intensity=medium
+Purpose: Variant on Memory 5 (slightly louder speech)
+Learn:   Medium-volume speech increases approach confidence
+
+
+[MEMORY 26] Slow Human in Blue with Low Speech (Variant)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Step: 26 | Action: APPROACH | Reward: 0.82
+Vision:  object_type=human, motion=slow, color=blue
+Audio:   sound_type=speech, intensity=low
+Purpose: Variant on Memory 6 (quieter speech)
+Learn:   Quiet speech with slow motion = consistent approach signal
+
+
+================================================================================
+SECTION D: IGNORE CONTEXTS (Neutral/Low-Threat Situations)
+================================================================================
+
+[MEMORY 7] Slow Animal in Dark with High Noise
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Step: 7 | Action: IGNORE | Reward: 0.62
+Vision:  object_type=animal, motion=slow, color=dark
+Audio:   sound_type=noise, intensity=high
+Purpose: Slow dark animal despite loud noise - not an immediate threat
+Learn:   Slow motion can override noise signals
+
+
+[MEMORY 8] Static Vehicle in Red with No Sound
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Step: 8 | Action: IGNORE | Reward: 0.75
+Vision:  object_type=vehicle, motion=static, color=red
+Audio:   sound_type=none, intensity=low
+Purpose: Static parked vehicle - safe to ignore
+Learn:   Stationary silent vehicles are low-priority
+
+
+[MEMORY 11] Static Animal in Bright with No Sound
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Step: 11 | Action: IGNORE | Reward: 0.68
+Vision:  object_type=animal, motion=static, color=bright
+Audio:   sound_type=none, intensity=low
+Purpose: Still animal, no audio - minimal threat
+Learn:   Silent static animals are safe to ignore
+
+
+[MEMORY 18] Slow Human in Dark with No Sound
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Step: 18 | Action: IGNORE | Reward: 0.72
+Vision:  object_type=human, motion=slow, color=dark
+Audio:   sound_type=none, intensity=low
+Purpose: Dark quiet human - avoid engagement
+Learn:   Dark + silent humans signal passive avoidance
+
+
+[MEMORY 27] Slow Animal in Dark with Medium Noise (Variant)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Step: 27 | Action: IGNORE | Reward: 0.60
+Vision:  object_type=animal, motion=slow, color=dark
+Audio:   sound_type=noise, intensity=medium
+Purpose: Variant on Memory 7 (reduced noise intensity)
+Learn:   Even with moderate noise, slow dark animals are ignorable
+
+
+[MEMORY 28] Static Vehicle in Red with Medium No-Sound (Variant)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Step: 28 | Action: IGNORE | Reward: 0.71
+Vision:  object_type=vehicle, motion=static, color=red
+Audio:   sound_type=none, intensity=medium
+Purpose: Variant on Memory 8 (elevated audio baseline)
+Learn:   Static vehicles remain ignorable even with audio presence
+
+
+================================================================================
+SECTION E: CHALLENGE CONTEXT (Conflicting Signals)
+================================================================================
+
+[MEMORY 30] Slow Animal in Dark with High Noise - APPROACH (Unexpected)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Step: 30 | Action: APPROACH | Reward: 0.42 (LOW)
+Vision:  object_type=animal, motion=slow, color=dark
+Audio:   sound_type=noise, intensity=high
+Purpose: Conflicting decision - slow/dark suggest IGNORE, but APPROACH chosen
+Learn:   This variant introduces uncertainty/contradiction for learning
+Insight: Same context as Memory 7 but with different (and less rewarded) action
+
+
+================================================================================
+SUMMARY STATISTICS
+================================================================================
+
+Action Distribution:
+  • ALERT:    6 memories (8 including variants)   - Avg Reward: 0.91
+  • OBSERVE:  9 memories (10 including variants)  - Avg Reward: 0.75
+  • APPROACH: 6 memories (8 including variants)   - Avg Reward: 0.80
+  • IGNORE:   5 memories (6 including variants)   - Avg Reward: 0.70
+
+Context Patterns:
+  • Humans:    8 memories (high approach/alert)
+  • Animals:   7 memories (mixed - observe/ignore when slow, alert when fast)
+  • Vehicles:  7 memories (observe/ignore when static, alert when moving)
+  • Unknown:   8 memories (observe/alert when fast, observe when slow)
+
+Motion Distribution:
+  • Static:    9 memories
+  • Slow:     12 memories
+  • Fast:      9 memories
+
+Key Learning Themes:
+  1. ALARMS → ALERT (Strongest signal, ~0.90 reward)
+  2. FAST + SPEECH/NOISE → OBSERVE (High variance, ~0.78 avg)
+  3. SLOW HUMANS + SPEECH → APPROACH (Social engagement, ~0.83 avg)
+  4. STATIC + SILENT → IGNORE (Passive, ~0.71 avg)
+
+Decay Timeline:
+  • Memories span steps 1-30
+  • Older memories (step 1) will have ~0.74x weight vs newest (step 30) after 12 steps
+  • By step 42, earliest memories decay to ~0.55x weight
+
+==========================================
+END OF MEMORY BREAKDOWN
+==========================================

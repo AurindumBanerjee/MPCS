@@ -4,6 +4,11 @@ Preset-memory launcher for MPCS.
 This script boots the existing Tk UI with a ready-made memory bank so you can
 test decision making against known prior experiences.
 
+Workflow:
+    1) Click Run Step to execute an action.
+    2) Enter reward value.
+    3) Click Apply Reward to attach it to that last executed action.
+
 Run:
     python mpcs_preset_memory.py
     python mpcs_preset_memory.py --profile cautious
@@ -164,7 +169,7 @@ def main() -> None:
         "Loaded preset memory bank with 30 experiences "
         "(20 novel + 10 repeated variants). "
         f"Profile={args.profile}, seed={args.seed}. "
-        "Start running steps to test decisions with prior knowledge.\n"
+        "Use Run Step, then Apply Reward to label the last executed action.\n"
     )
 
     root.mainloop()

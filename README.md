@@ -14,6 +14,8 @@ perception -> reflex or deliberation -> action -> reward -> memory -> state upda
 	- `python mpcs_preset_memory.py --profile cautious`
 	- `python mpcs_preset_memory.py --profile exploratory --seed 99`
 
+In the UI, use `Run Step` to execute an action, then enter a reward and click `Apply Reward` to attach that reward to the most recently executed action.
+
 ## Current Architecture
 
 - Multimodal afferent binding (vision + audio)
