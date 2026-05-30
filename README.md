@@ -6,6 +6,9 @@ perception -> reflex or deliberation -> action -> reward -> memory -> state upda
 
 ## Run
 
+Install optional BloomMCPS dependency:
+- `pip install bloom-filter`
+
 - Standard UI:
 	- `python mpcs.py`
 - Preset-memory test UI (starts with ready-made experience):
@@ -13,6 +16,13 @@ perception -> reflex or deliberation -> action -> reward -> memory -> state upda
 	- `python mpcs_preset_memory.py --profile balanced`
 	- `python mpcs_preset_memory.py --profile cautious`
 	- `python mpcs_preset_memory.py --profile exploratory --seed 99`
+- Bloom-filter variant UI:
+	- `python BloomMCPS.py`
+- Bloom-filter preset-memory UI:
+	- `python BloomMCPS_preset_memory.py`
+	- `python BloomMCPS_preset_memory.py --profile balanced`
+	- `python BloomMCPS_preset_memory.py --profile cautious`
+	- `python BloomMCPS_preset_memory.py --profile exploratory --seed 99`
 
 In the UI, use `Run Step` to execute an action, then enter a reward and click `Apply Reward` to attach that reward to the most recently executed action.
 
