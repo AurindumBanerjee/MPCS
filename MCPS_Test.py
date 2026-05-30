@@ -18,9 +18,16 @@ import json
 import random
 import statistics
 import time
+import sys
+from pathlib import Path
 from dataclasses import dataclass
 from itertools import product
 from typing import Iterable
+
+
+ROOT = Path(__file__).resolve().parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from mpcs import AfferentObject as BaseAfferentObject
 from mpcs import MemorySystem as BaseMemorySystem
@@ -142,7 +149,8 @@ def _time_queries(
         summary = _make_summary(vision, audio, use_bloom=use_bloom)
 
         start = time.perf_counter()
-        memory.maybe_seen(summary)
+        if use_bloom:
+            memory.maybe_seen(summary)
         memory.retrieve(summary)
         timings_ms.append((time.perf_counter() - start) * 1000.0)
 
@@ -204,7 +212,7 @@ def _benchmark_case(
 
 def run_benchmark(
     seed: int = 42,
-    memory_size: int = 180,
+    memory_size: int = 500,
     negative_query_count: int = 4000,
     positive_query_count: int = 4000,
 ) -> dict:
