@@ -4,25 +4,39 @@ Malleable Perceptual-Cognitive System
 MPCS is a compact cognitive-architecture simulation with a full loop:
 perception -> reflex or deliberation -> action -> reward -> memory -> state update.
 
+## Repository layout
+
+```
+Model/
+  reference/     Frozen baselines: mpcs.py, BloomMCPS.py, their preset launchers, MCPS_Test.py
+  experimental/  Active trunk: MCPS_Z.py (Z-numbers, dlCBF, expert-in-the-loop)
+  data/          PresetMemory.txt and other data artifacts
+docs/            MCPS_Report.html, CurrentStatus.md, Checklist.md
+Reading/         Background PDFs
+```
+
+Each `Model/` subfolder has its own README describing its contents.
+
 ## Run
 
 Install optional BloomMCPS dependency:
 - `pip install bloom-filter`
 
-- Standard UI:
-	- `python mpcs.py`
-- Preset-memory test UI (starts with ready-made experience):
-	- `python mpcs_preset_memory.py`
-	- `python mpcs_preset_memory.py --profile balanced`
-	- `python mpcs_preset_memory.py --profile cautious`
-	- `python mpcs_preset_memory.py --profile exploratory --seed 99`
-- Bloom-filter variant UI:
-	- `python BloomMCPS.py`
-- Bloom-filter preset-memory UI:
-	- `python BloomMCPS_preset_memory.py`
-	- `python BloomMCPS_preset_memory.py --profile balanced`
-	- `python BloomMCPS_preset_memory.py --profile cautious`
-	- `python BloomMCPS_preset_memory.py --profile exploratory --seed 99`
+- Active experimental UI (Z-number variant + expert teaching):
+	- `python Model/experimental/MCPS_Z.py`
+- Standard reference UI:
+	- `python Model/reference/mpcs.py`
+- Preset-memory reference UI (starts with ready-made experience):
+	- `python Model/reference/mpcs_preset_memory.py`
+	- `python Model/reference/mpcs_preset_memory.py --profile cautious`
+	- `python Model/reference/mpcs_preset_memory.py --profile exploratory --seed 99`
+- Bloom-filter reference UI:
+	- `python Model/reference/BloomMCPS.py`
+- Bloom-filter preset-memory reference UI:
+	- `python Model/reference/BloomMCPS_preset_memory.py --profile cautious`
+
+Note: the preset launchers import their sibling modules, so run them from
+within `Model/reference/` (or with that directory on `PYTHONPATH`).
 
 In the UI, use `Run Step` to execute an action, then enter a reward and click `Apply Reward` to attach that reward to the most recently executed action.
 
