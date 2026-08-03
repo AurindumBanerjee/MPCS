@@ -422,15 +422,15 @@ class CognitiveUI:
         ctrl_frame = ttk.Frame(self.root)
         ctrl_frame.grid(row=1, column=0, sticky="ew", **pad)
 
-        ttk.Button(ctrl_frame, text="▶  Run Step", command=self._run_step).pack(
+        ttk.Button(ctrl_frame, text="Run Step", command=self._run_step).pack(
             side="left", **pad
         )
         ttk.Button(
             ctrl_frame,
-            text="↩  Apply Reward",
+            text="Apply Reward",
             command=self._apply_reward_to_last_action,
         ).pack(side="left", **pad)
-        ttk.Button(ctrl_frame, text="⟳  Reset", command=self._reset).pack(
+        ttk.Button(ctrl_frame, text="Reset", command=self._reset).pack(
             side="left", **pad
         )
 
