@@ -1,0 +1,185 @@
+================================================================
+MPCS v2 — DASHBOARD D: TKINTER DESKTOP APP
+================================================================
+
+WHAT THIS IS
+------------
+The same cognition as the other dashboards (the shared engine in
+../core), in a native desktop window. Needs nothing beyond the
+standard library, and unlike the web variants it starts instantly —
+no server, no browser, no port.
+
+This is the successor to the old Tk window in ../baseline_z: four
+modalities instead of two, reward derived from memory instead of
+random, and a contribution graph the old window could not draw at
+all.
+
+Pick this one if you want a desktop app, or if you are working
+somewhere a browser is inconvenient.
+
+
+SETUP
+-----
+Python 3.10 or newer with Tkinter, which ships with most CPython
+installations on Windows and macOS.
+
+Check Tkinter is present:
+
+    python -c "import tkinter; print('ok')"
+
+On Debian/Ubuntu, if that fails:
+
+    sudo apt install python3-tk
+
+No other packages required.
+
+
+RUNNING
+-------
+    cd Model/experimental/dashboard_tk
+    python mcps_dash_tk.py
+
+Options:
+
+    python mcps_dash_tk.py --scratch
+        start with empty memory instead of the 70-experience bank
+
+    python mcps_dash_tk.py --profile cautious
+        balanced (default) / cautious / exploratory
+
+    python mcps_dash_tk.py --seed 42
+        fix the RNG for reproducible runs
+
+The script finds ../core on its own, so this also works from the
+repository root:
+
+    python Model/experimental/dashboard_tk/mcps_dash_tk.py
+
+
+USING THE DASHBOARD
+-------------------
+SIDEBAR — MEMORY SOURCE
+  preset    50 novel contexts + 20 near-repetitions, all four
+            modalities
+  scratch   empty memory; the system reports "cold-start" rewards
+            until experience accumulates
+
+  Pick a profile and optionally a seed, then press "Load". "Export"
+  and "Import" write and read memory as JSON through a normal file
+  dialog.
+
+SIDEBAR — PARAMETERS
+  Ten sliders, scrollable (use the mouse wheel over them). Each
+  takes effect on the next step. Dragging "Top-k memories" from 5 to
+  2 visibly shrinks the contribution graph, which is the quickest
+  way to see retrieval depth actually mattering.
+
+SIDEBAR — REWARD AND TEACHING
+  Manual reward    a number 0-1 used instead of deriving one from
+                   memory; leave blank for normal behaviour
+  Apply to last    retro-label the previous action, correcting the
+                   state update it caused
+  Teach expert     store a high-confidence corrected action and
+                   demote the model's original choice
+
+SENSORY INPUT
+  Twelve dropdowns in four groups. Unticking a group removes that
+  channel entirely rather than setting it to a neutral value: the
+  system then reasons from what remains, and reflexes on the missing
+  channel cannot fire. "Randomise" fills everything at random;
+  "Reset" reloads memory from the chosen source.
+
+DECISION
+  The chosen action in its own colour, the mode (REFLEXIVE or
+  DELIBERATIVE) and policy (EXPLOIT / EXPLORE / HESITATE / REFLEX),
+  then novelty, epsilon, threshold, memory size, whether this exact
+  percept was seen before, and which channels were active. A green
+  line names the reflex rule if one fired; a red line explains a
+  hesitation.
+
+REWARD DERIVATION
+  Where the number came from: the memory mean, how many memories it
+  averaged, and the sampled result. If the action contradicted what
+  memory advised, the penalty arithmetic is spelled out in red.
+
+ACTION SCORES
+  One bar per action with its support weight. Hatched bars have no
+  supporting memory at all — the 0.50 there is a default, not a
+  judgement. An arrow marks the chosen action.
+
+MEMORY CONTRIBUTION GRAPH
+  The current percept sits at the centre. Each surrounding circle is
+  a past experience that informed the decision; the number inside is
+  its reward, the label below its step. Colour is the action that
+  memory voted for.
+
+  Stronger contributors sit closer to the centre and are drawn
+  larger. Edge thickness is the contribution weight
+  (similarity x decay x boost). A gold ring marks an expert-taught
+  memory; a white pip marks one that came from a reflex. If the
+  action contradicted memory's advice, a red line at the top names
+  what was recommended instead.
+
+  The graph redraws on every step and rescales when you resize the
+  window.
+
+TABLES
+  Contributing memories with their full arithmetic, and the step
+  history. In the contributing table, "*" marks an expert memory and
+  "r" one of reflex origin. In the history, "!" marks a penalised
+  step.
+
+
+A FIVE-MINUTE TOUR
+------------------
+1. Set thermal=hot and press "Run step": the touch reflex fires,
+   action is WITHDRAW, and the rule is named.
+
+2. Set thermal=neutral, odor_type=smoke: ALERT, via the smell
+   reflex. Set odor_type=none and sound_type=alarm: also ALERT, but
+   through the older audio rule.
+
+3. Build a calm scene (human / slow / bright / speech / light
+   contact / warm / food / pleasant) and run. This is deliberative:
+   APPROACH, with the graph showing which preset memories carried
+   it and reward drawn from their mean.
+
+4. Untick Smell and run the same percept. Fewer channels means less
+   total confidence; watch the similarity column shift.
+
+5. Drag "Top-k memories" to 2 and run again — the graph loses nodes.
+
+6. Type 0.05 into the manual reward box and press "Apply to last"
+   repeatedly, watching the threshold climb. Eventually a weakly
+   supported percept produces HESITATE.
+
+7. Switch the source to "scratch", press "Load", and run a step:
+   with no memory at all the reward is a cold-start prior and the
+   graph says so explicitly.
+
+
+HOW THIS COMPARES
+-----------------
+  dashboard_tk       desktop window, no dependencies, instant start
+  dashboard_web      browser, no dependencies, richest static layout
+  dashboard_plotly   browser, needs dash+plotly, real hover cards
+  dashboard_streamlit browser, needs streamlit+pandas, least code
+
+All four drive the same engine, so a given percept and seed produce
+the same decision in any of them.
+
+
+TROUBLESHOOTING
+---------------
+"No module named tkinter"
+    Install your platform's Tk package (see SETUP). Tkinter is not
+    installable with pip.
+
+Window too small / panels cramped
+    Drag it larger; the graph rescales. Minimum is 1180x760.
+
+Sliders will not scroll
+    Put the pointer over the slider area first, then use the wheel.
+
+ModuleNotFoundError: mcps_engine
+    Verify the engine first:  python ../core/engine_smoke.py

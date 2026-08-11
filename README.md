@@ -12,6 +12,7 @@ Model/
   experimental/  Active trunk — MPCS v2, one folder per implementation:
       core/                  the engine (four modalities, memory-derived reward)
       dashboard_web/         local web dashboard, no dependencies
+      dashboard_tk/          Tkinter desktop dashboard, no dependencies
       dashboard_streamlit/   Streamlit dashboard
       dashboard_plotly/      Dash / Plotly dashboard
       baseline_z/            MCPS_Z.py, the previous two-modality version
@@ -26,12 +27,14 @@ walkthrough and troubleshooting.
 
 ## Run
 
-Current version — a browser dashboard showing which memories produced each
-decision. Needs nothing installed:
+Current version — a dashboard showing which memories produced each decision.
+Both of these need nothing installed:
 
-- `python Model/experimental/dashboard_web/MCPS_Test.py`
+- `python Model/experimental/dashboard_web/MCPS_Test.py` (browser)
+- `python Model/experimental/dashboard_tk/mcps_dash_tk.py` (desktop window)
 
-The same system through other front-ends (`pip install streamlit dash plotly`):
+The same system through other front-ends (`pip install -r requirements.txt`,
+or `pip install streamlit pandas dash plotly`):
 
 - `streamlit run Model/experimental/dashboard_streamlit/mcps_dash_streamlit.py`
 - `python Model/experimental/dashboard_plotly/mcps_dash_plotly.py`

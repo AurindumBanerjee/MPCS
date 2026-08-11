@@ -10,20 +10,22 @@ core/                  The engine. No UI. Everything else imports this.
 dashboard_web/         Dashboard A — local web app, no dependencies
 dashboard_streamlit/   Dashboard B — Streamlit
 dashboard_plotly/      Dashboard C — Dash / Plotly
+dashboard_tk/          Dashboard D — Tkinter desktop app, no dependencies
 baseline_z/            The previous two-modality version, unchanged
 ```
 
 ## Quick start
 
-No installation required:
+No installation required — pick a browser or a desktop window:
 
 ```
-python dashboard_web/MCPS_Test.py
+python dashboard_web/MCPS_Test.py     # opens http://127.0.0.1:8756/
+python dashboard_tk/mcps_dash_tk.py   # native window, instant start
 ```
 
-Opens a browser at `http://127.0.0.1:8756/` with the 70-experience preset bank
-loaded. The other two dashboards show the same thing through different
-technology — see their `instructions.txt`.
+Both open with the 70-experience preset bank loaded. The other two dashboards
+show the same thing through different technology — see their
+`instructions.txt`.
 
 Verify the engine without any UI:
 
@@ -82,14 +84,14 @@ contradicted advice.
 
 ## Dashboard comparison
 
-| | A: web | B: Streamlit | C: Dash/Plotly |
-|---|---|---|---|
-| Install | nothing | `streamlit` | `dash plotly` |
-| Launch | `python MCPS_Test.py` | `streamlit run …` | `python …` |
-| Opens browser | yes | yes | no |
-| Graph | inline SVG | inline SVG | Plotly traces |
-| Hover detail | title tooltips | title tooltips | full hover cards |
-| Lines of UI code | most | fewest | middle |
+| | A: web | B: Streamlit | C: Dash/Plotly | D: Tk |
+|---|---|---|---|---|
+| Install | nothing | `streamlit pandas` | `dash plotly` | nothing |
+| Launch | `python MCPS_Test.py` | `streamlit run …` | `python …` | `python …` |
+| Surface | browser | browser | browser | desktop window |
+| Startup | server + browser | server + browser | server, no browser | instant |
+| Graph | inline SVG | inline SVG | Plotly traces | Tk Canvas |
+| Hover detail | title tooltips | title tooltips | full hover cards | none |
 
 All three expose the same controls: sidebar parameters, memory source
 (scratch / preset / import), export, per-modality toggles, manual reward and

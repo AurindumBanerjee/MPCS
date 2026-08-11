@@ -17,13 +17,24 @@ each time you touched a widget.
 
 SETUP
 -----
-Python 3.10 or newer, plus Streamlit:
+Python 3.10 or newer, plus Streamlit and pandas. The tables here use
+st.dataframe, which requires pandas.
 
-    pip install streamlit
+    pip install streamlit pandas
+
+Or, from the repository root:
+
+    pip install -r requirements.txt
+
+Under Anaconda, activate the environment first:
+
+    conda activate TogAI
+    pip install streamlit pandas
 
 Verify:
 
     streamlit --version
+    python -c "import pandas; print(pandas.__version__)"
 
 
 RUNNING
@@ -133,6 +144,22 @@ there is no "apply" step for parameters.
 
 TROUBLESHOOTING
 ---------------
+"ModuleNotFoundError: No module named 'pandas._libs.pandas_parser'"
+    pandas is installed but its compiled extensions are broken or
+    were built against a different numpy. The app fails the moment
+    it reaches a table. Reinstall both together, bypassing the
+    cache so you do not get the same bad wheel back:
+
+        pip uninstall -y pandas numpy
+        pip install --no-cache-dir --force-reinstall \
+            "numpy>=1.26,<3" "pandas==2.2.3"
+        python -c "import pandas; print(pandas.__version__)"
+
+    If that still fails inside an Anaconda environment, use conda's
+    own builds instead, which resolve the numpy ABI for you:
+
+        conda install -y --force-reinstall -c conda-forge pandas numpy
+
 "streamlit: command not found"
     pip install streamlit, and make sure the Python whose pip you
     used is the one on your PATH.
