@@ -1,0 +1,133 @@
+================================================================
+MPCS v2 — CORE ENGINE
+================================================================
+
+WHAT THIS IS
+------------
+The cognition itself, with no user interface attached. All three
+dashboards import this and add only presentation, so behaviour is
+identical whichever one you run.
+
+  mcps_engine.py     Modalities, Z-numbers, memory, reflexes,
+                     deliberation, reward, explanation payload.
+  mcps_preset_v2.py  70-experience preset memory bank.
+  engine_smoke.py    67 headless checks over the engine.
+
+You do not run a dashboard from here. This folder is for working on
+the engine directly, or driving it from your own scripts.
+
+
+SETUP
+-----
+Python 3.10 or newer. No third-party packages — the engine uses only
+the standard library.
+
+Check your version:
+
+    python --version
+
+
+RUNNING
+-------
+Verify the engine (recommended after any change):
+
+    cd Model/experimental/core
+    python engine_smoke.py
+
+Expected: "67/67 checks passed".
+
+Inspect the preset bank and regenerate its companion document:
+
+    python mcps_preset_v2.py
+    python mcps_preset_v2.py --write-doc
+
+The second command rewrites Model/data/PresetMemory_v2.txt from the
+entry list itself, so the document cannot drift from the code.
+
+
+DRIVING THE ENGINE FROM YOUR OWN SCRIPT
+---------------------------------------
+    import sys; sys.path.insert(0, "Model/experimental/core")
+    import mcps_engine as E
+    from mcps_preset_v2 import build_preset_memory
+
+    session = E.Session(seed=42)
+    session.reset(memory=build_preset_memory("balanced"))
+
+    percept = {
+        "vision": {"object_type": "human", "motion": "slow",
+                   "color": "bright"},
+        "audio":  {"sound_type": "speech", "audio_intensity": "low"},
+        "touch":  {"contact": "light", "texture": "smooth",
+                   "thermal": "warm", "touch_intensity": "low"},
+        "smell":  {"odor_type": "food", "odor_intensity": "moderate",
+                   "pleasantness": "pleasant"},
+    }
+    result = session.run_step(percept)
+
+    print(result["action"], result["mode"], result["policy"])
+    print(result["reward"], result["reward_source"])
+    for c in result["contributions"]:
+        print(c["step"], c["action"], c["reward"], c["weight"])
+
+Omit any modality key to switch that channel off entirely — the
+system reasons from what remains.
+
+
+WHAT THE ENGINE DOES
+--------------------
+FOUR MODALITIES. Vision, audio, touch and smell, defined in one
+MODALITIES registry rather than hard-coded slots. Each channel has
+its own reliability (smell lowest at 0.70), which weights how much
+a match on that channel counts.
+
+REFLEXES. Checked before deliberation, first match wins:
+
+    thermal=hot                    -> withdraw
+    contact=impact                 -> withdraw
+    odor_type=smoke                -> alert
+    sound_type=alarm               -> alert
+    texture=sharp + contact=firm   -> withdraw
+    odor_type=chemical + strong    -> alert
+    motion=fast                    -> observe
+
+Touch pain outranks the older audio and vision rules. A rule cannot
+fire if its channel is switched off.
+
+REWARD FROM MEMORY. The reward for an action is the similarity- and
+decay-weighted mean of relevant past rewards, plus sampled variance.
+With no relevant memory it falls back to a weak neutral prior
+(0.4-0.6) and reports "cold-start". On the reflex path the same
+logic applies, with reflex-origin memories weighted more heavily.
+
+OFF-RECOMMENDATION PENALTY. When similar memories exist but the
+action taken is not the one they recommend, reward is scaled down by
+how much better the recommendation looked (margin) and how
+well-evidenced it was (support). A marginally worse choice barely
+stings; overriding a strong, well-supported recommendation does.
+Floored at 0.10.
+
+HESITATION. When even the best-scoring action falls below the
+learned action_threshold, the system falls back to "observe" and
+reports policy HESITATE rather than acting on a weak estimate.
+
+EXPLANATION PAYLOAD. Every step reports the memories that
+contributed and each one's arithmetic:
+similarity x decay x boost = weight. This is what the dashboards
+draw as a node-link graph.
+
+
+KEY TUNABLES (EngineConfig)
+---------------------------
+  top_k                how many memories inform one action's score
+  time_decay           per-step discount on older memories (0.99)
+  reward_variance      spread of the sampled reward (0.08)
+  penalty_strength     how hard off-recommendation is punished
+  support_saturation   total weight at which advice counts as certain
+  risk_bias            base exploration rate
+  action_threshold     commitment threshold; below it, hesitate
+  learning_rate        how fast the threshold moves (0.01)
+  expert_weight_boost  extra weight on expert-taught memories (3.0)
+  reflex_memory_boost  extra weight on reflex memories, reflex path
+
+Set them on session.cfg, or move the sliders in any dashboard.

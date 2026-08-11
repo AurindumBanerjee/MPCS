@@ -1,0 +1,154 @@
+================================================================
+MPCS v2 — DASHBOARD C: DASH / PLOTLY
+================================================================
+
+WHAT THIS IS
+------------
+The same cognition as the other two dashboards (the shared engine in
+../core), presented through Dash with Plotly figures.
+
+Plotly earns its place here through genuine hover interaction. In
+the other two dashboards the contribution graph is static SVG with
+title tooltips; here every memory node carries its own hover card
+showing similarity, decay, boost, age and the resulting weight, so
+the arithmetic behind a decision is inspectable rather than merely
+depicted. The action-score bars and the reward trace are likewise
+real charts you can hover and zoom.
+
+
+SETUP
+-----
+Python 3.10 or newer, plus Dash and Plotly:
+
+    pip install dash plotly
+
+Verify:
+
+    python -c "import dash, plotly; print(dash.__version__, plotly.__version__)"
+
+
+RUNNING
+-------
+    cd Model/experimental/dashboard_plotly
+    python mcps_dash_plotly.py
+
+Then open http://127.0.0.1:8757/ in your browser. Unlike the other
+two dashboards this one does not open a browser for you. Press
+Ctrl+C in the terminal to stop.
+
+The script finds ../core on its own, so this also works from the
+repository root:
+
+    python Model/experimental/dashboard_plotly/mcps_dash_plotly.py
+
+To change the port, edit the last line of mcps_dash_plotly.py
+(app.run(debug=False, port=8757)).
+
+
+USING THE DASHBOARD
+-------------------
+SIDEBAR — MEMORY SOURCE
+  Preset bank (70 experiences) or Start from scratch, plus a
+  profile (balanced / cautious / exploratory) and an optional seed.
+  Press "Load memory" to apply.
+
+  "Export" downloads the current memory as JSON. To import, drop a
+  previously exported file onto the dashed upload area — importing
+  applies immediately, without pressing "Load memory".
+
+SIDEBAR — PARAMETERS
+  Ten sliders. These write straight into the live config on every
+  callback, so a change takes effect on the very next step. The
+  current value is shown to the right of each label.
+
+SIDEBAR — REWARD AND TEACHING
+  Manual reward (0-1) used in place of the memory-derived one;
+  "Apply to last" retro-labels the previous action; "Teach expert"
+  stores a corrected action at high confidence and demotes the
+  model's original.
+
+MAIN PANEL — SENSORY INPUT
+  Four blocks of dropdowns, each with a checkbox. Unchecking removes
+  that channel entirely; the system reasons from what remains and
+  reflexes on the missing channel cannot fire.
+
+MAIN PANEL — DECISION AND REWARD
+  The action, mode, policy, novelty and threshold; the reflex rule
+  if one fired; the reward's provenance, including the penalty
+  arithmetic when the action contradicted memory's advice.
+
+MAIN PANEL — ACTION SCORES
+  Horizontal bars, one per action, labelled with score and support
+  weight. The chosen action is outlined in white. Faded bars have no
+  supporting memory — the 0.50 there is a default, not a judgement.
+
+MAIN PANEL — MEMORY CONTRIBUTION GRAPH
+  The current percept at the centre, contributing memories around
+  it. Stronger contributors sit closer and are drawn larger; edge
+  thickness is the contribution weight. Node colour is the action
+  that memory voted for; a gold outline marks an expert-taught
+  memory.
+
+  HOVER ANY NODE for its full breakdown: step, origin (reflexive or
+  deliberative), reward, similarity, decay with age, boost, and the
+  resulting weight. This is the reason to prefer this variant.
+
+  If the action contradicted memory's advice, a red annotation above
+  the graph names what was recommended instead.
+
+MAIN PANEL — TRACE AND TABLES
+  The reward and threshold traces are a hoverable chart with
+  penalised steps marked by red crosses. Below: contributing
+  memories with their arithmetic, and the last 25 steps of history.
+
+
+A FIVE-MINUTE TOUR
+------------------
+1. Load the preset bank. Set thermal=hot, run a step: the touch
+   reflex fires, WITHDRAW, rule named.
+
+2. thermal=neutral, odor_type=smoke: ALERT via smell.
+
+3. A calm scene (human / slow / speech / light / warm / food /
+   pleasant): deliberative APPROACH. Hover the graph nodes to see
+   exactly which preset memories carried it and by how much.
+
+4. Uncheck Smell and run again — hover the same memories and watch
+   their similarity values change now that a channel is gone.
+
+5. Drag "Top-k memories" to 2 and run: the graph loses nodes.
+
+6. Enter 0.05 as manual reward, press "Apply to last" repeatedly,
+   and watch the green threshold line climb in the trace until a
+   weakly supported percept produces HESITATE.
+
+
+DESIGN NOTES
+------------
+Dash callbacks are stateless, so the session lives at module level
+in SESSION. This is a single-user local tool; if you expose it on a
+network, every visitor shares one session and one memory.
+
+Plotly has no node-link primitive. Each edge is its own line trace
+so widths can differ, and the memory nodes are a single scatter
+trace carrying per-point customdata for the hover template.
+
+
+TROUBLESHOOTING
+---------------
+ModuleNotFoundError: dash
+    pip install dash plotly
+
+Page does not load
+    Dash does not open a browser. Visit http://127.0.0.1:8757/
+    yourself, and check the terminal for a traceback.
+
+Port already in use
+    Edit the port in the app.run(...) call at the bottom of
+    mcps_dash_plotly.py.
+
+Sliders appear to do nothing
+    They apply on the NEXT step. Press "Run step" after moving one.
+
+ModuleNotFoundError: mcps_engine
+    Verify the engine first:  python ../core/engine_smoke.py

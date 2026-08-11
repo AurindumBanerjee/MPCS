@@ -9,21 +9,42 @@ perception -> reflex or deliberation -> action -> reward -> memory -> state upda
 ```
 Model/
   reference/     Frozen baselines: mpcs.py, BloomMCPS.py, their preset launchers, MCPS_Test.py
-  experimental/  Active trunk: MCPS_Z.py (Z-numbers, dlCBF, expert-in-the-loop)
-  data/          PresetMemory.txt and other data artifacts
+  experimental/  Active trunk — MPCS v2, one folder per implementation:
+      core/                  the engine (four modalities, memory-derived reward)
+      dashboard_web/         local web dashboard, no dependencies
+      dashboard_streamlit/   Streamlit dashboard
+      dashboard_plotly/      Dash / Plotly dashboard
+      baseline_z/            MCPS_Z.py, the previous two-modality version
+  data/          PresetMemory.txt, PresetMemory_v2.txt and other data artifacts
 docs/            MCPS_Report.html, CurrentStatus.md, Checklist.md
 Reading/         Background PDFs
 ```
 
-Each `Model/` subfolder has its own README describing its contents.
+Each `Model/` subfolder has a README; every `experimental/` implementation
+folder also carries an `instructions.txt` with setup, run commands, a
+walkthrough and troubleshooting.
 
 ## Run
 
-Install optional BloomMCPS dependency:
+Current version — a browser dashboard showing which memories produced each
+decision. Needs nothing installed:
+
+- `python Model/experimental/dashboard_web/MCPS_Test.py`
+
+The same system through other front-ends (`pip install streamlit dash plotly`):
+
+- `streamlit run Model/experimental/dashboard_streamlit/mcps_dash_streamlit.py`
+- `python Model/experimental/dashboard_plotly/mcps_dash_plotly.py`
+
+Verify the engine with no UI involved:
+
+- `python Model/experimental/core/engine_smoke.py`
+
+Earlier versions, kept for comparison. Install optional BloomMCPS dependency:
 - `pip install bloom-filter`
 
-- Active experimental UI (Z-number variant + expert teaching):
-	- `python Model/experimental/MCPS_Z.py`
+- Previous Z-number Tk UI (two modalities, expert teaching):
+	- `python Model/experimental/baseline_z/MCPS_Z.py`
 - Standard reference UI:
 	- `python Model/reference/mpcs.py`
 - Preset-memory reference UI (starts with ready-made experience):
@@ -42,12 +63,25 @@ In the UI, use `Run Step` to execute an action, then enter a reward and click `A
 
 ## Current Architecture
 
-- Multimodal afferent binding (vision + audio)
-- Reflexive fast-path rules
-- Deliberative scoring over candidate actions
-- Experience memory with top-k retrieval
-- Internal state adaptation from reward
-- Interactive Tk UI for controlled experiments
+MPCS v2 (`Model/experimental/`) separates cognition from presentation: one
+engine, three interchangeable dashboards.
+
+- Multimodal afferent binding across **vision, audio, touch and smell**, with
+  any channel omissible at run time
+- Per-modality confidence weighting matched retrieval (Z-numbers)
+- Reflexive fast-path rules including touch pain and smoke, driving a fifth
+  action, `withdraw`
+- Deliberative scoring over candidate actions, with hesitation when the best
+  option falls below the learned threshold
+- Experience memory with top-k retrieval and time decay
+- **Reward derived from relevant past memory** — weighted mean plus sampled
+  variance — with a penalty for acting against what memory recommends
+- Internal state adaptation from reward, now actually consulted by decisions
+- Per-step explanation of which memories produced the decision, drawn as a
+  contribution graph
+
+Earlier versions (`Model/reference/`, `Model/experimental/baseline_z/`) keep
+the two-modality Tk implementations for comparison.
 
 ## Research-Aligned Improvement Roadmap
 
