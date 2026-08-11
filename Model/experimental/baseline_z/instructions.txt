@@ -1,0 +1,98 @@
+================================================================
+MPCS — BASELINE: Z-NUMBER VARIANT (two modalities, Tk UI)
+================================================================
+
+WHAT THIS IS
+------------
+The previous generation, kept unchanged for comparison. This is the
+implementation MPCS v2 was built from; nothing in v2 modifies it, so
+you can run both side by side and see what changed.
+
+Do not build on this file. New work belongs in ../core.
+
+
+SETUP
+-----
+Python 3.10 or newer with Tkinter, which ships with most CPython
+installations on Windows and macOS.
+
+Check Tkinter is present:
+
+    python -c "import tkinter; print('ok')"
+
+On Debian/Ubuntu, if that fails:
+
+    sudo apt install python3-tk
+
+No other packages required.
+
+
+RUNNING
+-------
+    cd Model/experimental/baseline_z
+    python MCPS_Z.py
+
+A desktop window opens. Use "Run Step" to execute an action, then
+enter a reward and press "Apply Reward" to attach it to that action.
+
+
+WHAT IT DOES
+------------
+  Two modalities         vision and audio only
+  Z-numbers              each feature value carries a
+                         (value, confidence) pair
+  dlCBF                  d-left counting Bloom filter supporting
+                         deletion, used to gate memory retrieval
+  Expert teaching        supply the correct action; it is stored as
+                         a high-confidence flagged experience and
+                         weighted more heavily, while the model's
+                         original choice is demoted
+  Reward                 random in [0, 1] unless you type one in
+
+
+HOW v2 DIFFERS
+--------------
+Run ../dashboard_web/MCPS_Test.py alongside this to compare.
+
+  MODALITIES. v2 adds touch and smell behind a generic registry, and
+  any channel can be switched off at run time.
+
+  CONFIDENCE. Here every Z-number is built with conf=1.0, which
+  makes confidence-weighted similarity arithmetically identical to
+  plain feature counting — the Z layer is present but inert. v2
+  gives each channel its own reliability, so it affects retrieval.
+
+  REWARD. Here, reward is random.uniform(0, 1) unless typed in, so
+  memory fills with rewards uncorrelated with the contexts that
+  produced them. v2 derives reward from the weighted mean of
+  relevant past memories plus sampled variance, and penalises
+  actions that contradict what memory recommends.
+
+  THRESHOLD. Here, action_threshold is written by the learning
+  update but read by no decision code, so the reward loop has no
+  behavioural effect. In v2 it gates commitment: below it, the
+  system hesitates and falls back to observe.
+
+  RETRIEVAL GATE. Here a dlCBF miss returns no memories and novelty
+  1.0, even when a near-identical memory exists. That is workable at
+  five features; at v2's twelve the exact-context space is far too
+  large, so v2 treats the filter as a fast exact-repeat hint and
+  falls through to the similarity scan.
+
+  EXPLANATION. Here you get a text log. v2 reports which memories
+  contributed and each one's arithmetic, drawn as a graph.
+
+
+RELATED BASELINES
+-----------------
+Model/reference/ holds the frozen pre-Z implementations:
+
+    mpcs.py                     canonical two-modality version
+    BloomMCPS.py                the same plus a Bloom membership
+                                layer (needs: pip install bloom-filter)
+    mpcs_preset_memory.py       launcher with a 30-experience bank
+    BloomMCPS_preset_memory.py  the same for the Bloom variant
+    MCPS_Test.py                latency benchmark, baseline vs Bloom
+
+Those import their siblings, so run them from inside
+Model/reference/.

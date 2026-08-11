@@ -1,0 +1,151 @@
+================================================================
+MPCS v2 — DASHBOARD A: LOCAL WEB APP (no dependencies)
+================================================================
+
+WHAT THIS IS
+------------
+The reference dashboard. A small HTTP server serves one
+self-contained page and drives the shared engine in ../core behind a
+JSON API. The entire interface — markup, styling, graph drawing — is
+inline in MCPS_Test.py.
+
+Use this one if you want the dashboard to just work. It needs
+nothing beyond Python itself, matching a repository that has no
+requirements.txt.
+
+
+SETUP
+-----
+Python 3.10 or newer. No packages to install.
+
+    python --version
+
+
+RUNNING
+-------
+    cd Model/experimental/dashboard_web
+    python MCPS_Test.py
+
+Your browser opens at http://127.0.0.1:8756/ automatically.
+Press Ctrl+C in the terminal to stop.
+
+Options:
+
+    python MCPS_Test.py --port 9000      run on a different port
+    python MCPS_Test.py --no-browser     do not open a browser
+    python MCPS_Test.py --host 0.0.0.0   accept connections from
+                                         other machines on your LAN
+
+The script finds ../core on its own, so you can also run it from the
+repository root:
+
+    python Model/experimental/dashboard_web/MCPS_Test.py
+
+If the port is already in use you will see "address already in use" —
+pass a different --port.
+
+
+USING THE DASHBOARD
+-------------------
+SIDEBAR — MEMORY SOURCE
+  Start from scratch          empty memory; the system learns from
+                              nothing and reports "cold-start"
+                              rewards until experience accumulates
+  Preset bank (70)            50 novel contexts + 20 near-repetitions
+                              covering all four modalities
+  Import JSON                 a memory file exported earlier
+
+  Profile   balanced / cautious / exploratory. Cautious explores
+            little and hesitates sooner; exploratory does the
+            reverse.
+  Seed      fix it for reproducible runs; leave blank for random.
+
+  Press "Load memory" to apply. "Export" downloads the current
+  memory as JSON.
+
+SIDEBAR — PARAMETERS
+  Move a slider and it takes effect on the next step immediately —
+  no reload. Lowering "Top-k memories" from 5 to 2 visibly shrinks
+  the contribution graph, which is the quickest way to see the
+  retrieval depth actually mattering.
+
+SIDEBAR — REWARD AND TEACHING
+  Manual reward    a number 0-1 used instead of deriving one from
+                   memory. Leave blank for the normal behaviour.
+  Apply to last    retro-label the previous action, correcting the
+                   state update it caused.
+  Teach expert     store a high-confidence corrected action and
+                   demote the model's original choice.
+
+MAIN PANEL — SENSORY INPUT
+  Twelve dropdowns in four groups. Unchecking a group removes that
+  channel entirely rather than setting it to a neutral value: the
+  system then reasons from what remains, and reflexes on the missing
+  channel cannot fire. "Randomise percept" fills everything at
+  random.
+
+MAIN PANEL — DECISION
+  The chosen action, whether it came from reflex or deliberation,
+  and the policy (EXPLOIT / EXPLORE / HESITATE / REFLEX). If a
+  reflex fired, the rule is named. If the system hesitated, the
+  score and threshold that caused it are shown.
+
+MAIN PANEL — REWARD DERIVATION
+  Where the number came from: the memory mean, how many memories it
+  averaged, and the sampled result. If the action contradicted what
+  memory advised, the penalty arithmetic is spelled out.
+
+MAIN PANEL — ACTION SCORES
+  One bar per action with its support weight. Faded bars have no
+  supporting memory at all — the 0.50 there is a default, not a
+  judgement.
+
+MAIN PANEL — MEMORY CONTRIBUTION GRAPH
+  The current percept sits at the centre. Each surrounding node is a
+  past experience that informed the decision; the number inside is
+  its reward, the label below is its step. Node colour is the action
+  that memory voted for.
+
+  Stronger contributors sit closer to the centre and are drawn
+  larger. Edge thickness is the contribution weight
+  (similarity x decay x boost). Hover any edge or node for the full
+  arithmetic. A gold ring marks an expert-taught memory; a white dot
+  marks one that came from a reflex.
+
+  If the action contradicted memory's advice, a red line at the top
+  names what was recommended instead.
+
+
+A FIVE-MINUTE TOUR
+------------------
+1. Load the preset bank. Set thermal=hot and run a step: the touch
+   reflex fires, action is WITHDRAW, and the rule is named.
+
+2. Set thermal=neutral, odor_type=smoke, run: ALERT, via the smell
+   reflex. Set odor_type=none and sound_type=alarm: also ALERT, but
+   through the older audio rule.
+
+3. Build a calm scene (human / slow / speech / light contact / warm /
+   food / pleasant) and run. This is deliberative: APPROACH, with
+   the graph showing which of the preset approach memories carried
+   it, and reward drawn from their mean.
+
+4. Uncheck Smell and run the same percept. Fewer channels means less
+   total confidence; watch the similarity numbers in the
+   contributing-memories table shift.
+
+5. Drag "Top-k memories" to 2 and run again — the graph loses nodes.
+
+6. Type 0.05 into the manual reward box and press "Apply to last"
+   a few times, watching the action threshold climb in the trace.
+   Eventually a weakly-supported percept produces HESITATE.
+
+
+TROUBLESHOOTING
+---------------
+Browser does not open      Visit http://127.0.0.1:8756/ manually.
+Blank page                 Check the terminal for a traceback.
+"address already in use"   Another process holds the port; use
+                           --port with a different number.
+ModuleNotFoundError        Run engine checks first:
+                           python ../core/engine_smoke.py

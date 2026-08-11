@@ -1,0 +1,147 @@
+================================================================
+MPCS v2 — DASHBOARD B: STREAMLIT
+================================================================
+
+WHAT THIS IS
+------------
+The same cognition as the other two dashboards (the shared engine in
+../core), presented through Streamlit. Streamlit supplies the
+sidebar, layout, tables and charts, so this is the shortest of the
+three front-ends by a wide margin.
+
+The trade-off: Streamlit re-runs the entire script on every
+interaction, so the session has to live in st.session_state and be
+built exactly once. Rebuilding it per run would silently wipe memory
+each time you touched a widget.
+
+
+SETUP
+-----
+Python 3.10 or newer, plus Streamlit:
+
+    pip install streamlit
+
+Verify:
+
+    streamlit --version
+
+
+RUNNING
+-------
+    cd Model/experimental/dashboard_streamlit
+    streamlit run mcps_dash_streamlit.py
+
+Streamlit prints a local URL (usually http://localhost:8501) and
+opens it. Press Ctrl+C in the terminal to stop.
+
+Note the command is "streamlit run", not "python". Running it with
+python directly produces a warning about missing ScriptRunContext
+and no interface.
+
+The script finds ../core on its own, so this also works from the
+repository root:
+
+    streamlit run Model/experimental/dashboard_streamlit/mcps_dash_streamlit.py
+
+Run on a different port:
+
+    streamlit run mcps_dash_streamlit.py --server.port 8600
+
+
+USING THE DASHBOARD
+-------------------
+SIDEBAR — MEMORY SOURCE
+  Preset bank (70 experiences)  50 novel + 20 near-repetitions,
+                                all four modalities
+  Start from scratch            empty memory
+  Import JSON                   reveals a file uploader for a
+                                memory file exported earlier
+
+  Choose a profile (balanced / cautious / exploratory) and
+  optionally a seed for reproducibility, then press "Load memory".
+  "Export memory" downloads the current bank as JSON.
+
+SIDEBAR — PARAMETERS
+  Ten sliders covering retrieval depth, decay, reward variance,
+  penalty strength, risk bias, threshold, learning rate and the
+  weighting boosts. Each takes effect on the next step.
+
+SIDEBAR — REWARD AND TEACHING
+  Manual reward (0-1) used in place of the memory-derived one;
+  "Apply to last" retro-labels the previous action; "Teach expert"
+  stores a corrected action at high confidence and demotes the
+  model's original choice.
+
+MAIN PANEL
+  Four columns of dropdowns, one per modality, each with a checkbox.
+  Unchecking removes that channel entirely — the dropdowns grey out
+  and the system reasons from what remains.
+
+  "Run step" produces:
+
+    Decision           action, mode, policy, novelty, threshold, and
+                       the reflex rule if one fired
+    Reward derivation  memory mean, count of memories averaged, the
+                       sampled result, and the penalty arithmetic if
+                       the action contradicted memory's advice
+    Action scores      per-action bars with their support weights
+
+  MEMORY CONTRIBUTION GRAPH. The current percept at the centre, past
+  experiences around it. Stronger contributors sit closer and are
+  drawn larger; edge thickness is similarity x decay x boost. Hover
+  a node for its arithmetic. A gold ring marks an expert-taught
+  memory.
+
+  Below: the contributing memories as a sortable table, a reward and
+  threshold trace, and the full step history.
+
+
+A FIVE-MINUTE TOUR
+------------------
+1. Load the preset bank. Set thermal=hot, run a step: the touch
+   reflex fires, WITHDRAW, rule named.
+
+2. thermal=neutral, odor_type=smoke: ALERT via smell.
+
+3. A calm scene (human / slow / speech / light / warm / food /
+   pleasant): deliberative APPROACH, with the graph showing which
+   preset memories carried it.
+
+4. Uncheck Smell, run the same percept, and watch similarity shift
+   in the contributing-memories table.
+
+5. Drag "Top-k memories" to 2 — the graph loses nodes on the next
+   step.
+
+6. Enter 0.05 as manual reward and press "Apply to last" repeatedly,
+   watching the threshold climb in the trace until a weakly
+   supported percept produces HESITATE.
+
+
+KNOWN QUIRKS
+------------
+Streamlit reruns the script on every widget change. The session is
+cached in st.session_state, so memory survives — but if you edit
+mcps_dash_streamlit.py while it is running, Streamlit reloads and
+the cached session is rebuilt from the preset bank. Reload your
+memory afterwards if you were mid-experiment.
+
+Widget state (the dropdowns) is keyed, so percept selections persist
+across reruns. The sliders write straight into the live config, so
+there is no "apply" step for parameters.
+
+
+TROUBLESHOOTING
+---------------
+"streamlit: command not found"
+    pip install streamlit, and make sure the Python whose pip you
+    used is the one on your PATH.
+
+Warning about missing ScriptRunContext
+    You ran it with python. Use "streamlit run" instead.
+
+Memory resets unexpectedly
+    You edited the file while it was running; see KNOWN QUIRKS.
+
+ModuleNotFoundError: mcps_engine
+    Verify the engine first:  python ../core/engine_smoke.py
