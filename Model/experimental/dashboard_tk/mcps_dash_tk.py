@@ -34,8 +34,18 @@ from mcps_preset_v2 import PROFILE_CONFIGS, build_preset_memory
 
 
 # Dark palette matching the web dashboards, so screenshots sit side by side.
-BG, PANEL, LINE = "#10131a", "#171b24", "#2a3040"
+BG, PANEL, LINE = "#10131a", "#171b24", "#3d465c"
 TEXT, MUTED, ACCENT = "#e6e9ef", "#8b94a7", "#4c8dff"
+# Raised surfaces: input fields sit lighter than their panel so the eye can
+# find them without needing a border.
+FIELD, FIELD_HOVER, SELECT = "#222839", "#2b3247", "#31527f"
+DISABLED = "#7a8397"
+# Primary-button fill: deeper than ACCENT so white text clears 4.5:1 on it.
+GO = "#2f5fb0"
+# Status text. Lighter than the equivalent node fills, because text needs more
+# contrast than a filled shape does: the graph's #d1483f withdraw red only
+# reaches 3.9:1 as text on the panel, which is under the 4.5:1 body-text bar.
+OK_FG, WARN_FG = "#4ecf95", "#ff7b70"
 
 PARAM_SPEC = [
     ("top_k",              "Top-k memories",      1,    20,   1),
@@ -53,6 +63,24 @@ PARAM_SPEC = [
 
 def fmt(value) -> str:
     return "—" if value is None else f"{value:.3f}"
+
+
+def _relative_luminance(colour: str) -> float:
+    colour = colour.lstrip("#")
+    channels = [int(colour[i:i + 2], 16) / 255 for i in (0, 2, 4)]
+    linear = [c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+              for c in channels]
+    return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+
+
+def ink_for(background: str) -> str:
+    """Pick black or white text for a filled shape, whichever reads better.
+
+    The action palette spans a wide lightness range — white on the alert
+    orange is only 2.6:1, while white on the observe blue is fine. Choosing
+    per colour keeps every node label legible instead of assuming white.
+    """
+    return "#0d1017" if _relative_luminance(background) > 0.35 else "#ffffff"
 
 
 class CognitiveTkUI:
@@ -74,40 +102,139 @@ class CognitiveTkUI:
 
     # -- styling ---------------------------------------------------------
     def _style(self) -> None:
+        """Apply a dark theme.
+
+        The subtlety here is that ttk's built-in themes carry *state maps*
+        that override whatever you pass to configure(). clam, for instance,
+        maps a readonly Combobox to a light grey field while leaving the
+        foreground near-white — light text on a light field, invisible. Every
+        widget that has such a map therefore needs an explicit map() call, not
+        just configure(). The same applies to the Checkbutton indicator and to
+        the Listbox that a Combobox pops up, which is a classic tk widget and
+        ignores ttk styling entirely (handled via option_add below).
+        """
         style = ttk.Style()
         try:
-            style.theme_use("clam")
-        except tk.TclError:
+            style.theme_use("clam")   # the only built-in theme that honours
+        except tk.TclError:           # background on most widgets
             pass
+
         style.configure(".", background=BG, foreground=TEXT,
-                        fieldbackground=PANEL, borderwidth=0)
+                        fieldbackground=FIELD, bordercolor=LINE,
+                        darkcolor=PANEL, lightcolor=PANEL,
+                        troughcolor=BG, focuscolor=ACCENT, borderwidth=0)
+
         style.configure("TFrame", background=BG)
         style.configure("Panel.TFrame", background=PANEL)
-        style.configure("TLabel", background=BG, foreground=TEXT, font=("Segoe UI", 9))
+
+        style.configure("TLabel", background=BG, foreground=TEXT,
+                        font=("Segoe UI", 9))
         style.configure("Panel.TLabel", background=PANEL, foreground=TEXT)
         style.configure("Muted.TLabel", background=PANEL, foreground=MUTED,
                         font=("Segoe UI", 8))
-        style.configure("Head.TLabel", background=PANEL, foreground=MUTED,
+        style.configure("Head.TLabel", background=PANEL, foreground=ACCENT,
                         font=("Segoe UI", 8, "bold"))
         style.configure("Action.TLabel", background=PANEL, foreground=TEXT,
                         font=("Segoe UI", 15, "bold"))
-        style.configure("TLabelframe", background=PANEL, foreground=MUTED,
-                        bordercolor=LINE)
-        style.configure("TLabelframe.Label", background=PANEL, foreground=MUTED,
+
+        style.configure("TLabelframe", background=PANEL, bordercolor=LINE,
+                        borderwidth=1, relief="solid")
+        style.configure("TLabelframe.Label", background=PANEL, foreground=ACCENT,
                         font=("Segoe UI", 8, "bold"))
-        style.configure("TCheckbutton", background=PANEL, foreground=TEXT)
-        style.configure("TButton", background="#1d2230", foreground=TEXT,
-                        font=("Segoe UI", 9), padding=5)
-        style.map("TButton", background=[("active", "#27304a")])
-        style.configure("Go.TButton", background=ACCENT, foreground="#ffffff",
-                        font=("Segoe UI", 9, "bold"))
-        style.map("Go.TButton", background=[("active", "#6ba0ff")])
-        style.configure("TScale", background=PANEL, troughcolor="#1d2230")
+
+        # -- entries and comboboxes: the light-on-light offenders
+        style.configure("TEntry", fieldbackground=FIELD, foreground=TEXT,
+                        insertcolor=TEXT, bordercolor=LINE, borderwidth=1,
+                        padding=4)
+        style.map("TEntry",
+                  fieldbackground=[("focus", FIELD_HOVER), ("!focus", FIELD)],
+                  foreground=[("disabled", DISABLED), ("!disabled", TEXT)],
+                  bordercolor=[("focus", ACCENT), ("!focus", LINE)])
+
+        style.configure("TCombobox", fieldbackground=FIELD, background=FIELD,
+                        foreground=TEXT, arrowcolor=TEXT, bordercolor=LINE,
+                        borderwidth=1, padding=4)
+        style.map(
+            "TCombobox",
+            # Without the explicit readonly entries here, clam paints #dcdad5.
+            fieldbackground=[("readonly", "focus", FIELD_HOVER),
+                             ("readonly", FIELD),
+                             ("disabled", PANEL),
+                             ("!disabled", FIELD)],
+            background=[("readonly", FIELD), ("active", FIELD_HOVER),
+                        ("!disabled", FIELD)],
+            foreground=[("disabled", DISABLED),
+                        ("readonly", "focus", "#ffffff"),
+                        ("!disabled", TEXT)],
+            arrowcolor=[("disabled", DISABLED), ("!disabled", ACCENT)],
+            bordercolor=[("focus", ACCENT), ("!focus", LINE)],
+            selectbackground=[("readonly", FIELD), ("!focus", FIELD)],
+            selectforeground=[("readonly", TEXT), ("!focus", TEXT)],
+        )
+
+        # -- checkbuttons: the indicator square needs its own map or it stays
+        # white-on-white and you cannot tell checked from unchecked
+        style.configure("TCheckbutton", background=PANEL, foreground=TEXT,
+                        indicatorcolor=FIELD, focuscolor=PANEL,
+                        font=("Segoe UI", 9, "bold"), padding=2)
+        style.map("TCheckbutton",
+                  background=[("active", PANEL)],
+                  foreground=[("disabled", DISABLED), ("!disabled", TEXT)],
+                  indicatorcolor=[("selected", ACCENT),
+                                  ("pressed", FIELD_HOVER),
+                                  ("!selected", FIELD)])
+
+        # -- buttons
+        style.configure("TButton", background=FIELD, foreground=TEXT,
+                        bordercolor=LINE, borderwidth=1, focusthickness=0,
+                        font=("Segoe UI", 9), padding=5, relief="flat")
+        style.map("TButton",
+                  background=[("pressed", SELECT), ("active", FIELD_HOVER),
+                              ("!disabled", FIELD)],
+                  foreground=[("disabled", DISABLED), ("!disabled", TEXT)],
+                  bordercolor=[("active", ACCENT), ("!active", LINE)])
+
+        # A deeper blue than ACCENT so white sits on it at ~5:1 rather than
+        # the 3.2:1 the lighter accent gives.
+        style.configure("Go.TButton", background=GO, foreground="#ffffff",
+                        bordercolor=GO, font=("Segoe UI", 9, "bold"))
+        style.map("Go.TButton",
+                  background=[("pressed", "#24457c"), ("active", ACCENT),
+                              ("!disabled", GO)],
+                  foreground=[("!disabled", "#ffffff")],
+                  bordercolor=[("!disabled", GO)])
+
+        # -- sliders
+        style.configure("TScale", background=PANEL, troughcolor=BG,
+                        bordercolor=LINE, lightcolor=ACCENT, darkcolor=ACCENT)
+        style.map("TScale", background=[("active", PANEL)])
+
+        style.configure("Vertical.TScrollbar", background=FIELD,
+                        troughcolor=BG, bordercolor=BG, arrowcolor=MUTED)
+        style.map("Vertical.TScrollbar",
+                  background=[("active", FIELD_HOVER), ("!active", FIELD)])
+
+        # -- tables
         style.configure("Treeview", background=PANEL, fieldbackground=PANEL,
-                        foreground=TEXT, rowheight=19, font=("Consolas", 8))
-        style.configure("Treeview.Heading", background="#1d2230", foreground=MUTED,
-                        font=("Segoe UI", 8, "bold"))
-        style.map("Treeview", background=[("selected", "#27304a")])
+                        foreground=TEXT, bordercolor=LINE, borderwidth=0,
+                        rowheight=20, font=("Consolas", 8))
+        style.map("Treeview",
+                  background=[("selected", SELECT)],
+                  foreground=[("selected", "#ffffff")])
+        style.configure("Treeview.Heading", background=FIELD, foreground=ACCENT,
+                        bordercolor=LINE, relief="flat",
+                        font=("Segoe UI", 8, "bold"), padding=3)
+        style.map("Treeview.Heading",
+                  background=[("active", FIELD_HOVER), ("!active", FIELD)])
+
+        # -- the Combobox dropdown is a classic tk Listbox, not a ttk widget,
+        # so ttk styling never reaches it. These options do.
+        self.root.option_add("*TCombobox*Listbox.background", FIELD)
+        self.root.option_add("*TCombobox*Listbox.foreground", TEXT)
+        self.root.option_add("*TCombobox*Listbox.selectBackground", ACCENT)
+        self.root.option_add("*TCombobox*Listbox.selectForeground", "#ffffff")
+        self.root.option_add("*TCombobox*Listbox.font", "{Segoe UI} 9")
+        self.root.option_add("*TCombobox*Listbox.borderWidth", 0)
 
     # -- layout ----------------------------------------------------------
     def _build(self) -> None:
@@ -454,12 +581,12 @@ class CognitiveTkUI:
             note, colour = "", MUTED
             if result["reflex_rule_label"]:
                 note = f"Reflex {result['reflex_rule']}: {result['reflex_rule_label']}"
-                colour = "#2aa36b"
+                colour = OK_FG
             elif result["policy"] == "HESITATE":
                 note = (f"Best score {fmt(result['scores'][result['best_action']])} "
                         f"below threshold {fmt(result['threshold'])} — "
                         f"fell back to observe.")
-                colour = "#d1483f"
+                colour = WARN_FG
             self.note_label.config(text=note, foreground=colour)
             self._render_reward(result)
 
@@ -481,7 +608,7 @@ class CognitiveTkUI:
         colour = TEXT
         if result["penalty"]:
             p = result["penalty"]
-            colour = "#d1483f"
+            colour = WARN_FG
             lines += [
                 "",
                 f"Off-recommendation: memory advised {p['recommended']}, "
@@ -505,25 +632,34 @@ class CognitiveTkUI:
             score = result["scores"][action]
             support = result["supports"].get(action, 0.0)
             chosen = action == result["action"]
+            evidenced = support > 0
 
-            canvas.create_text(4, y, anchor="w", text=action, fill=TEXT,
+            canvas.create_text(14, y, anchor="w", text=action,
+                               fill=TEXT if evidenced else MUTED,
                                font=("Segoe UI", 8, "bold" if chosen else "normal"))
-            canvas.create_rectangle(70, y - 5, 230, y + 5, fill="#1d2230", outline="")
-            width = max(0, min(1.0, score)) * 160
-            if width > 0:
-                # A bar with no supporting memory is the 0.50 default, not a
-                # judgement; stipple marks the difference.
-                canvas.create_rectangle(
-                    70, y - 5, 70 + width, y + 5,
-                    fill=E.ACTION_COLORS[action], outline="",
-                    stipple="" if support > 0 else "gray50")
-            canvas.create_text(238, y, anchor="w", text=f"{score:.2f}", fill=TEXT,
-                               font=("Consolas", 8))
-            canvas.create_text(272, y, anchor="w", text=f"w={support:.2f}",
-                               fill=MUTED, font=("Consolas", 7))
+            # Track: a visible well, not a near-black rectangle lost on the panel.
+            canvas.create_rectangle(70, y - 6, 230, y + 6,
+                                    fill=BG, outline=LINE, width=1)
+            width = max(0, min(1.0, score)) * 158
+            if width > 1:
+                if evidenced:
+                    canvas.create_rectangle(71, y - 5, 71 + width, y + 5,
+                                            fill=E.ACTION_COLORS[action], outline="")
+                else:
+                    # No supporting memory: the 0.50 is a default, not a
+                    # judgement. An outline says "nothing here" more clearly
+                    # than a stippled fill, which just reads as a dim bar.
+                    canvas.create_rectangle(71, y - 5, 71 + width, y + 5,
+                                            fill="", outline=DISABLED, dash=(2, 2))
+            canvas.create_text(236, y, anchor="w", text=f"{score:.2f}",
+                               fill=TEXT if evidenced else MUTED,
+                               font=("Consolas", 8, "bold" if chosen else "normal"))
+            canvas.create_text(270, y, anchor="w", text=f"w={support:.2f}",
+                               fill=MUTED if evidenced else DISABLED,
+                               font=("Consolas", 7))
             if chosen:
-                canvas.create_text(64, y, anchor="e", text="→", fill=TEXT,
-                                   font=("Segoe UI", 9, "bold"))
+                canvas.create_text(8, y, anchor="w", text="▸", fill=ACCENT,
+                                   font=("Segoe UI", 10, "bold"))
 
     def _draw_graph(self) -> None:
         canvas = self.graph_canvas
@@ -554,7 +690,7 @@ class CognitiveTkUI:
 
         if result["penalty"]:
             canvas.create_text(
-                10, 12, anchor="w", fill="#d1483f", font=("Segoe UI", 8, "bold"),
+                10, 12, anchor="w", fill=WARN_FG, font=("Segoe UI", 8, "bold"),
                 text=f"memory advised {result['penalty']['recommended']} — "
                      f"{result['action']} was taken instead")
 
@@ -574,25 +710,27 @@ class CognitiveTkUI:
                                    x + radius + 4, y + radius + 4,
                                    outline="#ffd166", width=2)
             canvas.create_oval(x - radius, y - radius, x + radius, y + radius,
-                               fill=node["color"], outline="#0d1017", width=1)
+                               fill=node["color"], outline=PANEL, width=2)
             if node["mode"] == "REFLEXIVE":
                 # White pip marks a memory that itself came from a reflex.
                 mark = radius * 0.7
                 canvas.create_oval(x + mark - 4, y - mark - 4,
                                    x + mark + 4, y - mark + 4,
                                    fill="#ffffff", outline=node["color"])
-            canvas.create_text(x, y, text=f"{node['reward']:.2f}", fill="#ffffff",
+            canvas.create_text(x, y, text=f"{node['reward']:.2f}",
+                               fill=ink_for(node["color"]),
                                font=("Segoe UI", 8, "bold"))
             canvas.create_text(x, y + radius + 9, text=f"s{node['step']}",
-                               fill=MUTED, font=("Segoe UI", 7))
+                               fill=TEXT, font=("Segoe UI", 7))
 
+        centre_fill = E.ACTION_COLORS[result["action"]]
+        centre_ink = ink_for(centre_fill)
         canvas.create_oval(cx - 32, cy - 32, cx + 32, cy + 32,
-                           fill=E.ACTION_COLORS[result["action"]],
-                           outline="#ffffff", width=2)
-        canvas.create_text(cx, cy - 6, text="NOW", fill="#ffffff",
+                           fill=centre_fill, outline="#ffffff", width=2)
+        canvas.create_text(cx, cy - 6, text="NOW", fill=centre_ink,
                            font=("Segoe UI", 8, "bold"))
-        canvas.create_text(cx, cy + 7, text=result["action"].upper(), fill="#ffffff",
-                           font=("Segoe UI", 7))
+        canvas.create_text(cx, cy + 7, text=result["action"].upper(),
+                           fill=centre_ink, font=("Segoe UI", 7))
 
     def _render_tables(self, result) -> None:
         self.contrib_tree.delete(*self.contrib_tree.get_children())
