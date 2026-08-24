@@ -1,0 +1,512 @@
+MPCS v2 — Preset Memory Bank
+============================================================
+
+70 experiences: 50 novel contexts + 20 near-repetitions.
+Every entry carries all four modalities (vision, audio, touch, smell).
+Generated from mcps_preset_v2.py — do not edit by hand.
+
+Action distribution
+------------------------------------------------------------
+  ignore      12 entries    mean reward 0.59
+  observe     14 entries    mean reward 0.72
+  approach    18 entries    mean reward 0.68
+  alert       12 entries    mean reward 0.86
+  withdraw    14 entries    mean reward 0.83
+
+Origin mode
+------------------------------------------------------------
+  DELIBERATIVE    41
+  REFLEXIVE       29
+
+Entries
+------------------------------------------------------------
+
+[ 1] NOVEL  WITHDRAW  reward=0.96  (REFLEXIVE)
+       vision  object_type=unknown, motion=static, color=bright
+       audio   sound_type=alarm, audio_intensity=high
+       touch   contact=firm, texture=smooth, thermal=hot, touch_intensity=high
+       smell   odor_type=smoke, odor_intensity=strong, pleasantness=foul
+       note    Burning surface, alarm sounding; withdrawal clearly right.
+
+[ 2] NOVEL  WITHDRAW  reward=0.92  (REFLEXIVE)
+       vision  object_type=vehicle, motion=static, color=dark
+       audio   sound_type=noise, audio_intensity=medium
+       touch   contact=light, texture=smooth, thermal=hot, touch_intensity=medium
+       smell   odor_type=smoke, odor_intensity=moderate, pleasantness=foul
+       note    Overheated machine; back away before inspecting.
+
+[ 3] NOVEL  ALERT     reward=0.94  (REFLEXIVE)
+       vision  object_type=unknown, motion=slow, color=red
+       audio   sound_type=alarm, audio_intensity=high
+       touch   contact=none, texture=smooth, thermal=warm, touch_intensity=low
+       smell   odor_type=smoke, odor_intensity=strong, pleasantness=foul
+       note    Fire signalled but not yet touchable; raise the alarm.
+
+[ 4] NOVEL  ALERT     reward=0.83  (REFLEXIVE)
+       vision  object_type=unknown, motion=static, color=dark
+       audio   sound_type=none, audio_intensity=low
+       touch   contact=none, texture=smooth, thermal=neutral, touch_intensity=low
+       smell   odor_type=smoke, odor_intensity=faint, pleasantness=neutral
+       note    Faint smoke with no other cue still warrants alerting.
+
+[ 5] NOVEL  WITHDRAW  reward=0.93  (REFLEXIVE)
+       vision  object_type=vehicle, motion=fast, color=dark
+       audio   sound_type=noise, audio_intensity=high
+       touch   contact=impact, texture=rough, thermal=neutral, touch_intensity=high
+       smell   odor_type=none, odor_intensity=faint, pleasantness=neutral
+       note    Struck by a moving vehicle; disengage immediately.
+
+[ 6] NOVEL  WITHDRAW  reward=0.95  (REFLEXIVE)
+       vision  object_type=unknown, motion=fast, color=bright
+       audio   sound_type=noise, audio_intensity=high
+       touch   contact=impact, texture=sharp, thermal=cold, touch_intensity=high
+       smell   odor_type=none, odor_intensity=faint, pleasantness=neutral
+       note    Sharp fast impact; the strongest withdrawal case.
+
+[ 7] NOVEL  WITHDRAW  reward=0.88  (REFLEXIVE)
+       vision  object_type=unknown, motion=static, color=dark
+       audio   sound_type=none, audio_intensity=low
+       touch   contact=firm, texture=sharp, thermal=cold, touch_intensity=medium
+       smell   odor_type=none, odor_intensity=faint, pleasantness=neutral
+       note    Gripping something sharp; release even when quiet.
+
+[ 8] NOVEL  WITHDRAW  reward=0.90  (REFLEXIVE)
+       vision  object_type=animal, motion=fast, color=dark
+       audio   sound_type=noise, audio_intensity=high
+       touch   contact=firm, texture=sharp, thermal=warm, touch_intensity=high
+       smell   odor_type=organic, odor_intensity=strong, pleasantness=foul
+       note    Animal bite: sharp, warm, foul-smelling.
+
+[ 9] NOVEL  ALERT     reward=0.91  (REFLEXIVE)
+       vision  object_type=human, motion=fast, color=red
+       audio   sound_type=alarm, audio_intensity=high
+       touch   contact=none, texture=smooth, thermal=neutral, touch_intensity=low
+       smell   odor_type=none, odor_intensity=faint, pleasantness=neutral
+       note    Person running with alarm; escalate.
+
+[10] NOVEL  ALERT     reward=0.89  (REFLEXIVE)
+       vision  object_type=vehicle, motion=fast, color=red
+       audio   sound_type=alarm, audio_intensity=medium
+       touch   contact=none, texture=smooth, thermal=neutral, touch_intensity=low
+       smell   odor_type=chemical, odor_intensity=moderate, pleasantness=foul
+       note    Emergency vehicle with chemical odour.
+
+[11] NOVEL  ALERT     reward=0.87  (REFLEXIVE)
+       vision  object_type=unknown, motion=static, color=dark
+       audio   sound_type=none, audio_intensity=low
+       touch   contact=none, texture=smooth, thermal=neutral, touch_intensity=low
+       smell   odor_type=chemical, odor_intensity=strong, pleasantness=foul
+       note    Strong chemical leak with no visual cue.
+
+[12] NOVEL  ALERT     reward=0.85  (REFLEXIVE)
+       vision  object_type=animal, motion=fast, color=dark
+       audio   sound_type=alarm, audio_intensity=high
+       touch   contact=none, texture=rough, thermal=warm, touch_intensity=low
+       smell   odor_type=organic, odor_intensity=strong, pleasantness=foul
+       note    Agitated animal; warn rather than engage.
+
+[13] NOVEL  ALERT     reward=0.90  (REFLEXIVE)
+       vision  object_type=human, motion=static, color=blue
+       audio   sound_type=alarm, audio_intensity=high
+       touch   contact=none, texture=smooth, thermal=neutral, touch_intensity=low
+       smell   odor_type=none, odor_intensity=faint, pleasantness=neutral
+       note    Stationary person, alarm sounding.
+
+[14] NOVEL  OBSERVE   reward=0.82  (REFLEXIVE)
+       vision  object_type=animal, motion=fast, color=red
+       audio   sound_type=noise, audio_intensity=medium
+       touch   contact=none, texture=smooth, thermal=neutral, touch_intensity=low
+       smell   odor_type=organic, odor_intensity=moderate, pleasantness=neutral
+       note    Fast animal, nothing threatening; watch.
+
+[15] NOVEL  OBSERVE   reward=0.78  (REFLEXIVE)
+       vision  object_type=unknown, motion=fast, color=bright
+       audio   sound_type=none, audio_intensity=low
+       touch   contact=none, texture=smooth, thermal=cold, touch_intensity=low
+       smell   odor_type=none, odor_intensity=faint, pleasantness=neutral
+       note    Unidentified fast mover in silence.
+
+[16] NOVEL  OBSERVE   reward=0.83  (REFLEXIVE)
+       vision  object_type=vehicle, motion=fast, color=dark
+       audio   sound_type=noise, audio_intensity=high
+       touch   contact=none, texture=smooth, thermal=neutral, touch_intensity=low
+       smell   odor_type=chemical, odor_intensity=faint, pleasantness=neutral
+       note    Passing traffic; track it, do not act.
+
+[17] NOVEL  OBSERVE   reward=0.70  (DELIBERATIVE)
+       vision  object_type=unknown, motion=slow, color=dark
+       audio   sound_type=noise, audio_intensity=medium
+       touch   contact=light, texture=rough, thermal=cold, touch_intensity=low
+       smell   odor_type=none, odor_intensity=faint, pleasantness=neutral
+       note    Slow ambiguous object, light contact.
+
+[18] NOVEL  OBSERVE   reward=0.64  (DELIBERATIVE)
+       vision  object_type=unknown, motion=static, color=blue
+       audio   sound_type=speech, audio_intensity=low
+       touch   contact=none, texture=smooth, thermal=neutral, touch_intensity=low
+       smell   odor_type=none, odor_intensity=faint, pleasantness=neutral
+       note    Static unknown with distant speech.
+
+[19] NOVEL  OBSERVE   reward=0.72  (DELIBERATIVE)
+       vision  object_type=animal, motion=slow, color=bright
+       audio   sound_type=noise, audio_intensity=low
+       touch   contact=light, texture=rough, thermal=warm, touch_intensity=low
+       smell   odor_type=organic, odor_intensity=moderate, pleasantness=neutral
+       note    Calm animal at light contact.
+
+[20] NOVEL  OBSERVE   reward=0.66  (DELIBERATIVE)
+       vision  object_type=vehicle, motion=static, color=blue
+       audio   sound_type=noise, audio_intensity=medium
+       touch   contact=light, texture=smooth, thermal=cold, touch_intensity=low
+       smell   odor_type=chemical, odor_intensity=faint, pleasantness=neutral
+       note    Parked vehicle, mild chemical trace.
+
+[21] NOVEL  APPROACH  reward=0.92  (DELIBERATIVE)
+       vision  object_type=human, motion=slow, color=bright
+       audio   sound_type=speech, audio_intensity=low
+       touch   contact=light, texture=smooth, thermal=warm, touch_intensity=low
+       smell   odor_type=food, odor_intensity=moderate, pleasantness=pleasant
+       note    Calm person, warm room, food smell: ideal approach.
+
+[22] NOVEL  APPROACH  reward=0.87  (DELIBERATIVE)
+       vision  object_type=human, motion=slow, color=blue
+       audio   sound_type=speech, audio_intensity=medium
+       touch   contact=light, texture=smooth, thermal=neutral, touch_intensity=low
+       smell   odor_type=food, odor_intensity=faint, pleasantness=pleasant
+       note    Conversational person; safe to close distance.
+
+[23] NOVEL  APPROACH  reward=0.89  (DELIBERATIVE)
+       vision  object_type=human, motion=static, color=bright
+       audio   sound_type=speech, audio_intensity=low
+       touch   contact=firm, texture=smooth, thermal=warm, touch_intensity=medium
+       smell   odor_type=food, odor_intensity=strong, pleasantness=pleasant
+       note    Firm friendly contact, strong pleasant food odour.
+
+[24] NOVEL  APPROACH  reward=0.81  (DELIBERATIVE)
+       vision  object_type=animal, motion=slow, color=bright
+       audio   sound_type=none, audio_intensity=low
+       touch   contact=light, texture=smooth, thermal=warm, touch_intensity=low
+       smell   odor_type=organic, odor_intensity=faint, pleasantness=pleasant
+       note    Docile warm animal.
+
+[25] NOVEL  APPROACH  reward=0.84  (DELIBERATIVE)
+       vision  object_type=human, motion=static, color=blue
+       audio   sound_type=speech, audio_intensity=medium
+       touch   contact=none, texture=smooth, thermal=warm, touch_intensity=low
+       smell   odor_type=food, odor_intensity=moderate, pleasantness=pleasant
+       note    Person waiting; nothing adverse in any channel.
+
+[26] NOVEL  APPROACH  reward=0.74  (DELIBERATIVE)
+       vision  object_type=vehicle, motion=static, color=bright
+       audio   sound_type=speech, audio_intensity=medium
+       touch   contact=light, texture=smooth, thermal=neutral, touch_intensity=low
+       smell   odor_type=none, odor_intensity=faint, pleasantness=neutral
+       note    Stationary vehicle with occupants talking.
+
+[27] NOVEL  APPROACH  reward=0.79  (DELIBERATIVE)
+       vision  object_type=animal, motion=slow, color=red
+       audio   sound_type=speech, audio_intensity=low
+       touch   contact=light, texture=smooth, thermal=warm, touch_intensity=low
+       smell   odor_type=food, odor_intensity=moderate, pleasantness=pleasant
+       note    Animal near food; approachable.
+
+[28] NOVEL  IGNORE    reward=0.62  (DELIBERATIVE)
+       vision  object_type=animal, motion=slow, color=dark
+       audio   sound_type=noise, audio_intensity=high
+       touch   contact=none, texture=smooth, thermal=cold, touch_intensity=low
+       smell   odor_type=none, odor_intensity=faint, pleasantness=neutral
+       note    Background animal noise; no action needed.
+
+[29] NOVEL  IGNORE    reward=0.76  (DELIBERATIVE)
+       vision  object_type=vehicle, motion=static, color=red
+       audio   sound_type=none, audio_intensity=low
+       touch   contact=none, texture=smooth, thermal=cold, touch_intensity=low
+       smell   odor_type=none, odor_intensity=faint, pleasantness=neutral
+       note    Empty parked vehicle; correctly ignored.
+
+[30] NOVEL  IGNORE    reward=0.72  (DELIBERATIVE)
+       vision  object_type=human, motion=slow, color=dark
+       audio   sound_type=none, audio_intensity=low
+       touch   contact=none, texture=smooth, thermal=neutral, touch_intensity=low
+       smell   odor_type=none, odor_intensity=faint, pleasantness=neutral
+       note    Passer-by, no signal in any channel.
+
+[31] NOVEL  IGNORE    reward=0.68  (DELIBERATIVE)
+       vision  object_type=animal, motion=static, color=bright
+       audio   sound_type=none, audio_intensity=low
+       touch   contact=none, texture=smooth, thermal=neutral, touch_intensity=low
+       smell   odor_type=organic, odor_intensity=faint, pleasantness=neutral
+       note    Resting animal.
+
+[32] NOVEL  IGNORE    reward=0.70  (DELIBERATIVE)
+       vision  object_type=unknown, motion=static, color=blue
+       audio   sound_type=none, audio_intensity=low
+       touch   contact=none, texture=smooth, thermal=cold, touch_intensity=low
+       smell   odor_type=none, odor_intensity=faint, pleasantness=neutral
+       note    Inert cold object; baseline ignore case.
+
+[33] NOVEL  IGNORE    reward=0.67  (DELIBERATIVE)
+       vision  object_type=vehicle, motion=slow, color=blue
+       audio   sound_type=none, audio_intensity=low
+       touch   contact=none, texture=smooth, thermal=cold, touch_intensity=low
+       smell   odor_type=none, odor_intensity=faint, pleasantness=neutral
+       note    Slow distant vehicle.
+
+[34] NOVEL  WITHDRAW  reward=0.71  (REFLEXIVE)
+       vision  object_type=human, motion=slow, color=bright
+       audio   sound_type=speech, audio_intensity=low
+       touch   contact=firm, texture=sharp, thermal=warm, touch_intensity=medium
+       smell   odor_type=food, odor_intensity=moderate, pleasantness=pleasant
+       note    Pleasant scene but sharp firm contact; touch overrides.
+
+[35] NOVEL  ALERT     reward=0.69  (DELIBERATIVE)
+       vision  object_type=animal, motion=slow, color=bright
+       audio   sound_type=speech, audio_intensity=low
+       touch   contact=light, texture=smooth, thermal=warm, touch_intensity=low
+       smell   odor_type=chemical, odor_intensity=strong, pleasantness=foul
+       note    Calm scene undermined by a strong chemical odour.
+
+[36] NOVEL  ALERT     reward=0.77  (REFLEXIVE)
+       vision  object_type=human, motion=static, color=blue
+       audio   sound_type=alarm, audio_intensity=high
+       touch   contact=light, texture=smooth, thermal=warm, touch_intensity=low
+       smell   odor_type=food, odor_intensity=strong, pleasantness=pleasant
+       note    Alarm during a pleasant meal; alarm still wins.
+
+[37] NOVEL  WITHDRAW  reward=0.74  (DELIBERATIVE)
+       vision  object_type=unknown, motion=static, color=dark
+       audio   sound_type=none, audio_intensity=low
+       touch   contact=firm, texture=wet, thermal=cold, touch_intensity=medium
+       smell   odor_type=organic, odor_intensity=strong, pleasantness=foul
+       note    Cold wet foul mass; unpleasant but not reflexive.
+
+[38] NOVEL  OBSERVE   reward=0.68  (REFLEXIVE)
+       vision  object_type=vehicle, motion=fast, color=bright
+       audio   sound_type=speech, audio_intensity=low
+       touch   contact=none, texture=smooth, thermal=warm, touch_intensity=low
+       smell   odor_type=food, odor_intensity=moderate, pleasantness=pleasant
+       note    Fast motion in an otherwise benign scene.
+
+[39] NOVEL  OBSERVE   reward=0.65  (DELIBERATIVE)
+       vision  object_type=unknown, motion=static, color=dark
+       audio   sound_type=none, audio_intensity=low
+       touch   contact=firm, texture=wet, thermal=warm, touch_intensity=medium
+       smell   odor_type=organic, odor_intensity=moderate, pleasantness=neutral
+       note    Warm wet unknown; inspect before deciding.
+
+[40] NOVEL  APPROACH  reward=0.70  (DELIBERATIVE)
+       vision  object_type=unknown, motion=static, color=bright
+       audio   sound_type=none, audio_intensity=low
+       touch   contact=light, texture=rough, thermal=warm, touch_intensity=low
+       smell   odor_type=none, odor_intensity=faint, pleasantness=neutral
+       note    Rough warm surface, harmless.
+
+[41] NOVEL  APPROACH  reward=0.76  (DELIBERATIVE)
+       vision  object_type=human, motion=slow, color=bright
+       audio   sound_type=speech, audio_intensity=low
+       touch   contact=firm, texture=smooth, thermal=cold, touch_intensity=medium
+       smell   odor_type=none, odor_intensity=faint, pleasantness=neutral
+       note    Cold handshake; cold alone is not a threat.
+
+[42] NOVEL  OBSERVE   reward=0.63  (DELIBERATIVE)
+       vision  object_type=unknown, motion=static, color=red
+       audio   sound_type=none, audio_intensity=low
+       touch   contact=light, texture=smooth, thermal=warm, touch_intensity=low
+       smell   odor_type=chemical, odor_intensity=faint, pleasantness=neutral
+       note    Warm object with a faint chemical trace.
+
+[43] NOVEL  APPROACH  reward=0.28  (DELIBERATIVE)
+       vision  object_type=animal, motion=slow, color=dark
+       audio   sound_type=noise, audio_intensity=high
+       touch   contact=none, texture=smooth, thermal=cold, touch_intensity=low
+       smell   odor_type=none, odor_intensity=faint, pleasantness=neutral
+       note    Approached where ignoring was advised; poor outcome.
+
+[44] NOVEL  APPROACH  reward=0.12  (DELIBERATIVE)
+       vision  object_type=unknown, motion=static, color=bright
+       audio   sound_type=alarm, audio_intensity=high
+       touch   contact=firm, texture=smooth, thermal=hot, touch_intensity=high
+       smell   odor_type=smoke, odor_intensity=strong, pleasantness=foul
+       note    Approached a fire. Worst entry in the bank.
+
+[45] NOVEL  WITHDRAW  reward=0.31  (DELIBERATIVE)
+       vision  object_type=human, motion=slow, color=bright
+       audio   sound_type=speech, audio_intensity=low
+       touch   contact=light, texture=smooth, thermal=warm, touch_intensity=low
+       smell   odor_type=food, odor_intensity=moderate, pleasantness=pleasant
+       note    Withdrew from a safe, inviting scene; wasted caution.
+
+[46] NOVEL  IGNORE    reward=0.09  (DELIBERATIVE)
+       vision  object_type=vehicle, motion=fast, color=dark
+       audio   sound_type=noise, audio_intensity=high
+       touch   contact=impact, texture=rough, thermal=neutral, touch_intensity=high
+       smell   odor_type=none, odor_intensity=faint, pleasantness=neutral
+       note    Ignored a collision. Should have withdrawn.
+
+[47] NOVEL  IGNORE    reward=0.22  (DELIBERATIVE)
+       vision  object_type=unknown, motion=static, color=dark
+       audio   sound_type=none, audio_intensity=low
+       touch   contact=none, texture=smooth, thermal=neutral, touch_intensity=low
+       smell   odor_type=chemical, odor_intensity=strong, pleasantness=foul
+       note    Ignored a strong chemical leak.
+
+[48] NOVEL  OBSERVE   reward=0.73  (DELIBERATIVE)
+       vision  object_type=human, motion=static, color=bright
+       audio   sound_type=none, audio_intensity=medium
+       touch   contact=none, texture=smooth, thermal=neutral, touch_intensity=low
+       smell   odor_type=none, odor_intensity=faint, pleasantness=neutral
+       note    Neutral human presence; default watchfulness.
+
+[49] NOVEL  IGNORE    reward=0.66  (DELIBERATIVE)
+       vision  object_type=animal, motion=static, color=red
+       audio   sound_type=none, audio_intensity=low
+       touch   contact=light, texture=rough, thermal=neutral, touch_intensity=low
+       smell   odor_type=organic, odor_intensity=faint, pleasantness=neutral
+       note    Quiet animal at light contact.
+
+[50] NOVEL  APPROACH  reward=0.75  (DELIBERATIVE)
+       vision  object_type=unknown, motion=slow, color=blue
+       audio   sound_type=speech, audio_intensity=medium
+       touch   contact=none, texture=smooth, thermal=neutral, touch_intensity=low
+       smell   odor_type=food, odor_intensity=faint, pleasantness=pleasant
+       note    Ambiguous but pleasant; approach paid off.
+
+[51] REPEAT WITHDRAW  reward=0.94  (REFLEXIVE)
+       vision  object_type=unknown, motion=static, color=bright
+       audio   sound_type=alarm, audio_intensity=high
+       touch   contact=firm, texture=smooth, thermal=hot, touch_intensity=medium
+       smell   odor_type=smoke, odor_intensity=strong, pleasantness=foul
+       note    Variant of 1: lower touch intensity, same verdict.
+
+[52] REPEAT WITHDRAW  reward=0.91  (REFLEXIVE)
+       vision  object_type=vehicle, motion=static, color=dark
+       audio   sound_type=noise, audio_intensity=high
+       touch   contact=light, texture=smooth, thermal=hot, touch_intensity=medium
+       smell   odor_type=smoke, odor_intensity=strong, pleasantness=foul
+       note    Variant of 2: louder, stronger smoke.
+
+[53] REPEAT WITHDRAW  reward=0.93  (REFLEXIVE)
+       vision  object_type=unknown, motion=fast, color=bright
+       audio   sound_type=noise, audio_intensity=high
+       touch   contact=impact, texture=sharp, thermal=neutral, touch_intensity=high
+       smell   odor_type=none, odor_intensity=faint, pleasantness=neutral
+       note    Variant of 6: neutral rather than cold.
+
+[54] REPEAT WITHDRAW  reward=0.87  (REFLEXIVE)
+       vision  object_type=animal, motion=fast, color=dark
+       audio   sound_type=noise, audio_intensity=high
+       touch   contact=firm, texture=sharp, thermal=warm, touch_intensity=medium
+       smell   odor_type=organic, odor_intensity=moderate, pleasantness=foul
+       note    Variant of 8: milder odour and grip.
+
+[55] REPEAT ALERT     reward=0.90  (REFLEXIVE)
+       vision  object_type=human, motion=fast, color=red
+       audio   sound_type=alarm, audio_intensity=medium
+       touch   contact=none, texture=smooth, thermal=neutral, touch_intensity=low
+       smell   odor_type=none, odor_intensity=faint, pleasantness=neutral
+       note    Variant of 9: quieter alarm.
+
+[56] REPEAT ALERT     reward=0.85  (REFLEXIVE)
+       vision  object_type=unknown, motion=static, color=dark
+       audio   sound_type=none, audio_intensity=low
+       touch   contact=none, texture=smooth, thermal=warm, touch_intensity=low
+       smell   odor_type=chemical, odor_intensity=strong, pleasantness=foul
+       note    Variant of 11: warm rather than neutral.
+
+[57] REPEAT ALERT     reward=0.88  (REFLEXIVE)
+       vision  object_type=human, motion=static, color=blue
+       audio   sound_type=alarm, audio_intensity=medium
+       touch   contact=none, texture=smooth, thermal=neutral, touch_intensity=low
+       smell   odor_type=none, odor_intensity=faint, pleasantness=neutral
+       note    Variant of 13: medium alarm intensity.
+
+[58] REPEAT OBSERVE   reward=0.80  (REFLEXIVE)
+       vision  object_type=animal, motion=fast, color=red
+       audio   sound_type=noise, audio_intensity=high
+       touch   contact=none, texture=smooth, thermal=neutral, touch_intensity=low
+       smell   odor_type=organic, odor_intensity=moderate, pleasantness=neutral
+       note    Variant of 14: louder background.
+
+[59] REPEAT OBSERVE   reward=0.76  (REFLEXIVE)
+       vision  object_type=unknown, motion=fast, color=dark
+       audio   sound_type=none, audio_intensity=low
+       touch   contact=none, texture=smooth, thermal=cold, touch_intensity=low
+       smell   odor_type=none, odor_intensity=faint, pleasantness=neutral
+       note    Variant of 15: dark rather than bright.
+
+[60] REPEAT OBSERVE   reward=0.68  (DELIBERATIVE)
+       vision  object_type=unknown, motion=slow, color=dark
+       audio   sound_type=noise, audio_intensity=high
+       touch   contact=light, texture=rough, thermal=cold, touch_intensity=low
+       smell   odor_type=none, odor_intensity=faint, pleasantness=neutral
+       note    Variant of 17: louder.
+
+[61] REPEAT APPROACH  reward=0.90  (DELIBERATIVE)
+       vision  object_type=human, motion=slow, color=bright
+       audio   sound_type=speech, audio_intensity=medium
+       touch   contact=light, texture=smooth, thermal=warm, touch_intensity=low
+       smell   odor_type=food, odor_intensity=moderate, pleasantness=pleasant
+       note    Variant of 21: louder speech; still ideal.
+
+[62] REPEAT APPROACH  reward=0.86  (DELIBERATIVE)
+       vision  object_type=human, motion=slow, color=blue
+       audio   sound_type=speech, audio_intensity=low
+       touch   contact=light, texture=smooth, thermal=warm, touch_intensity=low
+       smell   odor_type=food, odor_intensity=faint, pleasantness=pleasant
+       note    Variant of 22: quieter, warmer.
+
+[63] REPEAT APPROACH  reward=0.88  (DELIBERATIVE)
+       vision  object_type=human, motion=static, color=bright
+       audio   sound_type=speech, audio_intensity=low
+       touch   contact=firm, texture=smooth, thermal=warm, touch_intensity=low
+       smell   odor_type=food, odor_intensity=moderate, pleasantness=pleasant
+       note    Variant of 23: gentler contact.
+
+[64] REPEAT APPROACH  reward=0.78  (DELIBERATIVE)
+       vision  object_type=animal, motion=slow, color=bright
+       audio   sound_type=none, audio_intensity=low
+       touch   contact=light, texture=rough, thermal=warm, touch_intensity=low
+       smell   odor_type=organic, odor_intensity=faint, pleasantness=pleasant
+       note    Variant of 24: rougher coat.
+
+[65] REPEAT IGNORE    reward=0.60  (DELIBERATIVE)
+       vision  object_type=animal, motion=slow, color=dark
+       audio   sound_type=noise, audio_intensity=medium
+       touch   contact=none, texture=smooth, thermal=cold, touch_intensity=low
+       smell   odor_type=none, odor_intensity=faint, pleasantness=neutral
+       note    Variant of 28: quieter.
+
+[66] REPEAT IGNORE    reward=0.71  (DELIBERATIVE)
+       vision  object_type=vehicle, motion=static, color=red
+       audio   sound_type=none, audio_intensity=medium
+       touch   contact=none, texture=smooth, thermal=cold, touch_intensity=low
+       smell   odor_type=none, odor_intensity=faint, pleasantness=neutral
+       note    Variant of 29: some ambient sound.
+
+[67] REPEAT IGNORE    reward=0.69  (DELIBERATIVE)
+       vision  object_type=human, motion=slow, color=dark
+       audio   sound_type=none, audio_intensity=low
+       touch   contact=light, texture=smooth, thermal=neutral, touch_intensity=low
+       smell   odor_type=none, odor_intensity=faint, pleasantness=neutral
+       note    Variant of 30: incidental contact.
+
+[68] REPEAT WITHDRAW  reward=0.73  (REFLEXIVE)
+       vision  object_type=human, motion=slow, color=bright
+       audio   sound_type=speech, audio_intensity=low
+       touch   contact=firm, texture=sharp, thermal=warm, touch_intensity=high
+       smell   odor_type=food, odor_intensity=moderate, pleasantness=pleasant
+       note    Variant of 34: firmer sharp contact.
+
+[69] REPEAT APPROACH  reward=0.25  (DELIBERATIVE)
+       vision  object_type=animal, motion=slow, color=dark
+       audio   sound_type=noise, audio_intensity=high
+       touch   contact=none, texture=smooth, thermal=cold, touch_intensity=low
+       smell   odor_type=none, odor_intensity=faint, pleasantness=neutral
+       note    Variant of 43: approach punished again.
+
+[70] REPEAT APPROACH  reward=0.15  (DELIBERATIVE)
+       vision  object_type=unknown, motion=static, color=bright
+       audio   sound_type=alarm, audio_intensity=high
+       touch   contact=firm, texture=smooth, thermal=hot, touch_intensity=high
+       smell   odor_type=smoke, odor_intensity=moderate, pleasantness=foul
+       note    Variant of 44: approaching fire, punished again.
