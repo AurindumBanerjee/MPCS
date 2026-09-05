@@ -1,13 +1,13 @@
 """
 MPCS v2 dashboard — Variant C: Dash / Plotly
 ---------------------------------------------
-Same cognition as the other variants (mcps_engine), different front-end.
+Same cognition as the other variants (mpcs_engine), different front-end.
 Plotly earns its place here through real hover tooltips: every memory node
 carries its own similarity, decay, boost and resulting weight, so the
 arithmetic behind a decision is inspectable rather than merely depicted.
 
 Requires:  pip install dash plotly
-Run:       python mcps_dash_plotly.py
+Run:       python mpcs_dash_plotly.py
 """
 
 from __future__ import annotations
@@ -23,8 +23,8 @@ from dash import Dash, Input, Output, State, ctx, dcc, html, no_update
 # The engine lives in ../core; add it to the path so this runs from anywhere.
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "core"))
 
-import mcps_engine as E
-from mcps_preset_v2 import PROFILE_CONFIGS, build_preset_memory
+import mpcs_engine as E
+from mpcs_preset_v2 import PROFILE_CONFIGS, build_preset_memory
 
 
 # Dash callbacks are stateless, so the session lives here at module level.
@@ -596,7 +596,7 @@ def export_memory(_clicks):
         content=json.dumps({"memory": SESSION.memory.to_json_obj(),
                             "profile": SESSION.profile,
                             "config": SESSION.cfg.to_dict()}, indent=2),
-        filename="mcps_memory.json",
+        filename="mpcs_memory.json",
     )
 
 

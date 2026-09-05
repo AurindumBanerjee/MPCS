@@ -1,13 +1,13 @@
 """
 MPCS v2 dashboard — Variant B: Streamlit
 -----------------------------------------
-Same cognition as the other variants (mcps_engine), different front-end.
+Same cognition as the other variants (mpcs_engine), different front-end.
 Streamlit gives the sidebar and layout for free; the cost is that it re-runs
 this whole script on every interaction, so the session lives in
 st.session_state and is built exactly once.
 
 Requires:  pip install streamlit
-Run:       streamlit run mcps_dash_streamlit.py
+Run:       streamlit run mpcs_dash_streamlit.py
 """
 
 from __future__ import annotations
@@ -21,8 +21,8 @@ import streamlit as st
 # The engine lives in ../core; add it to the path so this runs from anywhere.
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "core"))
 
-import mcps_engine as E
-from mcps_preset_v2 import PROFILE_CONFIGS, build_preset_memory
+import mpcs_engine as E
+from mpcs_preset_v2 import PROFILE_CONFIGS, build_preset_memory
 
 
 st.set_page_config(page_title="MPCS v2 — Cognitive Dashboard",
@@ -47,14 +47,14 @@ PARAM_SPEC = [
 # on every widget interaction, which is the classic Streamlit trap.
 # ----------------------------------------------------------------------
 def get_session() -> E.Session:
-    if "mcps" not in st.session_state:
+    if "mpcs" not in st.session_state:
         session = E.Session()
         session.reset(memory=build_preset_memory("balanced"), profile="balanced")
-        st.session_state.mcps = session
+        st.session_state.mpcs = session
         st.session_state.notice = (
             f"Loaded preset bank: {len(session.memory)} experiences."
         )
-    return st.session_state.mcps
+    return st.session_state.mpcs
 
 
 def load_memory(source: str, profile: str, seed, uploaded) -> str:
@@ -111,7 +111,7 @@ with st.sidebar:
         data=json.dumps({"memory": session.memory.to_json_obj(),
                          "profile": session.profile,
                          "config": session.cfg.to_dict()}, indent=2),
-        file_name="mcps_memory.json", mime="application/json",
+        file_name="mpcs_memory.json", mime="application/json",
         use_container_width=True,
     )
 

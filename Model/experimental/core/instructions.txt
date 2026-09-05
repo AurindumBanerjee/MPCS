@@ -8,9 +8,9 @@ The cognition itself, with no user interface attached. All three
 dashboards import this and add only presentation, so behaviour is
 identical whichever one you run.
 
-  mcps_engine.py     Modalities, Z-numbers, memory, reflexes,
+  mpcs_engine.py     Modalities, Z-numbers, memory, reflexes,
                      deliberation, reward, explanation payload.
-  mcps_preset_v2.py  70-experience preset memory bank.
+  mpcs_preset_v2.py  70-experience preset memory bank.
   engine_smoke.py    67 headless checks over the engine.
 
 You do not run a dashboard from here. This folder is for working on
@@ -38,8 +38,8 @@ Expected: "67/67 checks passed".
 
 Inspect the preset bank and regenerate its companion document:
 
-    python mcps_preset_v2.py
-    python mcps_preset_v2.py --write-doc
+    python mpcs_preset_v2.py
+    python mpcs_preset_v2.py --write-doc
 
 The second command rewrites Model/data/PresetMemory_v2.txt from the
 entry list itself, so the document cannot drift from the code.
@@ -48,8 +48,8 @@ entry list itself, so the document cannot drift from the code.
 DRIVING THE ENGINE FROM YOUR OWN SCRIPT
 ---------------------------------------
     import sys; sys.path.insert(0, "Model/experimental/core")
-    import mcps_engine as E
-    from mcps_preset_v2 import build_preset_memory
+    import mpcs_engine as E
+    from mpcs_preset_v2 import build_preset_memory
 
     session = E.Session(seed=42)
     session.reset(memory=build_preset_memory("balanced"))

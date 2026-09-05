@@ -240,7 +240,7 @@
 
   <p>The engine binds four modalities — vision, audio, touch and smell — into an <code>AfferentObject</code> whose <code>summary</code> is a tuple of <code>(feature, value, confidence)</code> triples, any subset of which may be absent. Similarity between two summaries is a confidence-weighted count of exactly-matching feature values, normalised by total confidence:</p>
 
-  <div class="formula"><span class="comment"># Model/experimental/core/mcps_engine.py — current kernel</span>
+  <div class="formula"><span class="comment"># Model/experimental/core/mpcs_engine.py — current kernel</span>
 sim_z(s₁, s₂)  = Σ<span class="key">ₖ</span> [ v₁ₖ == v₂ₖ ] · min(c₁ₖ, c₂ₖ)
 norm_sim       = sim_z(s₁, s₂) / Σ<span class="key">ₖ</span> c₁ₖ
 novelty(s)     = 1 − max<span class="val">ₘ∈memory</span> norm_sim(s, m.summary)     <span class="comment"># full linear scan</span>
@@ -1340,7 +1340,7 @@ async queue: merge delta when idle; re-fit P₃ centroids after 500 writes</div>
 
 <footer>
   <p><strong>Sources.</strong> J. Chandra, S. K. Navneet &amp; Y. Zhang, <em>The Hybrid Multimodal Graph Index (HMGI)</em>, arXiv:2510.10123, 2025 · J. Myung, J. Park &amp; J. Han, <em>HyST: LLM-Powered Hybrid Retrieval over Semi-Structured Tabular Data</em>, arXiv:2508.18048, EARL '25 · F. Mohbat &amp; M. J. Zaki, <em>KERL: Knowledge-Enhanced Personalized Recipe Recommendation using LLMs</em>, arXiv:2505.14629, ACL 2025.</p>
-  <p><strong>System references.</strong> <code>Model/experimental/core/mcps_engine.py</code> (similarity kernel, dlCBF, memory system, contribution weighting, graph builder) · <code>docs/CurrentStatus.md</code> (named gaps: two-layer memory, emotion as first-class signal, triple-update loop) · <code>docs/MCPS_Report.html</code> (framework and visual language).</p>
+  <p><strong>System references.</strong> <code>Model/experimental/core/mpcs_engine.py</code> (similarity kernel, dlCBF, memory system, contribution weighting, graph builder) · <code>docs/CurrentStatus.md</code> (named gaps: two-layer memory, emotion as first-class signal, triple-update loop) · <code>docs/MPCS_Report.html</code> (framework and visual language).</p>
   <p>Illustrative figures in §8 are targets for measurement, not measurements. MPCS · Memory Indexing &amp; Retrieval Track · September 2026.</p>
 </footer>
 

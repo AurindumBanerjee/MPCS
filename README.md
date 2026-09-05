@@ -8,16 +8,16 @@ perception -> reflex or deliberation -> action -> reward -> memory -> state upda
 
 ```
 Model/
-  reference/     Frozen baselines: mpcs.py, BloomMCPS.py, their preset launchers, MCPS_Test.py
+  reference/     Frozen baselines: mpcs.py, BloomMPCS.py, their preset launchers, MPCS_Test.py
   experimental/  Active trunk — MPCS v2, one folder per implementation:
       core/                  the engine (four modalities, memory-derived reward)
       dashboard_web/         local web dashboard, no dependencies
       dashboard_tk/          Tkinter desktop dashboard, no dependencies
       dashboard_streamlit/   Streamlit dashboard
       dashboard_plotly/      Dash / Plotly dashboard
-      baseline_z/            MCPS_Z.py, the previous two-modality version
+      baseline_z/            MPCS_Z.py, the previous two-modality version
   data/          PresetMemory.txt, PresetMemory_v2.txt and other data artifacts
-docs/            MCPS_Report.html, CurrentStatus.md, Checklist.md
+docs/            MPCS_Report.html, CurrentStatus.md, Checklist.md
 Reading/         Background PDFs
 ```
 
@@ -30,24 +30,24 @@ walkthrough and troubleshooting.
 Current version — a dashboard showing which memories produced each decision.
 Both of these need nothing installed:
 
-- `python Model/experimental/dashboard_web/MCPS_Test.py` (browser)
-- `python Model/experimental/dashboard_tk/mcps_dash_tk.py` (desktop window)
+- `python Model/experimental/dashboard_web/MPCS_Test.py` (browser)
+- `python Model/experimental/dashboard_tk/mpcs_dash_tk.py` (desktop window)
 
 The same system through other front-ends (`pip install -r requirements.txt`,
 or `pip install streamlit pandas dash plotly`):
 
-- `streamlit run Model/experimental/dashboard_streamlit/mcps_dash_streamlit.py`
-- `python Model/experimental/dashboard_plotly/mcps_dash_plotly.py`
+- `streamlit run Model/experimental/dashboard_streamlit/mpcs_dash_streamlit.py`
+- `python Model/experimental/dashboard_plotly/mpcs_dash_plotly.py`
 
 Verify the engine with no UI involved:
 
 - `python Model/experimental/core/engine_smoke.py`
 
-Earlier versions, kept for comparison. Install optional BloomMCPS dependency:
+Earlier versions, kept for comparison. Install optional BloomMPCS dependency:
 - `pip install bloom-filter`
 
 - Previous Z-number Tk UI (two modalities, expert teaching):
-	- `python Model/experimental/baseline_z/MCPS_Z.py`
+	- `python Model/experimental/baseline_z/MPCS_Z.py`
 - Standard reference UI:
 	- `python Model/reference/mpcs.py`
 - Preset-memory reference UI (starts with ready-made experience):
@@ -55,9 +55,9 @@ Earlier versions, kept for comparison. Install optional BloomMCPS dependency:
 	- `python Model/reference/mpcs_preset_memory.py --profile cautious`
 	- `python Model/reference/mpcs_preset_memory.py --profile exploratory --seed 99`
 - Bloom-filter reference UI:
-	- `python Model/reference/BloomMCPS.py`
+	- `python Model/reference/BloomMPCS.py`
 - Bloom-filter preset-memory reference UI:
-	- `python Model/reference/BloomMCPS_preset_memory.py --profile cautious`
+	- `python Model/reference/BloomMPCS_preset_memory.py --profile cautious`
 
 Note: the preset launchers import their sibling modules, so run them from
 within `Model/reference/` (or with that directory on `PYTHONPATH`).

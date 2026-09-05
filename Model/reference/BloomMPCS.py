@@ -1,5 +1,5 @@
 """
-BloomMCPS - MPCS with Bloom Filter Accelerators
+BloomMPCS - MPCS with Bloom Filter Accelerators
 ===============================================
 A minimal cognitive architecture simulation that mimics core aspects of
 cognition: perception -> reasoning -> action -> learning.
@@ -402,7 +402,7 @@ def cognitive_step(
 class CognitiveUI:
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("BloomMCPS - Malleable Perceptual-Cognitive System")
+        self.root.title("BloomMPCS - Malleable Perceptual-Cognitive System")
         self.root.resizable(False, False)
 
         self.state  = init_state()

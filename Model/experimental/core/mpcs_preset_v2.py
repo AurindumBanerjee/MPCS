@@ -21,7 +21,7 @@ The bank is shaped so the decision machinery has something to chew on:
 Steps run 1..70 so older memories decay measurably against newer ones.
 
 Run directly to regenerate the human-readable companion document:
-    python mcps_preset_v2.py --write-doc
+    python mpcs_preset_v2.py --write-doc
 """
 
 from __future__ import annotations
@@ -30,7 +30,7 @@ import argparse
 import os
 from collections import Counter, defaultdict
 
-from mcps_engine import (
+from mpcs_engine import (
     ACTIONS,
     MemorySystem,
     clamp_reward,
@@ -454,7 +454,7 @@ def render_doc() -> str:
         f"{stats['total']} experiences: {stats['novel']} novel contexts + "
         f"{stats['repeated']} near-repetitions.",
         "Every entry carries all four modalities (vision, audio, touch, smell).",
-        "Generated from mcps_preset_v2.py — do not edit by hand.",
+        "Generated from mpcs_preset_v2.py — do not edit by hand.",
         "",
         "Action distribution",
         "-" * 60,

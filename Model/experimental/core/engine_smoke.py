@@ -15,8 +15,8 @@ from __future__ import annotations
 import random
 import statistics
 
-import mcps_engine as E
-from mcps_preset_v2 import build_preset_memory, bank_stats
+import mpcs_engine as E
+from mpcs_preset_v2 import build_preset_memory, bank_stats
 
 
 PASS, FAIL = "PASS", "FAIL"

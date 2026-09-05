@@ -2,7 +2,7 @@
 MPCS v2 dashboard — Variant A: local web app, standard library only
 --------------------------------------------------------------------
 Serves a single self-contained page from http.server and drives the shared
-mcps_engine behind a small JSON API. No third-party packages, no CDN
+mpcs_engine behind a small JSON API. No third-party packages, no CDN
 requests: the whole UI is inline in this file.
 
 What it shows that the old Tk window could not: which memories contributed to
@@ -10,8 +10,8 @@ the decision and how strongly, drawn as a percept-centred node-link graph that
 redraws every step.
 
 Run:
-    python MCPS_Test.py
-    python MCPS_Test.py --port 8765 --no-browser
+    python MPCS_Test.py
+    python MPCS_Test.py --port 8765 --no-browser
 """
 
 from __future__ import annotations
@@ -27,8 +27,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 # The engine lives in ../core; add it to the path so this runs from anywhere.
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "core"))
 
-import mcps_engine as E
-from mcps_preset_v2 import PROFILE_CONFIGS, build_preset_memory
+import mpcs_engine as E
+from mpcs_preset_v2 import PROFILE_CONFIGS, build_preset_memory
 
 
 # ----------------------------------------------------------------------
@@ -217,7 +217,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.send_header("Content-Disposition",
-                             'attachment; filename="mcps_memory.json"')
+                             'attachment; filename="mpcs_memory.json"')
             self.send_header("Content-Length", str(len(body)))
             self.end_headers()
             self.wfile.write(body)

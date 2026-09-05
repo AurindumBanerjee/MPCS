@@ -11,9 +11,9 @@ could not do at all — a contribution graph drawn on a Canvas showing which
 memories produced each decision.
 
 Run:
-    python mcps_dash_tk.py
-    python mcps_dash_tk.py --scratch     start with empty memory
-    python mcps_dash_tk.py --profile cautious --seed 42
+    python mpcs_dash_tk.py
+    python mpcs_dash_tk.py --scratch     start with empty memory
+    python mpcs_dash_tk.py --profile cautious --seed 42
 """
 
 from __future__ import annotations
@@ -29,8 +29,8 @@ from tkinter import filedialog, ttk
 # The engine lives in ../core; add it to the path so this runs from anywhere.
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "core"))
 
-import mcps_engine as E
-from mcps_preset_v2 import PROFILE_CONFIGS, build_preset_memory
+import mpcs_engine as E
+from mpcs_preset_v2 import PROFILE_CONFIGS, build_preset_memory
 
 
 # Dark palette matching the web dashboards, so screenshots sit side by side.
@@ -518,7 +518,7 @@ class CognitiveTkUI:
     def _export(self) -> None:
         path = filedialog.asksaveasfilename(
             defaultextension=".json", filetypes=[("JSON", "*.json")],
-            initialfile="mcps_memory.json")
+            initialfile="mpcs_memory.json")
         if not path:
             return
         with open(path, "w", encoding="utf-8") as handle:

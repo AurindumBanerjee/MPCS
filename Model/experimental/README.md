@@ -19,8 +19,8 @@ baseline_z/            The previous two-modality version, unchanged
 No installation required — pick a browser or a desktop window:
 
 ```
-python dashboard_web/MCPS_Test.py     # opens http://127.0.0.1:8756/
-python dashboard_tk/mcps_dash_tk.py   # native window, instant start
+python dashboard_web/MPCS_Test.py     # opens http://127.0.0.1:8756/
+python dashboard_tk/mpcs_dash_tk.py   # native window, instant start
 ```
 
 Both open with the 70-experience preset bank loaded. The other two dashboards
@@ -87,7 +87,7 @@ contradicted advice.
 | | A: web | B: Streamlit | C: Dash/Plotly | D: Tk |
 |---|---|---|---|---|
 | Install | nothing | `streamlit pandas` | `dash plotly` | nothing |
-| Launch | `python MCPS_Test.py` | `streamlit run …` | `python …` | `python …` |
+| Launch | `python MPCS_Test.py` | `streamlit run …` | `python …` | `python …` |
 | Surface | browser | browser | browser | desktop window |
 | Startup | server + browser | server + browser | server, no browser | instant |
 | Graph | inline SVG | inline SVG | Plotly traces | Tk Canvas |

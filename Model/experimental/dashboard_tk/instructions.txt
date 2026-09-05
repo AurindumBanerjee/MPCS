@@ -37,23 +37,23 @@ No other packages required.
 RUNNING
 -------
     cd Model/experimental/dashboard_tk
-    python mcps_dash_tk.py
+    python mpcs_dash_tk.py
 
 Options:
 
-    python mcps_dash_tk.py --scratch
+    python mpcs_dash_tk.py --scratch
         start with empty memory instead of the 70-experience bank
 
-    python mcps_dash_tk.py --profile cautious
+    python mpcs_dash_tk.py --profile cautious
         balanced (default) / cautious / exploratory
 
-    python mcps_dash_tk.py --seed 42
+    python mpcs_dash_tk.py --seed 42
         fix the RNG for reproducible runs
 
 The script finds ../core on its own, so this also works from the
 repository root:
 
-    python Model/experimental/dashboard_tk/mcps_dash_tk.py
+    python Model/experimental/dashboard_tk/mpcs_dash_tk.py
 
 
 USING THE DASHBOARD
@@ -181,5 +181,5 @@ Window too small / panels cramped
 Sliders will not scroll
     Put the pointer over the slider area first, then use the wheel.
 
-ModuleNotFoundError: mcps_engine
+ModuleNotFoundError: mpcs_engine
     Verify the engine first:  python ../core/engine_smoke.py
