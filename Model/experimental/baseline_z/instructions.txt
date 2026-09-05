@@ -30,7 +30,7 @@ No other packages required.
 RUNNING
 -------
     cd Model/experimental/baseline_z
-    python MCPS_Z.py
+    python MPCS_Z.py
 
 A desktop window opens. Use "Run Step" to execute an action, then
 enter a reward and press "Apply Reward" to attach it to that action.
@@ -52,7 +52,7 @@ WHAT IT DOES
 
 HOW v2 DIFFERS
 --------------
-Run ../dashboard_web/MCPS_Test.py alongside this to compare.
+Run ../dashboard_web/MPCS_Test.py alongside this to compare.
 
   MODALITIES. v2 adds touch and smell behind a generic registry, and
   any channel can be switched off at run time.
@@ -88,11 +88,11 @@ RELATED BASELINES
 Model/reference/ holds the frozen pre-Z implementations:
 
     mpcs.py                     canonical two-modality version
-    BloomMCPS.py                the same plus a Bloom membership
+    BloomMPCS.py                the same plus a Bloom membership
                                 layer (needs: pip install bloom-filter)
     mpcs_preset_memory.py       launcher with a 30-experience bank
-    BloomMCPS_preset_memory.py  the same for the Bloom variant
-    MCPS_Test.py                latency benchmark, baseline vs Bloom
+    BloomMPCS_preset_memory.py  the same for the Bloom variant
+    MPCS_Test.py                latency benchmark, baseline vs Bloom
 
 Those import their siblings, so run them from inside
 Model/reference/.

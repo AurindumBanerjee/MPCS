@@ -1,15 +1,15 @@
 """
-MCPS_Test - benchmark Bloom-backed MPCS against baseline MPCS.
+MPCS_Test - benchmark Bloom-backed MPCS against baseline MPCS.
 
 This script compares negative-heavy and positive-heavy membership/retrieval
 workloads using the regular MemorySystem from mpcs.py and the Bloom-backed
-MemorySystem from BloomMCPS.py.
+MemorySystem from BloomMPCS.py.
 
 Output:
     Prints a JSON metrics report and returns the same metrics from run_benchmark().
 
 Run:
-    python MCPS_Test.py
+    python MPCS_Test.py
 """
 
 from __future__ import annotations
@@ -34,10 +34,10 @@ from mpcs import MemorySystem as BaseMemorySystem
 from mpcs import VISION_FEATURES as BASE_VISION_FEATURES
 from mpcs import AUDIO_FEATURES as BASE_AUDIO_FEATURES
 
-from BloomMCPS import AfferentObject as BloomAfferentObject
-from BloomMCPS import MemorySystem as BloomMemorySystem
-from BloomMCPS import VISION_FEATURES as BLOOM_VISION_FEATURES
-from BloomMCPS import AUDIO_FEATURES as BLOOM_AUDIO_FEATURES
+from BloomMPCS import AfferentObject as BloomAfferentObject
+from BloomMPCS import MemorySystem as BloomMemorySystem
+from BloomMPCS import VISION_FEATURES as BLOOM_VISION_FEATURES
+from BloomMPCS import AUDIO_FEATURES as BLOOM_AUDIO_FEATURES
 
 
 @dataclass(frozen=True)

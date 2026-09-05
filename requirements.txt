@@ -1,7 +1,7 @@
 # MPCS optional dependencies
 #
 # The engine (Model/experimental/core/) and the web dashboard
-# (Model/experimental/dashboard_web/MCPS_Test.py) need NOTHING from this file
+# (Model/experimental/dashboard_web/MPCS_Test.py) need NOTHING from this file
 # — they use only the Python standard library. Install these only for the
 # optional dashboards and the legacy Bloom baseline.
 #
@@ -24,7 +24,7 @@ numpy>=1.26,<3
 dash>=2.14
 plotly>=5.18
 
-# Legacy baseline only — Model/reference/BloomMCPS.py
+# Legacy baseline only — Model/reference/BloomMPCS.py
 # The active engine uses its own d-left counting Bloom filter and does not
 # need this.
 bloom-filter>=1.3

@@ -2,7 +2,7 @@
 MPCS engine — multimodal Z-number cognition core
 ------------------------------------------------
 Shared cognition for every MPCS v2 front-end. Extends the two-modality
-Z-variant (MCPS_Z.py) with:
+Z-variant (MPCS_Z.py) with:
 
   * four modalities (vision, audio, touch, smell) behind a generic registry,
     so a percept may omit any subset of them (the report's malleability

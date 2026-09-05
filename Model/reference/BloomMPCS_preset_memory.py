@@ -1,5 +1,5 @@
 """
-Preset-memory launcher for BloomMCPS.
+Preset-memory launcher for BloomMPCS.
 
 This script boots the existing Tk UI with a ready-made memory bank so you can
 test decision making against known prior experiences.
@@ -10,15 +10,15 @@ Workflow:
     3) Click Apply Reward to attach it to that last executed action.
 
 Run:
-    python BloomMCPS_preset_memory.py
-    python BloomMCPS_preset_memory.py --profile cautious
-    python BloomMCPS_preset_memory.py --profile exploratory --seed 99
+    python BloomMPCS_preset_memory.py
+    python BloomMPCS_preset_memory.py --profile cautious
+    python BloomMPCS_preset_memory.py --profile exploratory --seed 99
 """
 
 import argparse
 import tkinter as tk
 
-from BloomMCPS import AfferentObject, CognitiveUI, MemorySystem, init_state
+from BloomMPCS import AfferentObject, CognitiveUI, MemorySystem, init_state
 
 
 PROFILE_CONFIGS = {
@@ -64,7 +64,7 @@ def clamp_reward(value: float) -> float:
 
 
 def make_summary(vision: dict, audio: dict) -> tuple:
-    """Build a canonical summary tuple using BloomMCPS afferent encoding."""
+    """Build a canonical summary tuple using BloomMPCS afferent encoding."""
     return AfferentObject(vision=vision, audio=audio, time=0, state={}).summary
 
 
@@ -125,7 +125,7 @@ def build_preset_memory(profile: str = "balanced") -> MemorySystem:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Launch BloomMCPS UI with a preset memory bank and selectable behavior profile."
+            "Launch BloomMPCS UI with a preset memory bank and selectable behavior profile."
         )
     )
     parser.add_argument(

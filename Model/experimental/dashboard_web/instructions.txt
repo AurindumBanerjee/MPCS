@@ -7,7 +7,7 @@ WHAT THIS IS
 The reference dashboard. A small HTTP server serves one
 self-contained page and drives the shared engine in ../core behind a
 JSON API. The entire interface — markup, styling, graph drawing — is
-inline in MCPS_Test.py.
+inline in MPCS_Test.py.
 
 Use this one if you want the dashboard to just work. It needs
 nothing beyond Python itself, matching a repository that has no
@@ -24,22 +24,22 @@ Python 3.10 or newer. No packages to install.
 RUNNING
 -------
     cd Model/experimental/dashboard_web
-    python MCPS_Test.py
+    python MPCS_Test.py
 
 Your browser opens at http://127.0.0.1:8756/ automatically.
 Press Ctrl+C in the terminal to stop.
 
 Options:
 
-    python MCPS_Test.py --port 9000      run on a different port
-    python MCPS_Test.py --no-browser     do not open a browser
-    python MCPS_Test.py --host 0.0.0.0   accept connections from
+    python MPCS_Test.py --port 9000      run on a different port
+    python MPCS_Test.py --no-browser     do not open a browser
+    python MPCS_Test.py --host 0.0.0.0   accept connections from
                                          other machines on your LAN
 
 The script finds ../core on its own, so you can also run it from the
 repository root:
 
-    python Model/experimental/dashboard_web/MCPS_Test.py
+    python Model/experimental/dashboard_web/MPCS_Test.py
 
 If the port is already in use you will see "address already in use" —
 pass a different --port.

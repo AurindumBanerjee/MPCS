@@ -40,7 +40,7 @@ Verify:
 RUNNING
 -------
     cd Model/experimental/dashboard_streamlit
-    streamlit run mcps_dash_streamlit.py
+    streamlit run mpcs_dash_streamlit.py
 
 Streamlit prints a local URL (usually http://localhost:8501) and
 opens it. Press Ctrl+C in the terminal to stop.
@@ -52,11 +52,11 @@ and no interface.
 The script finds ../core on its own, so this also works from the
 repository root:
 
-    streamlit run Model/experimental/dashboard_streamlit/mcps_dash_streamlit.py
+    streamlit run Model/experimental/dashboard_streamlit/mpcs_dash_streamlit.py
 
 Run on a different port:
 
-    streamlit run mcps_dash_streamlit.py --server.port 8600
+    streamlit run mpcs_dash_streamlit.py --server.port 8600
 
 
 USING THE DASHBOARD
@@ -133,7 +133,7 @@ KNOWN QUIRKS
 ------------
 Streamlit reruns the script on every widget change. The session is
 cached in st.session_state, so memory survives — but if you edit
-mcps_dash_streamlit.py while it is running, Streamlit reloads and
+mpcs_dash_streamlit.py while it is running, Streamlit reloads and
 the cached session is rebuilt from the preset bank. Reload your
 memory afterwards if you were mid-experiment.
 
@@ -170,5 +170,5 @@ Warning about missing ScriptRunContext
 Memory resets unexpectedly
     You edited the file while it was running; see KNOWN QUIRKS.
 
-ModuleNotFoundError: mcps_engine
+ModuleNotFoundError: mpcs_engine
     Verify the engine first:  python ../core/engine_smoke.py
