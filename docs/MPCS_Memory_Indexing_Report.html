@@ -1,0 +1,1349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MPCS – Perceptual Memory Indexing &amp; Retrieval</title>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1815; --ink2: #3d3830; --ink3: #6b6258;
+    --page: #f9f7f3; --surface: #f2ede5; --border: #e0d8cc;
+    --accent: #2b4c7e; --accent2: #1e6e5b; --accent3: #8b3a1a;
+    --accent-pale: #e8eef6; --accent2-pale: #e4f0ec; --accent3-pale: #f4ede8;
+    --amber: #b07a12; --amber-pale: #fdf3e0;
+    --purple: #5a3d8a; --purple-pale: #ede9f6;
+    --rule: #cfc7b8;
+    --mono: 'DM Mono', monospace;
+    --serif: 'EB Garamond', Georgia, serif;
+    --sans: 'Outfit', system-ui, sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; scroll-behavior: smooth; }
+  body {
+    background: var(--page); color: var(--ink);
+    font-family: var(--serif); font-size: 1.0625rem; line-height: 1.78;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page-wrap { max-width: 900px; margin: 0 auto; padding: 0 2.5rem 6rem; }
+
+  /* Cover */
+  .cover { padding: 5rem 0 4rem; border-bottom: 1.5px solid var(--ink); margin-bottom: 3.5rem; }
+  .cover-badge { font-family: var(--sans); font-size: .7rem; font-weight: 600;
+    letter-spacing: .15em; text-transform: uppercase; color: var(--ink3); margin-bottom: 1.5rem; }
+  .cover h1 { font-size: 3rem; font-weight: 500; line-height: 1.12; letter-spacing: -.01em;
+    margin-bottom: .5rem; max-width: 720px; }
+  .cover-sub { font-style: italic; font-size: 1.3rem; color: var(--ink3); margin-bottom: 2.2rem; max-width: 660px; }
+  .cover-meta { font-family: var(--sans); font-size: .8rem; color: var(--ink3);
+    display: flex; gap: 2rem; flex-wrap: wrap; }
+
+  .abstract { background: var(--surface); border-left: 3px solid var(--accent);
+    padding: 1.5rem 2rem; border-radius: 0 8px 8px 0; margin-bottom: 3rem; }
+  .abstract-label { font-family: var(--sans); font-size: .65rem; font-weight: 600;
+    letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin-bottom: .6rem; }
+  .abstract p { font-size: .96rem; line-height: 1.7; color: var(--ink2); margin-bottom: .8rem; }
+  .abstract p:last-child { margin-bottom: 0; }
+
+  .toc { margin-bottom: 4rem; }
+  .toc-title { font-family: var(--sans); font-size: .65rem; font-weight: 600; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--ink3); margin-bottom: 1rem; padding-bottom: .5rem;
+    border-bottom: 1px solid var(--border); }
+  .toc ol { list-style: none; counter-reset: toc; column-count: 2; column-gap: 2rem; }
+  .toc ol li { counter-increment: toc; font-family: var(--sans); font-size: .83rem;
+    color: var(--ink3); padding: .22rem 0; display: flex; align-items: baseline; gap: .5rem; break-inside: avoid; }
+  .toc ol li::before { content: counter(toc, decimal-leading-zero); font-family: var(--mono);
+    font-size: .68rem; color: var(--rule); min-width: 1.8rem; }
+  .toc a { color: inherit; text-decoration: none; border-bottom: 1px solid transparent; }
+  .toc a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+  section { margin-bottom: 4rem; scroll-margin-top: 1rem; }
+  .section-num { font-family: var(--mono); font-size: .7rem; color: var(--rule);
+    letter-spacing: .08em; display: block; margin-bottom: .25rem; }
+  h2 { font-size: 2rem; font-weight: 500; line-height: 1.15; margin-bottom: 1.4rem;
+    padding-bottom: .75rem; border-bottom: 1px solid var(--border); }
+  h3 { font-family: var(--sans); font-size: .95rem; font-weight: 600; color: var(--ink2); margin: 2rem 0 .75rem; }
+  h4 { font-family: var(--sans); font-size: .78rem; font-weight: 600; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--ink3); margin: 1.5rem 0 .5rem; }
+  p { margin-bottom: 1rem; }
+  p:last-child { margin-bottom: 0; }
+  ul.plain { list-style: none; margin: 1rem 0; }
+  ul.plain li { font-family: var(--sans); font-size: .87rem; color: var(--ink2); line-height: 1.6;
+    padding: .35rem 0 .35rem 1.3rem; position: relative; }
+  ul.plain li::before { content: '▸'; position: absolute; left: 0; color: var(--rule); }
+  code { font-family: var(--mono); font-size: .84em; background: var(--surface);
+    padding: .1em .35em; border-radius: 4px; color: var(--accent3); }
+
+  /* Paper header */
+  .paper-head { display: flex; gap: 1.2rem; align-items: flex-start; background: #fff;
+    border: 1px solid var(--border); border-radius: 10px; padding: 1.2rem 1.4rem; margin-bottom: 1.6rem; }
+  .paper-sigil { flex-shrink: 0; width: 54px; height: 54px; border-radius: 10px;
+    display: grid; place-items: center; font-family: var(--sans); font-weight: 600;
+    font-size: .78rem; letter-spacing: .04em; color: #fff; }
+  .sig-a { background: var(--accent); } .sig-b { background: var(--accent2); } .sig-c { background: var(--purple); }
+  .paper-head-body h3 { margin: 0 0 .2rem; font-size: 1rem; }
+  .paper-head-body .cite { font-family: var(--sans); font-size: .76rem; color: var(--ink3); line-height: 1.5; }
+  .paper-head-body .oneline { font-family: var(--sans); font-size: .84rem; color: var(--ink2);
+    margin-top: .5rem; line-height: 1.55; }
+
+  /* Diagrams */
+  .diagram-wrap { margin: 2.2rem 0; background: #fff; border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden; }
+  .diagram-label { font-family: var(--sans); font-size: .7rem; font-weight: 600; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--ink3); padding: .6rem 1.2rem; border-bottom: 1px solid var(--border);
+    background: var(--surface); display: flex; align-items: center; gap: .5rem; }
+  .diagram-label::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  .diagram-body { padding: 1.4rem; overflow-x: auto; }
+  .diagram-cap { font-family: var(--sans); font-size: .76rem; color: var(--ink3);
+    padding: 0 1.4rem 1.1rem; line-height: 1.55; }
+  svg.diag { width: 100%; height: auto; display: block; }
+  svg text { font-family: 'Outfit', system-ui, sans-serif; }
+  .svg-t { font-size: 11px; fill: #3d3830; }
+  .svg-s { font-size: 9.5px; fill: #6b6258; }
+  .svg-h { font-size: 11.5px; font-weight: 600; fill: #1a1815; }
+  .svg-m { font-family: 'DM Mono', monospace; font-size: 9.5px; fill: #6b6258; }
+  .svg-w { font-size: 11px; fill: #ffffff; font-weight: 500; }
+  .svg-ws { font-size: 9.5px; fill: #ffffff; opacity: .85; }
+
+  /* Cards */
+  .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+  .info-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.1rem; }
+  .info-card-label { font-family: var(--sans); font-size: .66rem; font-weight: 600; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--ink3); margin-bottom: .35rem; }
+  .info-card-title { font-size: 1.03rem; font-weight: 500; margin-bottom: .3rem; }
+  .info-card-text { font-family: var(--sans); font-size: .79rem; line-height: 1.55; color: var(--ink3); }
+  .info-card.blue { border-left: 3px solid var(--accent); }
+  .info-card.green { border-left: 3px solid var(--accent2); }
+  .info-card.orange { border-left: 3px solid var(--accent3); }
+  .info-card.purple { border-left: 3px solid var(--purple); }
+  .info-card.amber { border-left: 3px solid var(--amber); }
+
+  .formula { background: var(--ink); color: #e8e2d8; font-family: var(--mono); font-size: .84rem;
+    padding: 1.1rem 1.4rem; border-radius: 8px; margin: 1.2rem 0; line-height: 1.7;
+    overflow-x: auto; white-space: pre; }
+  .formula .comment { color: #7a7060; }
+  .formula .key { color: #8ecfb0; }
+  .formula .val { color: #d4a96a; }
+  .formula .hot { color: #e0836a; }
+
+  .fkey { margin: -.4rem 0 1.4rem; font-family: var(--sans); font-size: .8rem; color: var(--ink3);
+    line-height: 1.6; border-left: 2px solid var(--border); padding-left: .9rem; }
+  .fkey b { color: var(--ink2); font-weight: 600; }
+
+  table { width: 100%; border-collapse: collapse; font-family: var(--sans); font-size: .82rem; margin: 1.2rem 0; }
+  th { background: var(--surface); color: var(--ink2); font-weight: 600; font-size: .7rem;
+    letter-spacing: .06em; text-transform: uppercase; text-align: left;
+    padding: .55rem .9rem; border-bottom: 1.5px solid var(--border); }
+  td { padding: .55rem .9rem; border-bottom: 1px solid var(--border); color: var(--ink2); vertical-align: top; line-height: 1.5; }
+  tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: var(--surface); }
+  .tbl-wrap { overflow-x: auto; margin: 1.2rem 0; }
+
+  .callout { border-left: 3px solid var(--amber); background: var(--amber-pale);
+    padding: 1rem 1.25rem; border-radius: 0 8px 8px 0; margin: 1.5rem 0; }
+  .callout.purple { border-color: var(--purple); background: var(--purple-pale); }
+  .callout.green  { border-color: var(--accent2); background: var(--accent2-pale); }
+  .callout.blue   { border-color: var(--accent); background: var(--accent-pale); }
+  .callout.rust   { border-color: var(--accent3); background: var(--accent3-pale); }
+  .callout .callout-label { font-family: var(--sans); font-size: .66rem; font-weight: 600;
+    letter-spacing: .1em; text-transform: uppercase; color: var(--amber); margin-bottom: .35rem; }
+  .callout.purple .callout-label { color: var(--purple); }
+  .callout.green .callout-label { color: var(--accent2); }
+  .callout.blue .callout-label { color: var(--accent); }
+  .callout.rust .callout-label { color: var(--accent3); }
+  .callout p { font-family: var(--sans); font-size: .855rem; color: var(--ink2); line-height: 1.62; margin: 0 0 .6rem; }
+  .callout p:last-child { margin-bottom: 0; }
+
+  /* provenance chips */
+  .chip { display: inline-block; font-family: var(--sans); font-size: .63rem; font-weight: 600;
+    letter-spacing: .08em; text-transform: uppercase; padding: .16rem .5rem; border-radius: 20px;
+    vertical-align: middle; }
+  .chip-paper { background: var(--accent2-pale); color: var(--accent2); border: 1px solid #bcd9d0; }
+  .chip-ours  { background: var(--purple-pale); color: var(--purple); border: 1px solid #cfc2e6; }
+  .chip-adapt { background: var(--amber-pale); color: var(--amber); border: 1px solid #ecd6a8; }
+
+  /* step ribbon */
+  .steps { counter-reset: st; margin: 1.5rem 0; }
+  .step { counter-increment: st; display: flex; gap: 1rem; padding: 1rem 0;
+    border-bottom: 1px solid var(--border); }
+  .step:last-child { border-bottom: none; }
+  .step-n { flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; background: var(--ink);
+    color: var(--page); display: grid; place-items: center; font-family: var(--mono);
+    font-size: .74rem; margin-top: .1rem; }
+  .step-n::before { content: counter(st, decimal-leading-zero); }
+  .step-body h4 { margin: 0 0 .3rem; color: var(--ink); font-size: .8rem; }
+  .step-body p { font-family: var(--sans); font-size: .845rem; color: var(--ink2); line-height: 1.6; margin-bottom: .5rem; }
+  .step-body .trace { font-family: var(--mono); font-size: .76rem; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 6px; padding: .6rem .8rem; color: var(--ink2);
+    white-space: pre-wrap; line-height: 1.6; }
+
+  .stack-row { display: flex; align-items: stretch; gap: 0; border: 1px solid var(--border);
+    border-radius: 8px; overflow: hidden; margin-bottom: .6rem; background: #fff; }
+  .stack-tag { flex-shrink: 0; width: 62px; display: grid; place-items: center;
+    font-family: var(--mono); font-size: .74rem; color: #fff; }
+  .stack-body { padding: .75rem 1rem; }
+  .stack-body .st-title { font-family: var(--sans); font-weight: 600; font-size: .87rem; color: var(--ink); }
+  .stack-body .st-text { font-family: var(--sans); font-size: .8rem; color: var(--ink3); line-height: 1.55; margin-top: .15rem; }
+
+  footer { border-top: 1.5px solid var(--ink); padding-top: 1.5rem; margin-top: 4rem;
+    font-family: var(--sans); font-size: .78rem; color: var(--ink3); line-height: 1.7; }
+
+  @media (max-width: 640px) {
+    .page-wrap { padding: 0 1.2rem 4rem; }
+    .cover h1 { font-size: 2.1rem; }
+    .toc ol { column-count: 1; }
+  }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+<!-- ══════════════════ COVER ══════════════════ -->
+<header class="cover">
+  <div class="cover-badge">MPCS · Technical Integration Report</div>
+  <h1>Indexing Experience</h1>
+  <p class="cover-sub">A hybrid memory representation, screening and retrieval architecture for the Malleable Perceptual-Cognitive System, synthesised from HMGI, HyST and KERL.</p>
+  <div class="cover-meta">
+    <span>Malleable Perceptual-Cognitive System</span>
+    <span>Memory Indexing &amp; Retrieval Track</span>
+    <span>September 2026</span>
+  </div>
+</header>
+
+<div class="abstract">
+  <div class="abstract-label">Abstract</div>
+  <p>MPCS currently stores every experience as a flat list of confidence-weighted symbolic summaries and retrieves by linear scan with an exact-match similarity kernel. That design is correct, legible, and about to stop scaling: retrieval cost grows with the number of memories, the similarity kernel cannot express "nearly the same", and the retrieved record carries no separation between what was <em>hard fact</em> about a situation and what was <em>felt</em> about it. A d-left counting Bloom filter sits in front of the store, but experiments confirmed it buys almost nothing — it answers <em>"have I seen this exact summary before?"</em>, and perceptual experience is almost never bit-identical twice.</p>
+  <p>This report reads three recent systems papers not as literature but as parts. <strong>HMGI</strong> supplies modality-partitioned indexing and a fused graph-plus-vector score — the fix for the flat store and for the screening layer that Bloom filters failed to provide. <strong>HyST</strong> supplies the decomposition of a query into hard structured filters and a soft semantic residual — the fix for a similarity kernel that currently treats "thermal is hot" and "colour is blue" as equally negotiable. <strong>KERL</strong> supplies subgraph-conditioned generation with task-specific adapters — the fix for retrieval that returns records but no interpretation, and no route for emotional or nutritive-style derived attributes.</p>
+  <p>We then build one architecture from the three, in five clearly separated layers, and walk a single stimulus through it end to end. Every claim is marked as paper-supported, adapted, or our own proposal.</p>
+</div>
+
+<nav class="toc">
+  <div class="toc-title">Contents</div>
+  <ol>
+    <li><a href="#s1">Where MPCS memory stands</a></li>
+    <li><a href="#s2">The five questions, stated separately</a></li>
+    <li><a href="#s3">HMGI — partitioned hybrid indexing</a></li>
+    <li><a href="#s4">HyST — hard filters, soft residual</a></li>
+    <li><a href="#s5">KERL — subgraph-conditioned interpretation</a></li>
+    <li><a href="#s6">Why the three are complementary</a></li>
+    <li><a href="#s7">The unified MPCS memory architecture</a></li>
+    <li><a href="#s8">Running example: the hot pan</a></li>
+    <li><a href="#s9">Cost, limits and honest failure modes</a></li>
+    <li><a href="#s10">Provenance: papers vs. our proposal</a></li>
+    <li><a href="#s11">Proposed stack and build order</a></li>
+  </ol>
+</nav>
+
+<!-- ══════════════════ 1 ══════════════════ -->
+<section id="s1">
+  <span class="section-num">SECTION 01</span>
+  <h2>Where MPCS memory stands</h2>
+
+  <p>The engine binds four modalities — vision, audio, touch and smell — into an <code>AfferentObject</code> whose <code>summary</code> is a tuple of <code>(feature, value, confidence)</code> triples, any subset of which may be absent. Similarity between two summaries is a confidence-weighted count of exactly-matching feature values, normalised by total confidence:</p>
+
+  <div class="formula"><span class="comment"># Model/experimental/core/mcps_engine.py — current kernel</span>
+sim_z(s₁, s₂)  = Σ<span class="key">ₖ</span> [ v₁ₖ == v₂ₖ ] · min(c₁ₖ, c₂ₖ)
+norm_sim       = sim_z(s₁, s₂) / Σ<span class="key">ₖ</span> c₁ₖ
+novelty(s)     = 1 − max<span class="val">ₘ∈memory</span> norm_sim(s, m.summary)     <span class="comment"># full linear scan</span>
+retrieve(s, k) = top-k of memory sorted by sim_z                <span class="comment"># full linear scan again</span></div>
+
+  <p>Three properties of this kernel matter for everything that follows.</p>
+
+  <div class="info-grid">
+    <div class="info-card orange">
+      <div class="info-card-label">Property 1</div>
+      <div class="info-card-title">Everything is negotiable</div>
+      <div class="info-card-text">A mismatch on <code>thermal</code> costs exactly what a mismatch on <code>color</code> costs. Safety-critical features have no privileged status in retrieval, only later in the reflex rules.</div>
+    </div>
+    <div class="info-card orange">
+      <div class="info-card-label">Property 2</div>
+      <div class="info-card-title">Nothing is graded</div>
+      <div class="info-card-text"><code>warm</code> vs <code>hot</code> scores identically to <code>cold</code> vs <code>hot</code> — zero. The kernel has no notion of a value being <em>close</em>, so genuinely similar percepts read as unrelated.</div>
+    </div>
+    <div class="info-card orange">
+      <div class="info-card-label">Property 3</div>
+      <div class="info-card-title">Every query touches every memory</div>
+      <div class="info-card-text">Novelty and retrieval are two independent O(N·d) scans per cognitive step. At a few hundred records this is invisible; at 10⁵ episodes with per-step interaction it is the loop's cost centre.</div>
+    </div>
+  </div>
+
+  <h3>Why the Bloom filter did not help</h3>
+
+  <p>The <code>DLeftCountingBloomFilter</code> in the engine (4 sub-tables × 1024 buckets × 16-bit fingerprints) answers one question in O(1): <em>has this exact summary key been inserted before?</em> Benchmarking showed no meaningful speedup, and the reason is structural rather than an implementation defect.</p>
+
+  <div class="diagram-wrap">
+    <div class="diagram-label">Figure 1 — Why exact-membership screening cannot prune a perceptual workload</div>
+    <div class="diagram-body">
+    <svg class="diag" viewBox="0 0 820 250" role="img" aria-label="Comparison of exact membership screening versus similarity screening">
+      <defs>
+        <marker id="ar" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 z" fill="#6b6258"/>
+        </marker>
+      </defs>
+
+      <!-- left: bloom -->
+      <rect x="10" y="12" width="380" height="226" rx="9" fill="#f4ede8" stroke="#e0d8cc"/>
+      <text class="svg-h" x="28" y="36">Exact membership (dlCBF, present)</text>
+
+      <rect x="28" y="52" width="150" height="34" rx="6" fill="#fff" stroke="#cfc7b8"/>
+      <text class="svg-m" x="38" y="66">percept @ t=41</text>
+      <text class="svg-m" x="38" y="79">hot · sharp · smoke</text>
+
+      <rect x="28" y="96" width="150" height="34" rx="6" fill="#fff" stroke="#cfc7b8"/>
+      <text class="svg-m" x="38" y="110">percept @ t=88</text>
+      <text class="svg-m" x="38" y="123">hot · sharp · smoke</text>
+      <text class="svg-s" x="38" y="147">…but conf 0.92 vs 0.90</text>
+
+      <path d="M182,86 L214,86" stroke="#6b6258" stroke-width="1.2" marker-end="url(#ar)"/>
+      <path d="M182,113 L214,113" stroke="#6b6258" stroke-width="1.2" marker-end="url(#ar)"/>
+
+      <rect x="218" y="60" width="60" height="80" rx="6" fill="#8b3a1a"/>
+      <text class="svg-w" x="248" y="95" text-anchor="middle">hash</text>
+      <text class="svg-ws" x="248" y="110" text-anchor="middle">key</text>
+
+      <path d="M280,100 L310,100" stroke="#6b6258" stroke-width="1.2" marker-end="url(#ar)"/>
+      <rect x="314" y="72" width="62" height="56" rx="6" fill="#fff" stroke="#8b3a1a" stroke-dasharray="3 2"/>
+      <text class="svg-t" x="345" y="96" text-anchor="middle" fill="#8b3a1a">MISS</text>
+      <text class="svg-s" x="345" y="112" text-anchor="middle">two keys</text>
+
+      <text class="svg-s" x="28" y="180">Distinct keys ⇒ no repeat detected ⇒ nothing pruned.</text>
+      <text class="svg-s" x="28" y="196">Hit rate on live percepts ≈ 0, so the full scan runs</text>
+      <text class="svg-s" x="28" y="212">anyway and the filter is pure added cost.</text>
+
+      <!-- right: similarity -->
+      <rect x="410" y="12" width="400" height="226" rx="9" fill="#e4f0ec" stroke="#bcd9d0"/>
+      <text class="svg-h" x="428" y="36">Similarity screening (proposed)</text>
+
+      <rect x="428" y="52" width="150" height="34" rx="6" fill="#fff" stroke="#bcd9d0"/>
+      <text class="svg-m" x="438" y="66">percept @ t=41</text>
+      <text class="svg-m" x="438" y="79">hot · sharp · smoke</text>
+      <rect x="428" y="96" width="150" height="34" rx="6" fill="#fff" stroke="#bcd9d0"/>
+      <text class="svg-m" x="438" y="110">percept @ t=88</text>
+      <text class="svg-m" x="438" y="123">hot · sharp · smoke</text>
+
+      <path d="M582,86 L614,86" stroke="#1e6e5b" stroke-width="1.2" marker-end="url(#ar)"/>
+      <path d="M582,113 L614,113" stroke="#1e6e5b" stroke-width="1.2" marker-end="url(#ar)"/>
+
+      <rect x="618" y="60" width="66" height="80" rx="6" fill="#1e6e5b"/>
+      <text class="svg-w" x="651" y="90" text-anchor="middle">partition</text>
+      <text class="svg-ws" x="651" y="106" text-anchor="middle">+ ANN</text>
+      <text class="svg-ws" x="651" y="120" text-anchor="middle">probe</text>
+
+      <path d="M686,100 L716,100" stroke="#1e6e5b" stroke-width="1.2" marker-end="url(#ar)"/>
+      <rect x="720" y="66" width="74" height="68" rx="6" fill="#fff" stroke="#1e6e5b"/>
+      <text class="svg-t" x="757" y="90" text-anchor="middle" fill="#1e6e5b">NEIGHBOURS</text>
+      <text class="svg-s" x="757" y="106" text-anchor="middle">12 of 40 000</text>
+      <text class="svg-s" x="757" y="120" text-anchor="middle">candidates</text>
+
+      <text class="svg-s" x="428" y="180">Both land in the same touch/smell partition and the</text>
+      <text class="svg-s" x="428" y="196">same neighbourhood. The screen returns a small</text>
+      <text class="svg-s" x="428" y="212">candidate set, which is what actually prunes work.</text>
+    </svg>
+    </div>
+    <div class="diagram-cap">A Bloom filter is a <em>set</em> structure over an exact key space. Perceptual summaries live in a continuous-ish space where the same situation almost never produces an identical key, so membership queries miss and no work is saved. The right structure for this workload is not a cheaper exact test but a <em>similarity-sensitive</em> screen that returns a candidate neighbourhood.</div>
+  </div>
+
+  <div class="callout rust">
+    <div class="callout-label">The lesson we carry forward</div>
+    <p>The Bloom experiment was not a failed optimisation; it was a diagnosis. It established that <strong>MPCS does not have a membership problem, it has a neighbourhood problem</strong>. Every architectural decision in this report follows from that. Where the report proposes a fast screening layer, it is a partitioned approximate-neighbour index, not a set filter — and the dlCBF stays only in the narrow role it is actually good at: deduplicating literally-repeated preset and expert-taught entries at write time.</p>
+  </div>
+</section>
+
+<!-- ══════════════════ 2 ══════════════════ -->
+<section id="s2">
+  <span class="section-num">SECTION 02</span>
+  <h2>The five questions, stated separately</h2>
+
+  <p>The driving question — <em>how can a perceptual system represent rich multisensory experience, efficiently judge familiarity, and retrieve what is relevant?</em> — is really five questions that a single similarity scan is currently answering all at once, badly. Naming them separately is what lets three unrelated papers each solve one.</p>
+
+  <div class="diagram-wrap">
+    <div class="diagram-label">Figure 2 — The five separable concerns and the paper that addresses each</div>
+    <div class="diagram-body">
+    <svg class="diag" viewBox="0 0 840 320" role="img" aria-label="Five layers of the memory problem mapped to source papers">
+      <defs>
+        <marker id="ar2" markerWidth="9" markerHeight="9" refX="8" refY="3.2" orient="auto">
+          <path d="M0,0 L8,3.2 L0,6.4 z" fill="#8c8375"/>
+        </marker>
+      </defs>
+
+      <!-- lanes -->
+      <text class="svg-s" x="16" y="26" font-weight="600" fill="#6b6258">CONCERN</text>
+      <text class="svg-s" x="470" y="26" font-weight="600" fill="#6b6258">WHAT BREAKS TODAY</text>
+      <text class="svg-s" x="740" y="26" font-weight="600" fill="#6b6258">SOURCE</text>
+
+      <!-- rows -->
+      <g>
+        <rect x="16" y="38" width="420" height="46" rx="7" fill="#e8eef6" stroke="#b9c9e0"/>
+        <text class="svg-h" x="32" y="58">A · Multisensory representation</text>
+        <text class="svg-s" x="32" y="74">How one experience holds four channels + affect + context</text>
+        <text class="svg-s" x="470" y="58">Flat tuple; no structure between features</text>
+        <text class="svg-s" x="470" y="74">no relations, no derived attributes</text>
+        <rect x="726" y="46" width="98" height="30" rx="15" fill="#2b4c7e"/>
+        <text class="svg-w" x="775" y="66" text-anchor="middle">HMGI</text>
+      </g>
+      <g>
+        <rect x="16" y="94" width="420" height="46" rx="7" fill="#e8eef6" stroke="#b9c9e0"/>
+        <text class="svg-h" x="32" y="114">B · Fast membership / index screening</text>
+        <text class="svg-s" x="32" y="130">Cut 10⁵ memories to ~10² candidates in sub-ms</text>
+        <text class="svg-s" x="470" y="114">dlCBF answers the wrong question;</text>
+        <text class="svg-s" x="470" y="130">full O(N·d) scan on every step</text>
+        <rect x="726" y="102" width="98" height="30" rx="15" fill="#2b4c7e"/>
+        <text class="svg-w" x="775" y="122" text-anchor="middle">HMGI</text>
+      </g>
+      <g>
+        <rect x="16" y="150" width="420" height="46" rx="7" fill="#e4f0ec" stroke="#bcd9d0"/>
+        <text class="svg-h" x="32" y="170">C · Similarity-sensitive novelty</text>
+        <text class="svg-s" x="32" y="186">Is this new? — graded, not binary, and constraint-aware</text>
+        <text class="svg-s" x="470" y="170">Exact-match kernel; hard safety features</text>
+        <text class="svg-s" x="470" y="186">weighted like decorative ones</text>
+        <rect x="726" y="158" width="98" height="30" rx="15" fill="#1e6e5b"/>
+        <text class="svg-w" x="775" y="178" text-anchor="middle">HyST</text>
+      </g>
+      <g>
+        <rect x="16" y="206" width="420" height="46" rx="7" fill="#ede9f6" stroke="#cfc2e6"/>
+        <text class="svg-h" x="32" y="226">D · Detailed semantic / emotional retrieval</text>
+        <text class="svg-s" x="32" y="242">Rank survivors and say what they mean for now</text>
+        <text class="svg-s" x="470" y="226">Returns records + scalar reward;</text>
+        <text class="svg-s" x="470" y="242">no affect, no interpretation</text>
+        <rect x="726" y="214" width="98" height="30" rx="15" fill="#5a3d8a"/>
+        <text class="svg-w" x="775" y="234" text-anchor="middle">KERL</text>
+      </g>
+      <g>
+        <rect x="16" y="262" width="420" height="46" rx="7" fill="#fdf3e0" stroke="#ecd6a8"/>
+        <text class="svg-h" x="32" y="282">E · Memory updating and learning</text>
+        <text class="svg-s" x="32" y="298">Write back without rebuilding the index</text>
+        <text class="svg-s" x="470" y="282">Append + decay only; an index would</text>
+        <text class="svg-s" x="470" y="298">go stale every single step</text>
+        <rect x="726" y="270" width="98" height="30" rx="15" fill="#b07a12"/>
+        <text class="svg-w" x="775" y="290" text-anchor="middle">HMGI+KERL</text>
+      </g>
+
+      <path d="M452,61 L716,61" stroke="#8c8375" stroke-width=".9" stroke-dasharray="2 3" marker-end="url(#ar2)" opacity=".5"/>
+      <path d="M452,117 L716,117" stroke="#8c8375" stroke-width=".9" stroke-dasharray="2 3" marker-end="url(#ar2)" opacity=".5"/>
+      <path d="M452,173 L716,173" stroke="#8c8375" stroke-width=".9" stroke-dasharray="2 3" marker-end="url(#ar2)" opacity=".5"/>
+      <path d="M452,229 L716,229" stroke="#8c8375" stroke-width=".9" stroke-dasharray="2 3" marker-end="url(#ar2)" opacity=".5"/>
+      <path d="M452,285 L716,285" stroke="#8c8375" stroke-width=".9" stroke-dasharray="2 3" marker-end="url(#ar2)" opacity=".5"/>
+    </svg>
+    </div>
+    <div class="diagram-cap">Concerns A–E are answered today by a single function, <code>similarity_z</code>, plus a linear scan. The rest of this report keeps them apart on purpose: each has a different cost profile, a different failure mode, and a different right answer.</div>
+  </div>
+</section>
+
+<!-- ══════════════════ 3 ══════════════════ -->
+<section id="s3">
+  <span class="section-num">SECTION 03</span>
+  <h2>HMGI — partitioned hybrid indexing</h2>
+
+  <div class="paper-head">
+    <div class="paper-sigil sig-a">HMGI</div>
+    <div class="paper-head-body">
+      <h3>The Hybrid Multimodal Graph Index: A Comprehensive Framework for Integrated Relational and Vector Search</h3>
+      <div class="cite">Chandra, Navneet &amp; Zhang · arXiv:2510.10123 · 2025</div>
+      <div class="oneline">Store entities as graph nodes whose embeddings are node properties, partition those embeddings <em>by modality</em> into separate ANN indexes, and fuse a vector score with a graph-traversal score into one ranking — with an MVCC delta store so writes never trigger an index rebuild.</div>
+    </div>
+  </div>
+
+  <h3>Core mechanism</h3>
+
+  <p>HMGI's argument is that vector databases and graph databases each hold half of what a multimodal query needs, and that maintaining both separately costs more in synchronisation than it saves. Its answer has three moving parts, and all three matter to us.</p>
+
+  <p><strong>Modality-aware partitioning.</strong> Rather than one monolithic HNSW graph over all embeddings, HMGI fits K-means centroids per modality and builds a separate index per partition, assigning each vector by <code>arg min_c ‖e − μ_c‖²</code>. A query that concerns one modality searches only that partition. The paper reports this reduces the searched space by up to 70%, and its own ablation shows removing partitioning raises latency from 12 ms to 17.4 ms while dropping cross-modal recall 18%.</p>
+
+  <p><strong>Fused scoring.</strong> A candidate's final score combines its vector distance with the evidence gathered by traversing <em>h</em> hops of graph structure around it:</p>
+
+  <div class="formula"><span class="comment"># HMGI, Eq. 3 — fused hybrid score</span>
+S = w<span class="val">ᵥ</span> · (1 − d<span class="val">ᵥ</span>)  +  w<span class="val">g</span> · (1/h) Σ<span class="key">ᵢ₌₁..h</span> s<span class="val">gᵢ</span></div>
+  <div class="fkey"><b>d<sub>v</sub></b> normalised vector distance in [0,1] · <b>s<sub>gᵢ</sub></b> score contributed by hop <em>i</em> of the graph traversal · <b>w<sub>v</sub>, w<sub>g</sub></b> weights that HMGI adjusts dynamically per query (its DEG-inspired component) rather than fixing at build time. The important structural fact: <em>vector proximity and relational context are summed, not chained</em> — neither can veto the other, they trade off.</div>
+
+  <p><strong>Adaptive updates.</strong> An MVCC delta store absorbs inserts; queries run ANN over the stable index and brute-force over the (tiny) delta, then merge. Asynchronous vacuuming folds the delta in later. The ablation is the persuasive part: remove the delta store and update latency goes from 50 ms to 250 ms with 15% query downtime, because every write forces a partial rebuild.</p>
+
+  <div class="diagram-wrap">
+    <div class="diagram-label">Figure 3 — HMGI mechanism, redrawn against an MPCS percept</div>
+    <div class="diagram-body">
+    <svg class="diag" viewBox="0 0 840 360" role="img" aria-label="HMGI partitioned index and fused scoring applied to a four-modality percept">
+      <defs>
+        <marker id="ar3" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 z" fill="#2b4c7e"/>
+        </marker>
+        <marker id="ar3g" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 z" fill="#6b6258"/>
+        </marker>
+      </defs>
+
+      <!-- percept -->
+      <rect x="12" y="90" width="122" height="150" rx="8" fill="#fff" stroke="#2b4c7e" stroke-width="1.3"/>
+      <text class="svg-h" x="73" y="112" text-anchor="middle">Percept</text>
+      <rect x="24" y="122" width="98" height="24" rx="4" fill="#e8eef6"/>
+      <text class="svg-m" x="32" y="138">vision  1.00</text>
+      <rect x="24" y="150" width="98" height="24" rx="4" fill="#e8eef6"/>
+      <text class="svg-m" x="32" y="166">audio   0.90</text>
+      <rect x="24" y="178" width="98" height="24" rx="4" fill="#e8eef6"/>
+      <text class="svg-m" x="32" y="194">touch   0.95</text>
+      <rect x="24" y="206" width="98" height="24" rx="4" fill="#e8eef6"/>
+      <text class="svg-m" x="32" y="222">smell   0.70</text>
+
+      <!-- encoders -->
+      <path d="M136,134 L172,134" stroke="#2b4c7e" stroke-width="1.2" marker-end="url(#ar3)"/>
+      <path d="M136,162 L172,162" stroke="#2b4c7e" stroke-width="1.2" marker-end="url(#ar3)"/>
+      <path d="M136,190 L172,190" stroke="#2b4c7e" stroke-width="1.2" marker-end="url(#ar3)"/>
+      <path d="M136,218 L172,218" stroke="#2b4c7e" stroke-width="1.2" marker-end="url(#ar3)"/>
+
+      <text class="svg-s" x="176" y="82" font-weight="600">Per-modality partitions (separate ANN index each)</text>
+      <rect x="176" y="92" width="180" height="34" rx="6" fill="#2b4c7e"/>
+      <text class="svg-w" x="188" y="107">P₁ vision</text><text class="svg-ws" x="188" y="120">1 240 vectors · d=48</text>
+      <rect x="176" y="130" width="180" height="34" rx="6" fill="#3b5f96"/>
+      <text class="svg-w" x="188" y="145">P₂ audio</text><text class="svg-ws" x="188" y="158">980 vectors · d=24</text>
+      <rect x="176" y="168" width="180" height="34" rx="6" fill="#4d72ab"/>
+      <text class="svg-w" x="188" y="183">P₃ touch</text><text class="svg-ws" x="188" y="196">1 610 vectors · d=40</text>
+      <rect x="176" y="206" width="180" height="34" rx="6" fill="#6386bd"/>
+      <text class="svg-w" x="188" y="221">P₄ smell</text><text class="svg-ws" x="188" y="234">720 vectors · d=32</text>
+
+      <text class="svg-s" x="176" y="258">Query touching touch+smell probes P₃,P₄ only:</text>
+      <text class="svg-s" x="176" y="273">2 330 of 4 550 vectors ⇒ ~49% of the space.</text>
+
+      <!-- graph -->
+      <path d="M360,166 L398,166" stroke="#6b6258" stroke-width="1.2" marker-end="url(#ar3g)"/>
+      <rect x="402" y="88" width="196" height="156" rx="8" fill="#f2ede5" stroke="#cfc7b8"/>
+      <text class="svg-h" x="500" y="108" text-anchor="middle">Episode graph</text>
+      <circle cx="450" cy="140" r="15" fill="#2b4c7e"/><text class="svg-w" x="450" y="144" text-anchor="middle">e₄₁</text>
+      <circle cx="524" cy="130" r="13" fill="#1e6e5b"/><text class="svg-w" x="524" y="134" text-anchor="middle">e₈₈</text>
+      <circle cx="556" cy="184" r="13" fill="#5a3d8a"/><text class="svg-w" x="556" y="188" text-anchor="middle">obj</text>
+      <circle cx="462" cy="200" r="13" fill="#b07a12"/><text class="svg-w" x="462" y="204" text-anchor="middle">act</text>
+      <line x1="464" y1="136" x2="511" y2="131" stroke="#8c8375" stroke-width="1.4"/>
+      <line x1="530" y1="142" x2="551" y2="171" stroke="#8c8375" stroke-width="1.4"/>
+      <line x1="452" y1="155" x2="461" y2="187" stroke="#8c8375" stroke-width="1.4"/>
+      <line x1="475" y1="196" x2="544" y2="187" stroke="#8c8375" stroke-width="1.1" stroke-dasharray="3 2"/>
+      <text class="svg-s" x="416" y="228">hop 1 · same-object   hop 2 · same-outcome</text>
+
+      <!-- fusion -->
+      <path d="M602,166 L640,166" stroke="#6b6258" stroke-width="1.2" marker-end="url(#ar3g)"/>
+      <rect x="644" y="112" width="182" height="108" rx="8" fill="#1a1815"/>
+      <text class="svg-w" x="660" y="136" font-weight="600">Fused score S</text>
+      <text class="svg-ws" x="660" y="158">wᵥ · (1 − dᵥ)</text>
+      <text class="svg-ws" x="660" y="176">+ wg · mean(hop scores)</text>
+      <line x1="660" y1="186" x2="810" y2="186" stroke="#7a7060" stroke-width=".8"/>
+      <text class="svg-ws" x="660" y="204">weights adapt per query</text>
+
+      <!-- delta -->
+      <rect x="402" y="264" width="424" height="72" rx="8" fill="#fdf3e0" stroke="#ecd6a8"/>
+      <text class="svg-h" x="418" y="286">Delta store (MVCC)</text>
+      <text class="svg-s" x="418" y="303">New episodes append here and are scanned brute-force alongside the</text>
+      <text class="svg-s" x="418" y="318">ANN result; a background merge folds them in. No rebuild on the hot path.</text>
+      <path d="M614,264 L614,232" stroke="#b07a12" stroke-width="1.2" marker-end="url(#ar3g)"/>
+    </svg>
+    </div>
+    <div class="diagram-cap">HMGI's three components map onto MPCS almost one-to-one: modality partitions correspond to the engine's existing <code>MODALITIES</code> registry, the graph is the episode/object/action structure the dashboards already draw via <code>build_graph</code>, and the delta store is what makes an index survive a system that writes a memory on every single step.</div>
+  </div>
+
+  <h3>Concretely, on our data</h3>
+
+  <p>Suppose 40 000 stored episodes. Today, <code>compute_novelty</code> plus <code>retrieve</code> means two passes over all 40 000, each comparing ~12 feature slots — roughly 10⁶ comparisons per cognitive step. Under HMGI-style partitioning, a percept whose active modalities are touch and smell probes only those two partitions, and within them an HNSW-style graph search visits O(log N) nodes rather than N. The candidate set handed to the next stage is ~100 episodes, not 40 000.</p>
+
+  <div class="callout blue">
+    <div class="callout-label">Which MPCS problem this solves</div>
+    <p><strong>Concerns A and B.</strong> It gives the representation layer somewhere to put structure that a flat tuple cannot hold — an episode <em>node</em> with typed edges to the object it involved, the action taken, and neighbouring episodes — and it gives the screening layer the thing Bloom filters could not: a sub-linear route from 40 000 memories to a candidate neighbourhood, using similarity rather than identity. The MVCC delta store is what makes this compatible with concern E, since MPCS writes a memory every step and a rebuild-on-write index would be unusable.</p>
+  </div>
+
+  <h4>What it does not solve</h4>
+  <ul class="plain">
+    <li>Fusion is a weighted sum, so a hard constraint can always be outvoted by strong vector similarity. HMGI's own ablation notes hybrid recall drops to 85% precisely when vector proximity and relational constraints disagree.</li>
+    <li>It assumes learned embeddings exist per modality. MPCS features are categorical; we must design that encoder ourselves (§7).</li>
+    <li>Reported numbers come from billion-scale benchmarks with GPU clusters. At 10⁴–10⁵ episodes on a laptop, partition overhead could exceed the saving — this is a claim to verify, not inherit.</li>
+  </ul>
+</section>
+
+<!-- ══════════════════ 4 ══════════════════ -->
+<section id="s4">
+  <span class="section-num">SECTION 04</span>
+  <h2>HyST — hard filters, soft residual</h2>
+
+  <div class="paper-head">
+    <div class="paper-sigil sig-b">HyST</div>
+    <div class="paper-head-body">
+      <h3>HyST: LLM-Powered Hybrid Retrieval over Semi-Structured Tabular Data</h3>
+      <div class="cite">Myung, Park &amp; Han · PrompTart Lab, MODULABS · arXiv:2508.18048 · EARL '25</div>
+      <div class="oneline">Split a query into (1) explicit structured constraints, executed as metadata filters <em>inside</em> the vector database, and (2) the unstructured residual — the subjective part — which drives dense similarity search over only the surviving candidates.</div>
+    </div>
+  </div>
+
+  <h3>Core mechanism</h3>
+
+  <p>HyST's target is the failure of <em>linearisation</em>. If you flatten <code>{category: Italian, location: New York, review: "cozy atmosphere"}</code> into one string and embed the whole thing, the embedding cannot distinguish a requirement from a preference. Ask for an Italian restaurant and you get a French one that is semantically adjacent — the paper's Table 4 shows exactly this: query says Spyder brand, semantic-only retrieval returns 3Skull.</p>
+
+  <p>The fix is a three-stage pipeline: an LLM extracts structured filter conditions in a database-native operator format (<code>$eq</code>, <code>$in</code>, <code>$lt</code>, <code>$between</code>); the query is refined to strip out what the filter now covers, leaving the semantic residual; the vector DB applies the filter <em>first</em> and runs similarity only over the survivors.</p>
+
+  <div class="diagram-wrap">
+    <div class="diagram-label">Figure 4 — HyST decomposition, and the MPCS analogue</div>
+    <div class="diagram-body">
+    <svg class="diag" viewBox="0 0 840 330" role="img" aria-label="HyST query decomposition into hard filters and semantic residual, mapped to MPCS percept features">
+      <defs>
+        <marker id="ar4" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 z" fill="#1e6e5b"/>
+        </marker>
+      </defs>
+
+      <!-- top: paper -->
+      <rect x="12" y="14" width="816" height="132" rx="9" fill="#e4f0ec" stroke="#bcd9d0"/>
+      <text class="svg-h" x="28" y="36">As published — a product query</text>
+      <rect x="28" y="46" width="200" height="42" rx="6" fill="#fff" stroke="#bcd9d0"/>
+      <text class="svg-t" x="38" y="64">“Italian restaurant in New</text>
+      <text class="svg-t" x="38" y="80">York with a cozy atmosphere”</text>
+
+      <path d="M232,67 L268,52" stroke="#1e6e5b" stroke-width="1.2" marker-end="url(#ar4)"/>
+      <path d="M232,67 L268,104" stroke="#1e6e5b" stroke-width="1.2" marker-end="url(#ar4)"/>
+
+      <rect x="272" y="42" width="212" height="40" rx="6" fill="#1e6e5b"/>
+      <text class="svg-w" x="284" y="58">HARD · metadata filter</text>
+      <text class="svg-ws" x="284" y="73">CATEGORY $eq Italian · LOC $eq NY</text>
+
+      <rect x="272" y="94" width="212" height="40" rx="6" fill="#7fb3a3"/>
+      <text class="svg-w" x="284" y="110">SOFT · semantic residual</text>
+      <text class="svg-ws" x="284" y="125">“restaurant with cozy atmosphere”</text>
+
+      <path d="M488,62 L522,80" stroke="#1e6e5b" stroke-width="1.2" marker-end="url(#ar4)"/>
+      <path d="M488,114 L522,96" stroke="#1e6e5b" stroke-width="1.2" marker-end="url(#ar4)"/>
+      <rect x="526" y="60" width="120" height="56" rx="6" fill="#fff" stroke="#1e6e5b" stroke-width="1.3"/>
+      <text class="svg-t" x="586" y="82" text-anchor="middle">filter → then</text>
+      <text class="svg-t" x="586" y="98" text-anchor="middle">rank survivors</text>
+
+      <rect x="662" y="46" width="152" height="84" rx="6" fill="#fff" stroke="#bcd9d0"/>
+      <text class="svg-s" x="674" y="66" font-weight="600">Reported (STaRK-Amazon)</text>
+      <text class="svg-s" x="674" y="84">P@1  0.9211  vs 0.8947 linearised</text>
+      <text class="svg-s" x="674" y="100">MRR  0.9265  vs 0.9232</text>
+      <text class="svg-s" x="674" y="118">Zero brand/category violations</text>
+
+      <!-- bottom: MPCS -->
+      <rect x="12" y="158" width="816" height="160" rx="9" fill="#f2ede5" stroke="#e0d8cc"/>
+      <text class="svg-h" x="28" y="180">The MPCS analogue — a percept as a query against episodic memory</text>
+
+      <rect x="28" y="192" width="200" height="66" rx="6" fill="#fff" stroke="#cfc7b8"/>
+      <text class="svg-m" x="38" y="210">thermal      = hot   (0.95)</text>
+      <text class="svg-m" x="38" y="225">odor_type    = smoke (0.70)</text>
+      <text class="svg-m" x="38" y="240">color        = dark  (1.00)</text>
+      <text class="svg-m" x="38" y="255">motion       = static(1.00)</text>
+
+      <path d="M232,214 L268,206" stroke="#8b3a1a" stroke-width="1.2" marker-end="url(#ar4)"/>
+      <path d="M232,240 L268,266" stroke="#6b6258" stroke-width="1.2" marker-end="url(#ar4)"/>
+
+      <rect x="272" y="188" width="228" height="52" rx="6" fill="#8b3a1a"/>
+      <text class="svg-w" x="284" y="206">HARD · safety-critical predicate</text>
+      <text class="svg-ws" x="284" y="222">thermal ∈ {hot} AND odor_type ∈ {smoke}</text>
+      <text class="svg-ws" x="284" y="235">→ candidates must satisfy this</text>
+
+      <rect x="272" y="248" width="228" height="52" rx="6" fill="#8c8375"/>
+      <text class="svg-w" x="284" y="266">SOFT · descriptive residual</text>
+      <text class="svg-ws" x="284" y="282">colour, motion, texture, loudness</text>
+      <text class="svg-ws" x="284" y="295">→ graded similarity over survivors</text>
+
+      <path d="M504,214 L540,238" stroke="#6b6258" stroke-width="1.2" marker-end="url(#ar4)"/>
+      <path d="M504,274 L540,254" stroke="#6b6258" stroke-width="1.2" marker-end="url(#ar4)"/>
+      <rect x="544" y="216" width="132" height="62" rx="6" fill="#fff" stroke="#8b3a1a" stroke-width="1.3"/>
+      <text class="svg-t" x="610" y="240" text-anchor="middle">Novelty computed</text>
+      <text class="svg-t" x="610" y="256" text-anchor="middle">only against episodes</text>
+      <text class="svg-t" x="610" y="272" text-anchor="middle">that share the danger</text>
+
+      <rect x="692" y="200" width="124" height="98" rx="6" fill="#f4ede8" stroke="#dfc4b6"/>
+      <text class="svg-s" x="702" y="220" font-weight="600" fill="#8b3a1a">Failure it prevents</text>
+      <text class="svg-s" x="702" y="240">A calm, dark, static</text>
+      <text class="svg-s" x="702" y="256">non-hot memory scoring</text>
+      <text class="svg-s" x="702" y="272">0.83 similar and</text>
+      <text class="svg-s" x="702" y="288">suppressing novelty.</text>
+    </svg>
+    </div>
+    <div class="diagram-cap">The translation is direct: HyST's "explicit constraint vs subjective preference" is our "safety-critical feature vs descriptive feature". Both are cases where averaging the two into one similarity number destroys the distinction that matters.</div>
+  </div>
+
+  <h3>Why this is the sharpest fix for our similarity kernel</h3>
+
+  <p>Consider a concrete pathology in the current system. A percept arrives with <code>thermal=hot, contact=firm, texture=rough, color=dark, motion=static</code>. A stored memory has <code>thermal=neutral, contact=firm, texture=rough, color=dark, motion=static</code> — four of five features match. Normalised similarity ≈ 0.83, so novelty ≈ 0.17: the system judges this situation thoroughly familiar and retrieves an episode whose reward history says <em>approach</em>. The one feature that differed is the one that burns.</p>
+
+  <p>Under a HyST decomposition the hard predicate <code>thermal ∈ {hot}</code> is applied first. The comfortable memory is not down-weighted; it is <strong>not a candidate at all</strong>. Novelty is then computed over the surviving set, and if that set is empty, novelty is 1.0 and the system correctly treats the situation as unprecedented.</p>
+
+  <div class="formula"><span class="comment"># Proposed — HyST-style two-part matching for MPCS</span>
+C     = { m ∈ Memory : <span class="hot">Φ(m) ⊨ hard(p)</span> }              <span class="comment"># hard predicate, index-executed</span>
+sim(p, m) = Σ<span class="key">ₖ∈soft</span> ω<span class="val">ₖ</span> · κ(v<span class="val">ₚₖ</span>, v<span class="val">ₘₖ</span>) · min(c<span class="val">ₚₖ</span>, c<span class="val">ₘₖ</span>)   <span class="comment"># graded kernel κ, soft slots only</span>
+novelty(p) = 1 − max<span class="val">ₘ∈C</span> sim(p, m)    <span class="comment"># =1.0 when C is empty — correctly unprecedented</span></div>
+  <div class="fkey"><b>hard(p)</b> the predicate derived from safety-critical slots of the percept · <b>Φ(m)</b> the stored episode's structured attributes · <b>κ</b> a graded value kernel, so <code>warm</code>↔<code>hot</code> scores above <code>cold</code>↔<code>hot</code> instead of both scoring zero · <b>ω<sub>k</sub></b> per-slot learned weight. Note the two departures from HyST: it uses an LLM to extract filters from free text (we read them from typed slots, no LLM needed) and it uses an ungraded metadata match (we add κ because our values are ordinal).</div>
+
+  <div class="callout green">
+    <div class="callout-label">Which MPCS problem this solves</div>
+    <p><strong>Concern C, and part of A.</strong> It makes novelty detection <em>constraint-aware</em>: the system can no longer be talked out of alarm by four irrelevant matching features. It also tells us how to lay out an episode record — the split between filterable structured metadata and embedded soft content is a storage decision, made once at write time, not a query-time trick.</p>
+  </div>
+
+  <h4>What it does not solve, and one honest caution</h4>
+  <ul class="plain">
+    <li>HyST's own ablation (Table 3) is a warning: removing query refinement <em>improved</em> P@5 (0.8586 vs 0.8349) and P@10, because stripping the "soft" text discarded cues that were genuinely informative. Their recommendation is that refinement be toggleable. We adopt this directly — our hard predicate must <em>filter</em> the candidate set without <em>deleting</em> those slots from the similarity computation, or we will reproduce their regression.</li>
+    <li>An over-narrow predicate can empty the candidate set. For a retrieval system that is a bad day; for a cognitive system it is arguably correct behaviour (novelty = 1.0 → deliberate), but it must be a designed outcome, not an accident.</li>
+    <li>It says nothing about how to rank the survivors beyond cosine similarity, and nothing about affect. That is the next paper's job.</li>
+  </ul>
+</section>
+
+<!-- ══════════════════ 5 ══════════════════ -->
+<section id="s5">
+  <span class="section-num">SECTION 05</span>
+  <h2>KERL — subgraph-conditioned interpretation</h2>
+
+  <div class="paper-head">
+    <div class="paper-sigil sig-c">KERL</div>
+    <div class="paper-head-body">
+      <h3>KERL: Knowledge-Enhanced Personalized Recipe Recommendation using Large Language Models</h3>
+      <div class="cite">Mohbat &amp; Zaki · Rensselaer Polytechnic Institute · arXiv:2505.14629 · ACL 2025</div>
+      <div class="oneline">Parse a constrained query into entities, pull a <em>subgraph</em> from a knowledge graph as context, and run three LoRA adapters over one shared base model: one selects items satisfying the constraints, one generates procedure, one generates derived quantitative attributes that were never stored explicitly.</div>
+    </div>
+  </div>
+
+  <h3>Core mechanism</h3>
+
+  <p>KERL is a recommendation paper, and the recipes are irrelevant to us. Three of its structural decisions are not.</p>
+
+  <p><strong>Retrieval returns a subgraph, not a row.</strong> Given a query, KERL parses the tag <em>t<sub>j</sub></em> and constraints, generates a SPARQL query against FoodKG, and retrieves a subgraph R(t<sub>j</sub>) — nodes plus their relations plus their attributes. That subgraph, serialised, becomes the LLM's context. The retrieved object is a piece of connected structure, and the reasoning happens <em>over</em> it rather than over an isolated record.</p>
+
+  <p><strong>Positive/negative context construction.</strong> During training, context C<sub>j</sub> is built from at most K/2 items from R⁺ (satisfying all constraints) and at most K/2 from R⁻ (the rest). The model learns to <em>select</em> from a mixed candidate set — not to rank a pre-cleaned list. Their Table 2 makes the ratio vivid: mean |R(t<sub>j</sub>)| ≈ 3167 against |R⁺| ≈ 10.67. The discrimination task is the whole point.</p>
+
+  <p><strong>Multi-LoRA over one backbone.</strong> Three adapters — Recom, Recipe, Nutri — share Phi-3-mini and are swapped at inference. Each is a specialised reader of the same retrieved subgraph. The Nutri adapter is the interesting one for us: it <em>generates</em> micro-nutrient values from title, ingredients and steps, i.e. it produces attributes that exist nowhere in the stored record and are inferred from structure. Their Table 9 shows accuracy improves as more of the retrieved structure is supplied (calories MAE 258.28 from title alone → 221.38 with title + ingredients + instructions).</p>
+
+  <div class="diagram-wrap">
+    <div class="diagram-label">Figure 5 — KERL's shape, and the MPCS reading of it</div>
+    <div class="diagram-body">
+    <svg class="diag" viewBox="0 0 840 340" role="img" aria-label="KERL subgraph retrieval with three task adapters, mapped to MPCS memory heads">
+      <defs>
+        <marker id="ar5" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 z" fill="#5a3d8a"/>
+        </marker>
+      </defs>
+
+      <!-- KERL row -->
+      <text class="svg-s" x="16" y="24" font-weight="600" fill="#5a3d8a">AS PUBLISHED</text>
+      <rect x="16" y="32" width="118" height="60" rx="6" fill="#fff" stroke="#cfc2e6"/>
+      <text class="svg-t" x="26" y="52">constrained</text>
+      <text class="svg-t" x="26" y="68">query + prefs</text>
+      <text class="svg-s" x="26" y="84">tags, likes, limits</text>
+
+      <path d="M138,62 L172,62" stroke="#5a3d8a" stroke-width="1.2" marker-end="url(#ar5)"/>
+      <rect x="176" y="32" width="124" height="60" rx="6" fill="#ede9f6" stroke="#cfc2e6"/>
+      <text class="svg-t" x="186" y="52">SPARQL over</text>
+      <text class="svg-t" x="186" y="68">FoodKG →</text>
+      <text class="svg-t" x="186" y="84">subgraph R(t)</text>
+
+      <path d="M304,62 L338,62" stroke="#5a3d8a" stroke-width="1.2" marker-end="url(#ar5)"/>
+      <rect x="342" y="32" width="104" height="60" rx="6" fill="#5a3d8a"/>
+      <text class="svg-w" x="394" y="58" text-anchor="middle">base LLM</text>
+      <text class="svg-ws" x="394" y="76" text-anchor="middle">Phi-3-mini</text>
+
+      <path d="M450,50 L484,42" stroke="#5a3d8a" stroke-width="1.1" marker-end="url(#ar5)"/>
+      <path d="M450,62 L484,80" stroke="#5a3d8a" stroke-width="1.1" marker-end="url(#ar5)"/>
+      <path d="M450,74 L484,118" stroke="#5a3d8a" stroke-width="1.1" marker-end="url(#ar5)"/>
+      <rect x="488" y="26" width="150" height="32" rx="6" fill="#7b60a8"/>
+      <text class="svg-w" x="498" y="46">LoRA₁ Recom → items</text>
+      <rect x="488" y="64" width="150" height="32" rx="6" fill="#7b60a8"/>
+      <text class="svg-w" x="498" y="84">LoRA₂ Recipe → steps</text>
+      <rect x="488" y="102" width="150" height="32" rx="6" fill="#7b60a8"/>
+      <text class="svg-w" x="498" y="122">LoRA₃ Nutri → values</text>
+
+      <rect x="654" y="26" width="170" height="108" rx="6" fill="#fff" stroke="#cfc2e6"/>
+      <text class="svg-s" x="664" y="46" font-weight="600">Reported (KGQA test)</text>
+      <text class="svg-s" x="664" y="64">Recom F1 0.973 vs 0.41 for</text>
+      <text class="svg-s" x="664" y="80">the same base model untuned</text>
+      <text class="svg-s" x="664" y="100">Nutri MAE falls as more of</text>
+      <text class="svg-s" x="664" y="116">the subgraph is supplied</text>
+
+      <line x1="16" y1="152" x2="824" y2="152" stroke="#e0d8cc" stroke-width="1"/>
+
+      <!-- MPCS row -->
+      <text class="svg-s" x="16" y="176" font-weight="600" fill="#8b3a1a">THE MPCS READING</text>
+      <rect x="16" y="184" width="118" height="60" rx="6" fill="#fff" stroke="#cfc7b8"/>
+      <text class="svg-t" x="26" y="204">percept +</text>
+      <text class="svg-t" x="26" y="220">internal state</text>
+      <text class="svg-s" x="26" y="236">risk_bias, threshold</text>
+
+      <path d="M138,214 L172,214" stroke="#8b3a1a" stroke-width="1.2" marker-end="url(#ar5)"/>
+      <rect x="176" y="184" width="124" height="60" rx="6" fill="#f4ede8" stroke="#dfc4b6"/>
+      <text class="svg-t" x="186" y="204">candidates from</text>
+      <text class="svg-t" x="186" y="220">§3+§4 → episode</text>
+      <text class="svg-t" x="186" y="236">subgraph (2 hops)</text>
+
+      <path d="M304,214 L338,214" stroke="#8b3a1a" stroke-width="1.2" marker-end="url(#ar5)"/>
+      <rect x="342" y="184" width="104" height="60" rx="6" fill="#8b3a1a"/>
+      <text class="svg-w" x="394" y="210" text-anchor="middle">shared scorer</text>
+      <text class="svg-ws" x="394" y="228" text-anchor="middle">over subgraph</text>
+
+      <path d="M450,202 L484,194" stroke="#8b3a1a" stroke-width="1.1" marker-end="url(#ar5)"/>
+      <path d="M450,214 L484,232" stroke="#8b3a1a" stroke-width="1.1" marker-end="url(#ar5)"/>
+      <path d="M450,226 L484,270" stroke="#8b3a1a" stroke-width="1.1" marker-end="url(#ar5)"/>
+      <rect x="488" y="178" width="150" height="32" rx="6" fill="#a55c36"/>
+      <text class="svg-w" x="498" y="198">HEAD-A action value</text>
+      <rect x="488" y="216" width="150" height="32" rx="6" fill="#a55c36"/>
+      <text class="svg-w" x="498" y="236">HEAD-E affect (v, a)</text>
+      <rect x="488" y="254" width="150" height="32" rx="6" fill="#a55c36"/>
+      <text class="svg-w" x="498" y="274">HEAD-X explanation</text>
+
+      <rect x="654" y="178" width="170" height="108" rx="6" fill="#f4ede8" stroke="#dfc4b6"/>
+      <text class="svg-s" x="664" y="198" font-weight="600" fill="#8b3a1a">Why three heads</text>
+      <text class="svg-s" x="664" y="216">One retrieval pass, three</text>
+      <text class="svg-s" x="664" y="232">read-outs. Affect is derived</text>
+      <text class="svg-s" x="664" y="248">from structure the way KERL</text>
+      <text class="svg-s" x="664" y="264">derives nutrition — it need</text>
+      <text class="svg-s" x="664" y="280">not be stored per episode.</text>
+    </svg>
+    </div>
+    <div class="diagram-cap">The transferable idea is not the LLM. It is the pattern: <em>retrieve connected structure once, then read it several ways with small specialised heads</em>. MPCS's <code>CurrentStatus.md</code> lists "emotion as a first-class signal" as a top gap; KERL's Nutri adapter is a working demonstration that a derived attribute can be computed from retrieved structure rather than stored on every record.</div>
+  </div>
+
+  <h3>Concretely, on our data</h3>
+
+  <p>MPCS's <code>_contribution_weight</code> already computes a per-memory contribution (similarity × recency × boosts) and <code>build_graph</code> already emits an explanation payload naming which memories drove a decision. KERL tells us what that machinery is short of: the retrieved set is used only to produce a scalar reward estimate. Three heads over the same retrieved subgraph would produce (a) the action value we already compute, (b) a valence/arousal pair inferred from the reward distribution and the hard-predicate hits across the subgraph, and (c) the natural-language trace the dashboards want. Each is cheap; none requires a second retrieval.</p>
+
+  <div class="callout purple">
+    <div class="callout-label">Which MPCS problem this solves</div>
+    <p><strong>Concern D, and the interpretation half of A.</strong> It converts retrieval from "return k records" into "return a reading of the situation" — action value, emotional colouring, and a defensible explanation, all conditioned on the same retrieved structure. It also supplies the discrimination framing: like KERL's R⁺/R⁻ split, our detailed ranker should be trained to <em>select</em> from a candidate set that deliberately contains near-misses, which is exactly what §3 and §4 hand it.</p>
+  </div>
+
+  <h4>What it does not solve</h4>
+  <ul class="plain">
+    <li>KERL's own limitation section is blunt: if no item in the KG satisfies all constraints, the system returns nothing, and incorrect context yields incorrect output. Retrieval quality bounds everything downstream — which is why layers B and C must come first.</li>
+    <li>Their qualitative Table 14 shows the selector emitting false positives and dropping true positives even at F1 0.97. A head is a heuristic, not a guarantee; safety-critical routing must stay with the reflex rules, not the learned head.</li>
+    <li>The paper is offline, batch, GPU-bound. MPCS is an interactive per-step loop. Our heads must be small — linear or shallow MLP over the retrieved contributions — not fine-tuned language models.</li>
+  </ul>
+</section>
+
+<!-- ══════════════════ 6 ══════════════════ -->
+<section id="s6">
+  <span class="section-num">SECTION 06</span>
+  <h2>Why the three are complementary</h2>
+
+  <p>They are complementary because each operates at a different point on the precision/cost curve, and each fails in a way the next one covers.</p>
+
+  <div class="diagram-wrap">
+    <div class="diagram-label">Figure 6 — Cost per candidate against selectivity: the three papers occupy different regimes</div>
+    <div class="diagram-body">
+    <svg class="diag" viewBox="0 0 800 300" role="img" aria-label="Funnel showing candidate set shrinking across HMGI, HyST and KERL stages with rising per-candidate cost">
+      <!-- axes -->
+      <line x1="70" y1="250" x2="770" y2="250" stroke="#cfc7b8" stroke-width="1.2"/>
+      <line x1="70" y1="30" x2="70" y2="250" stroke="#cfc7b8" stroke-width="1.2"/>
+      <text class="svg-s" x="70" y="272">many candidates, cheap per candidate</text>
+      <text class="svg-s" x="770" y="272" text-anchor="end">few candidates, expensive per candidate</text>
+      <text class="svg-s" x="30" y="140" transform="rotate(-90 30 140)" text-anchor="middle">cost / candidate →</text>
+
+      <!-- funnel bars -->
+      <rect x="90" y="196" width="180" height="48" rx="6" fill="#2b4c7e"/>
+      <text class="svg-w" x="104" y="216">HMGI screen</text>
+      <text class="svg-ws" x="104" y="232">40 000 → ~400 · O(log N) hops</text>
+
+      <rect x="300" y="140" width="200" height="48" rx="6" fill="#1e6e5b"/>
+      <text class="svg-w" x="314" y="160">HyST hard predicate</text>
+      <text class="svg-ws" x="314" y="176">~400 → ~40 · one pass, no embedding</text>
+
+      <rect x="530" y="70" width="230" height="48" rx="6" fill="#5a3d8a"/>
+      <text class="svg-w" x="544" y="90">KERL subgraph + heads</text>
+      <text class="svg-ws" x="544" y="106">~40 → ranked 5 · 2-hop walk + 3 read-outs</text>
+
+      <!-- connectors -->
+      <path d="M270,220 C290,220 288,164 300,164" stroke="#8c8375" stroke-width="1.4" fill="none"/>
+      <path d="M500,164 C520,164 518,94 530,94" stroke="#8c8375" stroke-width="1.4" fill="none"/>
+
+      <!-- failure notes -->
+      <rect x="90" y="34" width="180" height="70" rx="6" fill="#f4ede8" stroke="#dfc4b6"/>
+      <text class="svg-s" x="100" y="52" font-weight="600" fill="#8b3a1a">fails alone by…</text>
+      <text class="svg-s" x="100" y="70">letting a strong vector</text>
+      <text class="svg-s" x="100" y="86">match outvote a hard</text>
+      <text class="svg-s" x="100" y="100">safety constraint</text>
+
+      <rect x="300" y="34" width="200" height="70" rx="6" fill="#f4ede8" stroke="#dfc4b6"/>
+      <text class="svg-s" x="310" y="52" font-weight="600" fill="#8b3a1a">fails alone by…</text>
+      <text class="svg-s" x="310" y="70">still scanning everything</text>
+      <text class="svg-s" x="310" y="86">to apply the filter, and</text>
+      <text class="svg-s" x="310" y="100">saying nothing about affect</text>
+
+      <rect x="530" y="150" width="230" height="70" rx="6" fill="#f4ede8" stroke="#dfc4b6"/>
+      <text class="svg-s" x="540" y="168" font-weight="600" fill="#8b3a1a">fails alone by…</text>
+      <text class="svg-s" x="540" y="186">being far too expensive to run</text>
+      <text class="svg-s" x="540" y="202">over the whole store, and being</text>
+      <text class="svg-s" x="540" y="216">only as good as its candidates</text>
+    </svg>
+    </div>
+    <div class="diagram-cap">Each stage's weakness is the next stage's premise. HMGI is fast and imprecise, so it must be followed by a precision filter; HyST is precise but has no way to avoid a scan, so it must be preceded by a screen; KERL is rich but costly, so it must be given a small set.</div>
+  </div>
+
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:15%">Axis</th><th style="width:28%">HMGI</th><th style="width:28%">HyST</th><th style="width:29%">KERL</th></tr></thead>
+    <tbody>
+      <tr><td><b>Question answered</b></td><td>Which memories are even worth looking at?</td><td>Which of those are admissible?</td><td>What do the admissible ones mean?</td></tr>
+      <tr><td><b>Granularity</b></td><td>Whole store → neighbourhood</td><td>Neighbourhood → admissible set</td><td>Admissible set → ranked reading</td></tr>
+      <tr><td><b>Signal used</b></td><td>Dense proximity + graph hops</td><td>Symbolic predicates over metadata</td><td>Connected subgraph structure</td></tr>
+      <tr><td><b>Cost class</b></td><td>O(log N) per partition probed</td><td>O(|candidates|), no embeddings</td><td>O(|admissible| · hops), heads on top</td></tr>
+      <tr><td><b>Makes cheaper</b></td><td>Novelty and retrieval scans — the current cost centre</td><td>Precision: fewer wrong candidates reach the expensive stage</td><td>Interpretation: one retrieval, three read-outs instead of three passes</td></tr>
+      <tr><td><b>Key risk</b></td><td>Partition overhead exceeds saving at our scale</td><td>Over-narrow predicate empties the set; refinement can discard useful cues</td><td>Learned head is a heuristic; must not own safety routing</td></tr>
+      <tr><td><b>Evidence strength</b></td><td>Strong ablations, but billion-scale GPU regime</td><td>Small curated set (76 queries, 3 335 products); ablation partly negative</td><td>Strong, large benchmark; offline batch setting</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout">
+    <div class="callout-label">A caution on transferring numbers</div>
+    <p>None of the reported figures — HMGI's 0.22 ms latency, HyST's 0.9211 P@1, KERL's 0.973 F1 — transfer to MPCS. They were measured on different data, at different scales, with different hardware, and HMGI's own paper flags that its results so far cover up to 50K queries with full-scale evaluation still pending. What transfers is the <em>architecture</em>: the layering, the separation of hard from soft, the one-retrieval-many-heads pattern. Everything quantitative must be re-measured on our workload, which is why §11 puts instrumentation before optimisation.</p>
+  </div>
+</section>
+
+<!-- ══════════════════ 7 ══════════════════ -->
+<section id="s7">
+  <span class="section-num">SECTION 07</span>
+  <h2>The unified MPCS memory architecture</h2>
+
+  <p>Five layers, L0 through L4, matching the five concerns of §2. Layers are strictly ordered on the read path and strictly ordered in reverse on the write path.</p>
+
+  <div class="diagram-wrap">
+    <div class="diagram-label">Figure 7 — The proposed five-layer perceptual memory stack</div>
+    <div class="diagram-body">
+    <svg class="diag" viewBox="0 0 860 620" role="img" aria-label="Full five-layer MPCS memory architecture from stimulus to memory update">
+      <defs>
+        <marker id="arm" markerWidth="9" markerHeight="9" refX="8" refY="3.2" orient="auto">
+          <path d="M0,0 L8,3.2 L0,6.4 z" fill="#3d3830"/>
+        </marker>
+        <marker id="arw" markerWidth="9" markerHeight="9" refX="8" refY="3.2" orient="auto">
+          <path d="M0,0 L8,3.2 L0,6.4 z" fill="#b07a12"/>
+        </marker>
+      </defs>
+
+      <!-- L0 -->
+      <rect x="16" y="14" width="700" height="104" rx="9" fill="#e8eef6" stroke="#b9c9e0"/>
+      <text class="svg-h" x="32" y="36">L0 · MULTISENSORY REPRESENTATION — the composite percept record</text>
+      <rect x="32" y="46" width="152" height="58" rx="6" fill="#fff" stroke="#b9c9e0"/>
+      <text class="svg-s" x="42" y="64" font-weight="600">Structured facet Φ</text>
+      <text class="svg-m" x="42" y="80">thermal=hot c.95</text>
+      <text class="svg-m" x="42" y="94">odor=smoke c.70</text>
+
+      <rect x="196" y="46" width="152" height="58" rx="6" fill="#fff" stroke="#b9c9e0"/>
+      <text class="svg-s" x="206" y="64" font-weight="600">Dense facet E</text>
+      <text class="svg-m" x="206" y="80">e_vis e_aud</text>
+      <text class="svg-m" x="206" y="94">e_tou e_smell</text>
+
+      <rect x="360" y="46" width="152" height="58" rx="6" fill="#fff" stroke="#b9c9e0"/>
+      <text class="svg-s" x="370" y="64" font-weight="600">Relational facet G</text>
+      <text class="svg-m" x="370" y="80">→object →action</text>
+      <text class="svg-m" x="370" y="94">→prev →outcome</text>
+
+      <rect x="524" y="46" width="176" height="58" rx="6" fill="#fff" stroke="#b9c9e0"/>
+      <text class="svg-s" x="534" y="64" font-weight="600">Affective facet A</text>
+      <text class="svg-m" x="534" y="80">valence, arousal,</text>
+      <text class="svg-m" x="534" y="94">reward, step, decay</text>
+
+      <path d="M366,118 L366,142" stroke="#3d3830" stroke-width="1.4" marker-end="url(#arm)"/>
+
+      <!-- L1 -->
+      <rect x="16" y="146" width="700" height="90" rx="9" fill="#dce6f2" stroke="#b9c9e0"/>
+      <text class="svg-h" x="32" y="168">L1 · FAST INDEX SCREENING  — HMGI partitions · target &lt;1 ms</text>
+      <rect x="32" y="178" width="120" height="46" rx="6" fill="#2b4c7e"/>
+      <text class="svg-w" x="42" y="196">route by active</text><text class="svg-ws" x="42" y="212">modality set</text>
+      <rect x="164" y="178" width="120" height="46" rx="6" fill="#3b5f96"/>
+      <text class="svg-w" x="174" y="196">ANN probe in</text><text class="svg-ws" x="174" y="212">each partition</text>
+      <rect x="296" y="178" width="120" height="46" rx="6" fill="#4d72ab"/>
+      <text class="svg-w" x="306" y="196">+ scan delta</text><text class="svg-ws" x="306" y="212">store (MVCC)</text>
+      <rect x="428" y="178" width="120" height="46" rx="6" fill="#6386bd"/>
+      <text class="svg-w" x="438" y="196">dedupe via</text><text class="svg-ws" x="438" y="212">dlCBF (writes)</text>
+      <rect x="560" y="178" width="140" height="46" rx="6" fill="#fff" stroke="#2b4c7e" stroke-width="1.3"/>
+      <text class="svg-t" x="630" y="198" text-anchor="middle">≈400 candidates</text>
+      <text class="svg-s" x="630" y="214" text-anchor="middle">from 40 000</text>
+
+      <path d="M366,236 L366,260" stroke="#3d3830" stroke-width="1.4" marker-end="url(#arm)"/>
+
+      <!-- L2 -->
+      <rect x="16" y="264" width="700" height="90" rx="9" fill="#e4f0ec" stroke="#bcd9d0"/>
+      <text class="svg-h" x="32" y="286">L2 · SIMILARITY-SENSITIVE NOVELTY — HyST split · target &lt;2 ms</text>
+      <rect x="32" y="296" width="164" height="46" rx="6" fill="#8b3a1a"/>
+      <text class="svg-w" x="42" y="314">apply hard predicate</text><text class="svg-ws" x="42" y="330">safety slots must match</text>
+      <rect x="208" y="296" width="164" height="46" rx="6" fill="#1e6e5b"/>
+      <text class="svg-w" x="218" y="314">graded kernel κ over</text><text class="svg-ws" x="218" y="330">soft slots, weights ω</text>
+      <rect x="384" y="296" width="164" height="46" rx="6" fill="#7fb3a3"/>
+      <text class="svg-w" x="394" y="314">novelty = 1 − max sim</text><text class="svg-ws" x="394" y="330">empty set ⇒ novelty 1.0</text>
+      <rect x="560" y="296" width="140" height="46" rx="6" fill="#fff" stroke="#1e6e5b" stroke-width="1.3"/>
+      <text class="svg-t" x="630" y="316" text-anchor="middle">≈40 admissible</text>
+      <text class="svg-s" x="630" y="332" text-anchor="middle">+ novelty scalar</text>
+
+      <path d="M366,354 L366,378" stroke="#3d3830" stroke-width="1.4" marker-end="url(#arm)"/>
+      <path d="M700,319 C760,319 762,470 716,470" stroke="#8b3a1a" stroke-width="1.3" fill="none" marker-end="url(#arm)" stroke-dasharray="4 3"/>
+      <text class="svg-s" x="742" y="392" fill="#8b3a1a">novelty ≥ θ</text>
+      <text class="svg-s" x="742" y="406" fill="#8b3a1a">or reflex hit</text>
+      <text class="svg-s" x="742" y="420" fill="#8b3a1a">→ short-circuit</text>
+
+      <!-- L3 -->
+      <rect x="16" y="382" width="700" height="112" rx="9" fill="#ede9f6" stroke="#cfc2e6"/>
+      <text class="svg-h" x="32" y="404">L3 · DETAILED SEMANTIC / EMOTIONAL / CONTEXTUAL RETRIEVAL — KERL heads</text>
+      <rect x="32" y="414" width="170" height="66" rx="6" fill="#5a3d8a"/>
+      <text class="svg-w" x="42" y="434">expand 2-hop subgraph</text>
+      <text class="svg-ws" x="42" y="452">same object, same action,</text>
+      <text class="svg-ws" x="42" y="468">temporally adjacent</text>
+      <rect x="214" y="414" width="152" height="20" rx="4" fill="#7b60a8"/>
+      <text class="svg-w" x="222" y="429">HEAD-A action value</text>
+      <rect x="214" y="437" width="152" height="20" rx="4" fill="#7b60a8"/>
+      <text class="svg-w" x="222" y="452">HEAD-E valence/arousal</text>
+      <rect x="214" y="460" width="152" height="20" rx="4" fill="#7b60a8"/>
+      <text class="svg-w" x="222" y="475">HEAD-X explanation</text>
+      <rect x="378" y="414" width="170" height="66" rx="6" fill="#fff" stroke="#5a3d8a"/>
+      <text class="svg-s" x="388" y="432" font-weight="600">fused rank (HMGI Eq.3)</text>
+      <text class="svg-m" x="388" y="450">S = wᵥ(1−dᵥ) + wg·ḡ</text>
+      <text class="svg-s" x="388" y="468">× recency × confidence</text>
+      <rect x="560" y="414" width="140" height="66" rx="6" fill="#fff" stroke="#5a3d8a" stroke-width="1.3"/>
+      <text class="svg-t" x="630" y="440" text-anchor="middle">top-5 ranked</text>
+      <text class="svg-s" x="630" y="458" text-anchor="middle">+ affect + trace</text>
+      <text class="svg-s" x="630" y="474" text-anchor="middle">→ deliberation</text>
+
+      <path d="M366,494 L366,518" stroke="#b07a12" stroke-width="1.4" marker-end="url(#arw)"/>
+
+      <!-- L4 -->
+      <rect x="16" y="522" width="700" height="84" rx="9" fill="#fdf3e0" stroke="#ecd6a8"/>
+      <text class="svg-h" x="32" y="544">L4 · UPDATE AND LEARNING — write path, reverse order</text>
+      <rect x="32" y="554" width="150" height="40" rx="6" fill="#b07a12"/>
+      <text class="svg-w" x="42" y="570">append episode</text><text class="svg-ws" x="42" y="585">to delta store</text>
+      <rect x="194" y="554" width="150" height="40" rx="6" fill="#c08d2a"/>
+      <text class="svg-w" x="204" y="570">update ω, wᵥ, wg</text><text class="svg-ws" x="204" y="585">from reward error</text>
+      <rect x="356" y="554" width="150" height="40" rx="6" fill="#cea044"/>
+      <text class="svg-w" x="366" y="570">decay + re-partition</text><text class="svg-ws" x="366" y="585">async, off hot path</text>
+      <rect x="518" y="554" width="182" height="40" rx="6" fill="#fff" stroke="#b07a12" stroke-width="1.3"/>
+      <text class="svg-t" x="609" y="574" text-anchor="middle">index never rebuilt</text>
+      <text class="svg-s" x="609" y="589" text-anchor="middle">on the interactive path</text>
+
+      <path d="M16,564 C-4,564 -4,60 20,60" stroke="#b07a12" stroke-width="1.2" fill="none" stroke-dasharray="4 3"/>
+
+      <!-- reflex lane -->
+      <rect x="726" y="446" width="120" height="48" rx="6" fill="#8b3a1a"/>
+      <text class="svg-w" x="736" y="466">REFLEX PATH</text>
+      <text class="svg-ws" x="736" y="482">bypasses L3 entirely</text>
+    </svg>
+    </div>
+    <div class="diagram-cap">The reflex short-circuit is deliberate and is <em>our</em> addition, not any paper's. If a reflex rule fires or novelty exceeds θ, the system must act without paying for L3 — a cognitive architecture that cannot answer quickly under threat has the wrong shape regardless of its retrieval quality.</div>
+  </div>
+
+  <h3>L0 · Multisensory representation</h3>
+
+  <p>An episode becomes a record with four facets rather than one tuple.</p>
+
+  <div class="formula"><span class="comment"># Proposed episode record</span>
+Episode = {
+  <span class="key">Φ</span>: { thermal:(hot,.95), contact:(firm,.95), odor_type:(smoke,.70), ... }   <span class="comment"># structured, filterable</span>
+  <span class="key">E</span>: { vision:ℝ⁴⁸, audio:ℝ²⁴, touch:ℝ⁴⁰, smell:ℝ³² }                        <span class="comment"># dense, per modality</span>
+  <span class="key">G</span>: { object:o₇, action:withdraw, prev:e₄₀, outcome:e₄₂ }                <span class="comment"># typed edges</span>
+  <span class="key">A</span>: { reward:0.08, valence:−0.82, arousal:0.91, step:41, decay:0.99ᵗ }   <span class="comment"># affect + bookkeeping</span>
+}</div>
+  <div class="fkey"><b>Φ</b> is what HyST filters on and what the current engine already stores. <b>E</b> is what HMGI indexes; for categorical features the encoder is a learned embedding table per (feature, value) pair, mean-pooled per modality and scaled by the Z-confidence — the confidence weighting the engine already applies, moved into the vector so the ANN index respects it. <b>G</b> is what KERL walks. <b>A</b> is the gap <code>CurrentStatus.md</code> names; valence and arousal are <em>derived</em> at write time from the reward and the hard-predicate hits, in the spirit of KERL-Nutri, rather than being asked of the user.</div>
+
+  <h3>L1 · Fast index screening</h3>
+  <p>One HNSW-style index per modality partition, probed only for the modalities the percept actually contains — which is directly enabled by MPCS's existing malleability property, where any channel may be omitted. Writes go to an MVCC delta scanned brute-force alongside the index. The dlCBF stays, demoted to exact-duplicate detection at write time, where its O(1) answer is the right answer.</p>
+
+  <h3>L2 · Similarity-sensitive novelty</h3>
+  <p>Hard predicate first, graded kernel second, over the L1 candidates only. Slot classification (hard vs soft) is initialised from the existing <code>REFLEX_RULES</code> — every feature appearing in a reflex condition is hard by construction, which gives the split a principled starting point rather than a hand-tuned one — and thereafter adjusted by the L4 weight update.</p>
+
+  <h3>L3 · Detailed retrieval</h3>
+  <p>Two-hop subgraph expansion around the admissible set, fused ranking by HMGI's Eq. 3 modulated by the existing recency decay, then three lightweight heads. HEAD-A reproduces today's <code>reward_from_memory</code>; HEAD-E is new; HEAD-X formalises the explanation payload the dashboards already draw.</p>
+
+  <h3>L4 · Update and learning</h3>
+  <p>Three writes per step, none of which touch the index structure: the episode appends to the delta; the slot weights ω and the fusion weights w<sub>v</sub>, w<sub>g</sub> take a gradient step on the reward prediction error; re-partitioning and delta merging run asynchronously when the loop is idle. This closes the "triple-update loop" gap in <code>CurrentStatus.md</code> — memory store, salience weights, and routing threshold all moving together.</p>
+</section>
+
+<!-- ══════════════════ 8 ══════════════════ -->
+<section id="s8">
+  <span class="section-num">SECTION 08</span>
+  <h2>Running example: the hot pan</h2>
+
+  <p>One stimulus, traced through all five layers. Numbers are illustrative and consistent with the engine's current defaults (<code>top_k=5</code>, <code>time_decay=0.99</code>, <code>novelty_threshold=0.5</code>, <code>action_threshold=0.5</code>) against a hypothetical store of 40 000 episodes.</p>
+
+  <div class="diagram-wrap">
+    <div class="diagram-label">Figure 8 — End-to-end trace: stimulus to memory update</div>
+    <div class="diagram-body">
+    <svg class="diag" viewBox="0 0 860 250" role="img" aria-label="Seven-stage horizontal trace of one stimulus through the memory stack">
+      <defs>
+        <marker id="art" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 z" fill="#6b6258"/>
+        </marker>
+      </defs>
+      <g>
+        <rect x="8" y="60" width="104" height="70" rx="8" fill="#fff" stroke="#cfc7b8" stroke-width="1.3"/>
+        <text class="svg-s" x="60" y="80" text-anchor="middle" font-weight="600">1 STIMULUS</text>
+        <text class="svg-s" x="60" y="98" text-anchor="middle">dark object</text>
+        <text class="svg-s" x="60" y="112" text-anchor="middle">hot · smoke</text>
+        <text class="svg-m" x="60" y="150" text-anchor="middle">t = 41</text>
+      </g>
+      <path d="M114,95 L128,95" stroke="#6b6258" stroke-width="1.2" marker-end="url(#art)"/>
+      <g>
+        <rect x="132" y="60" width="104" height="70" rx="8" fill="#e8eef6" stroke="#b9c9e0"/>
+        <text class="svg-s" x="184" y="80" text-anchor="middle" font-weight="600">2 PERCEPT</text>
+        <text class="svg-s" x="184" y="98" text-anchor="middle">Φ,E,G,A built</text>
+        <text class="svg-s" x="184" y="112" text-anchor="middle">3 modalities</text>
+        <text class="svg-m" x="184" y="150" text-anchor="middle">~0.1 ms</text>
+      </g>
+      <path d="M238,95 L252,95" stroke="#6b6258" stroke-width="1.2" marker-end="url(#art)"/>
+      <g>
+        <rect x="256" y="60" width="104" height="70" rx="8" fill="#dce6f2" stroke="#b9c9e0"/>
+        <text class="svg-s" x="308" y="80" text-anchor="middle" font-weight="600">3 INDEX</text>
+        <text class="svg-s" x="308" y="98" text-anchor="middle">P₁P₃P₄ probed</text>
+        <text class="svg-s" x="308" y="112" text-anchor="middle">40 000 → 412</text>
+        <text class="svg-m" x="308" y="150" text-anchor="middle">~0.6 ms</text>
+      </g>
+      <path d="M362,95 L376,95" stroke="#6b6258" stroke-width="1.2" marker-end="url(#art)"/>
+      <g>
+        <rect x="380" y="60" width="104" height="70" rx="8" fill="#e4f0ec" stroke="#bcd9d0"/>
+        <text class="svg-s" x="432" y="80" text-anchor="middle" font-weight="600">4 NOVELTY</text>
+        <text class="svg-s" x="432" y="98" text-anchor="middle">hard: hot∧smoke</text>
+        <text class="svg-s" x="432" y="112" text-anchor="middle">412 → 6 · ν=0.71</text>
+        <text class="svg-m" x="432" y="150" text-anchor="middle">~0.3 ms</text>
+      </g>
+      <path d="M486,95 L500,95" stroke="#6b6258" stroke-width="1.2" marker-end="url(#art)"/>
+      <g>
+        <rect x="504" y="60" width="104" height="70" rx="8" fill="#ede9f6" stroke="#cfc2e6"/>
+        <text class="svg-s" x="556" y="80" text-anchor="middle" font-weight="600">5 CANDIDATES</text>
+        <text class="svg-s" x="556" y="98" text-anchor="middle">2-hop → 14</text>
+        <text class="svg-s" x="556" y="112" text-anchor="middle">nodes in subgraph</text>
+        <text class="svg-m" x="556" y="150" text-anchor="middle">~0.4 ms</text>
+      </g>
+      <path d="M610,95 L624,95" stroke="#6b6258" stroke-width="1.2" marker-end="url(#art)"/>
+      <g>
+        <rect x="628" y="60" width="104" height="70" rx="8" fill="#ded4ef" stroke="#cfc2e6"/>
+        <text class="svg-s" x="680" y="80" text-anchor="middle" font-weight="600">6 RANK</text>
+        <text class="svg-s" x="680" y="98" text-anchor="middle">top-5 + affect</text>
+        <text class="svg-s" x="680" y="112" text-anchor="middle">v −0.74 a 0.88</text>
+        <text class="svg-m" x="680" y="150" text-anchor="middle">~0.5 ms</text>
+      </g>
+      <path d="M734,95 L748,95" stroke="#6b6258" stroke-width="1.2" marker-end="url(#art)"/>
+      <g>
+        <rect x="752" y="60" width="100" height="70" rx="8" fill="#fdf3e0" stroke="#ecd6a8"/>
+        <text class="svg-s" x="802" y="80" text-anchor="middle" font-weight="600">7 UPDATE</text>
+        <text class="svg-s" x="802" y="98" text-anchor="middle">append + ω step</text>
+        <text class="svg-s" x="802" y="112" text-anchor="middle">no rebuild</text>
+        <text class="svg-m" x="802" y="150" text-anchor="middle">~0.2 ms</text>
+      </g>
+
+      <line x1="8" y1="178" x2="852" y2="178" stroke="#e0d8cc"/>
+      <text class="svg-s" x="8" y="198" font-weight="600">Today, for comparison:</text>
+      <text class="svg-s" x="8" y="216">two full linear scans of all 40 000 episodes × ~12 slots ≈ 10⁶ comparisons — and a novelty of 0.17, because four decorative features matched a memory that was never hot.</text>
+      <text class="svg-s" x="8" y="234">Proposed: ~2.1 ms of layered work, a novelty of 0.71, and a candidate set that could not contain a non-hot episode by construction.</text>
+    </svg>
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="step"><div class="step-n"></div><div class="step-body">
+      <h4>Stimulus</h4>
+      <p>The agent's hand approaches a dark, motionless object on a stove. Vision reports a dark static unknown at full confidence; touch reports firm contact on a rough hot surface at 0.95; smell reports smoke at 0.70. Audio is absent — a channel MPCS is explicitly allowed to omit.</p>
+    </div></div>
+
+    <div class="step"><div class="step-n"></div><div class="step-body">
+      <h4>Percept construction (L0)</h4>
+      <p>The four facets are assembled. Note that Φ and E carry the same information in two forms on purpose: Φ so it can be filtered exactly, E so it can be compared approximately.</p>
+      <div class="trace">Φ = {object_type:(unknown,1.00), motion:(static,1.00), color:(dark,1.00),
+     contact:(firm,0.95), texture:(rough,0.95), thermal:(hot,0.95),
+     odor_type:(smoke,0.70), odor_intensity:(moderate,0.70)}
+E = {vision: ℝ⁴⁸, touch: ℝ⁴⁰, smell: ℝ³²}       audio: absent
+hard(p) = thermal ∈ {hot}  AND  odor_type ∈ {smoke}     ← from REFLEX_RULES membership
+soft(p) = {object_type, motion, color, texture, odor_intensity}</div>
+    </div></div>
+
+    <div class="step"><div class="step-n"></div><div class="step-body">
+      <h4>Indexing / screening (L1)</h4>
+      <p>Partitions P₁ (vision), P₃ (touch), P₄ (smell) are probed; P₂ (audio) is skipped entirely. Each probe is an HNSW descent, not a scan. The delta store — 37 episodes written since the last merge — is scanned brute-force and unioned in.</p>
+      <div class="trace">probe P₁ → 180   probe P₃ → 150   probe P₄ → 120   delta → 37
+union, dedupe                                    → 412 candidates
+dlCBF: exact key not present → this is not a literal repeat (used at write time only)</div>
+    </div></div>
+
+    <div class="step"><div class="step-n"></div><div class="step-body">
+      <h4>Familiarity / novelty evaluation (L2)</h4>
+      <p>The hard predicate runs first and is brutal: of 412 candidates, 6 were both hot and smoky. Among those six, the graded kernel over soft slots finds the closest at 0.29 — a hot smoky episode involving a <em>fast-moving bright</em> object, which shares the danger but little else.</p>
+      <div class="trace">hard predicate      412 → 6 admissible
+best soft match     sim = 0.29   (e₁₉₀₃: hot, smoke, bright, fast, smooth)
+novelty ν = 1 − 0.29 = 0.71      ν > novelty_threshold (0.50)
+  ↳ compare with today's kernel: nearest overall was e₂₂₄ at 0.83 → ν = 0.17
+     e₂₂₄ was thermal=neutral. It is not in the admissible set at all.</div>
+      <p>This is the single most important step in the example. The old kernel called this situation familiar and safe; the new one calls it dangerous and largely unprecedented, and it is right.</p>
+    </div></div>
+
+    <div class="step"><div class="step-n"></div><div class="step-body">
+      <h4>Candidate retrieval (L3a)</h4>
+      <p>The six admissible episodes are expanded two hops: same-object edges pull in three earlier encounters with the same stove; same-action edges pull in four prior <code>withdraw</code> outcomes; temporal-adjacency edges pull in what happened immediately after each. Fourteen nodes total.</p>
+      <div class="trace">hop 0  e₁₉₀₃ e₂₀₄₄ e₂₁₁₇ e₂₂₈₀ e₃₀₀₁ e₃₄₉₂        (admissible)
+hop 1  +o₇ stove → e₈₈₀ e₉₀₂ e₁₄₅₅            (same object)
+hop 2  +act:withdraw → e₉₀₃ e₁₄₅₆ e₂₀₄₅ e₃₄₉₃  (outcome of the action)
+                                              → 14-node subgraph</div>
+    </div></div>
+
+    <div class="step"><div class="step-n"></div><div class="step-body">
+      <h4>Detailed ranking (L3b)</h4>
+      <p>Fused scoring ranks the subgraph; the three heads read it. HEAD-A finds <code>withdraw</code> dominant with mean reward 0.86 against 0.11 for <code>approach</code>. HEAD-E returns strongly negative valence with high arousal — derived from the reward distribution and the hard-predicate density in the subgraph, not stored anywhere. HEAD-X names the evidence.</p>
+      <div class="trace">rank  episode  S = wᵥ(1−dᵥ) + wg·ḡ   × recency   action     reward
+ 1    e₂₁₁₇     0.62 + 0.29         × 0.94      withdraw    0.91
+ 2    e₃₄₉₂     0.58 + 0.31         × 0.88      withdraw    0.88
+ 3    e₁₉₀₃     0.71 + 0.14         × 0.79      withdraw    0.83
+ 4    e₂₀₄₄     0.49 + 0.27         × 0.91      alert       0.74
+ 5    e₉₀₂      0.31 + 0.44         × 0.72      approach    0.11   ← same object, bad end
+
+HEAD-A  withdraw 0.86 | alert 0.74 | observe 0.40 | approach 0.11 | ignore 0.22
+HEAD-E  valence −0.74   arousal 0.88
+HEAD-X  "hot + smoke, 6 matching episodes, 5 ended in withdraw or alert;
+         the one approach on this object (e₉₀₂) scored 0.11."</div>
+      <p>Because the reflex rule <code>thermal=hot → withdraw</code> also fires, L3 runs in parallel with the action rather than gating it: the agent withdraws first and the ranking arrives to justify, weight and record the choice. That ordering is our design decision, and it is why the reflex lane in Figure 7 bypasses L3.</p>
+    </div></div>
+
+    <div class="step"><div class="step-n"></div><div class="step-body">
+      <h4>Memory update (L4)</h4>
+      <p>The new episode is appended to the delta with its derived affect. Because ν was high and the outcome confirmed the retrieved recommendation, the slot weights shift toward the features that carried the prediction, and the fusion weights shift slightly toward the graph term, which contributed the decisive e₉₀₂ evidence.</p>
+      <div class="trace">append e₄₁ → delta (38 pending)          index untouched
+reward 0.89 vs HEAD-A prediction 0.86 → error +0.03
+ω[thermal] 0.94→0.95   ω[odor_type] 0.88→0.90   ω[color] 0.41→0.40
+wg 0.35→0.36           action_threshold 0.500→0.507   (novelty_gain = 0.5+ν)
+async queue: merge delta when idle; re-fit P₃ centroids after 500 writes</div>
+    </div></div>
+  </div>
+
+  <div class="callout green">
+    <div class="callout-label">What the example demonstrates</div>
+    <p>The three papers do not overlap anywhere in this trace. HMGI acts once, at step 3, and never looks at meaning. HyST acts once, at step 4, and never looks at cost. KERL acts once, at steps 5–6, and never looks at either. The layering is what turns a 10⁶-comparison scan that reached the wrong conclusion into a ~2 ms cascade that reached the right one.</p>
+  </div>
+</section>
+
+<!-- ══════════════════ 9 ══════════════════ -->
+<section id="s9">
+  <span class="section-num">SECTION 09</span>
+  <h2>Cost, limits and honest failure modes</h2>
+
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:16%">Layer</th><th style="width:26%">Makes cheaper</th><th style="width:19%">Cost it adds</th><th style="width:39%">Limitation / when it hurts</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b>L1</b> screening<br><span class="chip chip-paper">HMGI</span></td>
+        <td>Novelty + retrieval drop from two O(N·d) scans to O(log N) per probed partition. Skipping absent modalities is free selectivity.</td>
+        <td>Index build and periodic re-fit; embedding tables; memory for four HNSW graphs.</td>
+        <td>Below roughly 5 000 episodes the constant factors likely exceed the saving — a linear scan over 2 000 records is already sub-millisecond. Partitioning also hurts genuinely cross-modal recall: HMGI itself concedes multimodal systems favour dominant modalities, and a percept whose signal lives in the <em>combination</em> of touch and smell may be found in neither partition alone.</td>
+      </tr>
+      <tr>
+        <td><b>L2</b> novelty<br><span class="chip chip-paper">HyST</span></td>
+        <td>Precision: the expensive L3 stage sees ~40 rather than ~400 items. Also removes an entire class of dangerous false-familiarity.</td>
+        <td>One predicate evaluation per candidate; the hard/soft slot classification must be maintained.</td>
+        <td>An over-narrow predicate empties the candidate set and the agent is permanently novel — hesitating forever. HyST's own ablation shows query refinement can <em>reduce</em> precision when the "soft" part carried real signal, so we filter without deleting. Slot classification is also a policy choice with safety consequences: mark too few features hard and the old pathology returns.</td>
+      </tr>
+      <tr>
+        <td><b>L3</b> retrieval<br><span class="chip chip-paper">KERL</span></td>
+        <td>One retrieval, three read-outs. Affect becomes derivable rather than stored, so no per-episode annotation burden.</td>
+        <td>Two-hop graph walk; three small heads to train and keep calibrated.</td>
+        <td>Garbage in, garbage out — KERL's stated limitation. The heads are heuristics that will emit false positives at any accuracy short of perfect (their Table 14 shows this at F1 0.97), so safety routing must remain with the deterministic reflex rules. Derived valence is also a modelling assumption, not a measurement; if reward is sparse or noisy the affect signal is decorative.</td>
+      </tr>
+      <tr>
+        <td><b>L4</b> update<br><span class="chip chip-adapt">HMGI + ours</span></td>
+        <td>Removes index rebuild from the interactive path entirely; HMGI reports 50 ms vs 250 ms update latency with vs without a delta store.</td>
+        <td>Delta scan cost grows until merge; two consistency regimes to reason about.</td>
+        <td>If merges are deferred too long the delta becomes the dominant scan and L1's advantage erodes. Weight updates on ω risk slow drift toward whatever the agent happens to encounter, which is learning working correctly and looking like a bug.</td>
+      </tr>
+      <tr>
+        <td><b>dlCBF</b><br><span class="chip chip-ours">demoted</span></td>
+        <td>O(1) duplicate detection when loading preset memory or accepting expert teaching, where keys genuinely repeat.</td>
+        <td>Negligible; it is already built.</td>
+        <td>Useless on the read path, as measured. Keeping it anywhere else would be sunk-cost reasoning.</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout">
+    <div class="callout-label">The scale question, stated plainly</div>
+    <p>MPCS today runs interactive sessions with hundreds of memories. At that scale <strong>this entire architecture is over-engineering</strong>, and a fair reading of the evidence says so. Its value is conditional on the store growing by two or three orders of magnitude — which the preset-memory and long-run experiment tracks make plausible, but not yet true. The correct response is not to build it all now; it is to build L0 and L2 now (they improve correctness at any scale, and L2 fixes a real safety pathology), instrument the loop, and gate L1, L3 and L4 on measured scan cost.</p>
+  </div>
+</section>
+
+<!-- ══════════════════ 10 ══════════════════ -->
+<section id="s10">
+  <span class="section-num">SECTION 10</span>
+  <h2>Provenance: papers vs. our proposal</h2>
+
+  <p>Everything above is one of three things, and the distinction matters for anyone deciding what to trust.</p>
+
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:36%">Claim or component</th><th style="width:16%">Status</th><th style="width:48%">Basis</th></tr></thead>
+    <tbody>
+      <tr><td>Modality-partitioned ANN indexes reduce searched space</td><td><span class="chip chip-paper">From paper</span></td><td>HMGI §3.2, Eq. 1; ablation §5.1 reports 12→17.4 ms and −18% recall without partitioning.</td></tr>
+      <tr><td>Weighted fusion of vector and graph scores</td><td><span class="chip chip-paper">From paper</span></td><td>HMGI Eq. 3, with dynamic w<sub>v</sub>/w<sub>g</sub>.</td></tr>
+      <tr><td>Delta store avoids rebuild-on-write</td><td><span class="chip chip-paper">From paper</span></td><td>HMGI §3.5; ablation §5.2 reports 50→250 ms and 15% downtime without it.</td></tr>
+      <tr><td>Hard constraints filtered before semantic ranking</td><td><span class="chip chip-paper">From paper</span></td><td>HyST §3.1–3.3; case study Table 4 shows constraint violations under semantic-only retrieval.</td></tr>
+      <tr><td>Query refinement should be optional, not mandatory</td><td><span class="chip chip-paper">From paper</span></td><td>HyST §5.2 — removing refinement improved P@5 and P@10.</td></tr>
+      <tr><td>Retrieve a subgraph, then read it with several small task heads</td><td><span class="chip chip-paper">From paper</span></td><td>KERL §3, Fig. 2; multi-LoRA over one backbone.</td></tr>
+      <tr><td>Derived attributes can be generated from retrieved structure</td><td><span class="chip chip-paper">From paper</span></td><td>KERL-Nutri §3.3; Table 9 shows error falling as more structure is supplied.</td></tr>
+      <tr><td>Train the selector on a mixed R⁺/R⁻ candidate set</td><td><span class="chip chip-paper">From paper</span></td><td>KERL §3.1 model optimisation.</td></tr>
+
+      <tr><td>Mapping HyST's structured/unstructured split onto safety-critical vs descriptive percept slots</td><td><span class="chip chip-adapt">Adapted</span></td><td>HyST uses an LLM to extract filters from free text. We read them from typed slots — no LLM, no extraction error, but also no ability to handle unanticipated constraints.</td></tr>
+      <tr><td>Graded value kernel κ inside the soft term</td><td><span class="chip chip-adapt">Adapted</span></td><td>Not in HyST, which matches metadata exactly. Added because our values are ordinal (<code>cold/neutral/warm/hot</code>) and exact matching discards that ordering.</td></tr>
+      <tr><td>Confidence-scaled modality embeddings</td><td><span class="chip chip-adapt">Adapted</span></td><td>HMGI has no confidence notion. We fold MPCS's existing Z-numbers into the vector so the ANN index inherits the weighting the engine already applies.</td></tr>
+      <tr><td>Episode graph edge types (object, action, previous, outcome)</td><td><span class="chip chip-adapt">Adapted</span></td><td>KERL's FoodKG relations are domain-specific; these are ours, derived from what <code>build_graph</code> already emits.</td></tr>
+
+      <tr><td>Five-layer decomposition L0–L4 and their ordering</td><td><span class="chip chip-ours">Our proposal</span></td><td>No paper proposes this stack; it is our synthesis, motivated by §2's separation of concerns.</td></tr>
+      <tr><td>Reflex short-circuit bypassing L3</td><td><span class="chip chip-ours">Our proposal</span></td><td>Required by MPCS's dual-process design. Contradicts nothing in the papers but appears in none of them — they have no notion of acting before retrieval completes.</td></tr>
+      <tr><td>Novelty = 1.0 on an empty admissible set as <em>correct</em> behaviour</td><td><span class="chip chip-ours">Our proposal</span></td><td>In HyST an empty result is a failure. In a cognitive system it is an accurate report of unprecedented experience.</td></tr>
+      <tr><td>Deriving valence/arousal from reward distribution and predicate density</td><td><span class="chip chip-ours">Our proposal</span></td><td>Structurally analogous to KERL-Nutri, but nutrition has ground truth and affect does not. This is the least evidenced component in the report.</td></tr>
+      <tr><td>Hard/soft slot classification initialised from <code>REFLEX_RULES</code></td><td><span class="chip chip-ours">Our proposal</span></td><td>Uses an artefact MPCS already has to avoid a hand-tuned safety policy.</td></tr>
+      <tr><td>Demoting the dlCBF to write-time deduplication</td><td><span class="chip chip-ours">Our proposal</span></td><td>Follows from our own negative Bloom-filter result, not from any paper.</td></tr>
+      <tr><td>All latency figures in §8</td><td><span class="chip chip-ours">Illustrative</span></td><td>Consistent with the papers' order of magnitude, but <strong>not measured on MPCS</strong>. They are a target to test against, not a result.</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ══════════════════ 11 ══════════════════ -->
+<section id="s11">
+  <span class="section-num">SECTION 11</span>
+  <h2>Proposed stack and build order</h2>
+
+  <div class="stack-row">
+    <div class="stack-tag" style="background:#2b4c7e">L0</div>
+    <div class="stack-body">
+      <div class="st-title">Four-facet episode record — Φ structured · E dense per modality · G typed edges · A affect</div>
+      <div class="st-text">Replaces the flat summary tuple. Backwards-compatible: Φ is the current summary, everything else is additive. Build first — every other layer reads it.</div>
+    </div>
+  </div>
+  <div class="stack-row">
+    <div class="stack-tag" style="background:#1e6e5b">L2</div>
+    <div class="stack-body">
+      <div class="st-title">Hard-predicate filter + graded soft kernel, slots seeded from <code>REFLEX_RULES</code></div>
+      <div class="st-text">Build second, ahead of the index. It is a pure correctness fix, costs nothing at current scale, and closes the false-familiarity failure demonstrated in §8 step 4.</div>
+    </div>
+  </div>
+  <div class="stack-row">
+    <div class="stack-tag" style="background:#8b3a1a">—</div>
+    <div class="stack-body">
+      <div class="st-title">Instrumentation: per-step scan cost, candidate counts, novelty distribution</div>
+      <div class="st-text">Build third. This is the gate. L1 and L4 are justified only once measured scan cost is actually a problem — the Bloom-filter result is the standing reminder of what happens when it is assumed instead.</div>
+    </div>
+  </div>
+  <div class="stack-row">
+    <div class="stack-tag" style="background:#5a3d8a">L3</div>
+    <div class="stack-body">
+      <div class="st-title">Two-hop subgraph expansion + HEAD-A / HEAD-E / HEAD-X over fused ranking</div>
+      <div class="st-text">Build fourth. HEAD-A largely exists as <code>reward_from_memory</code>; HEAD-X largely exists as the explanation payload. HEAD-E is genuinely new and should ship behind a flag with its outputs logged before they influence any decision.</div>
+    </div>
+  </div>
+  <div class="stack-row">
+    <div class="stack-tag" style="background:#3b5f96">L1</div>
+    <div class="stack-body">
+      <div class="st-title">Per-modality ANN partitions + MVCC delta; dlCBF demoted to write-time dedupe</div>
+      <div class="st-text">Build fifth, when instrumentation says so. Ship with a linear-scan fallback and a correctness harness that asserts the indexed top-k matches the exhaustive top-k on a held-out set.</div>
+    </div>
+  </div>
+  <div class="stack-row">
+    <div class="stack-tag" style="background:#b07a12">L4</div>
+    <div class="stack-body">
+      <div class="st-title">Triple update — episode append, ω / w<sub>v</sub> / w<sub>g</sub> gradient step, async merge and re-partition</div>
+      <div class="st-text">Build last. The weight-learning half closes the salience-weight gap named in <code>CurrentStatus.md</code>; the async half is only needed once L1 exists.</div>
+    </div>
+  </div>
+
+  <div class="callout blue">
+    <div class="callout-label">The one-paragraph answer to the driving question</div>
+    <p><strong>Represent</strong> each experience as four facets — filterable structure, per-modality dense vectors, typed relational edges, and derived affect — so that different questions can be asked of different facets. <strong>Screen</strong> for familiarity with modality-partitioned approximate neighbour search over an append-tolerant index, not with exact membership, because perceptual experience never repeats bit-for-bit. <strong>Judge novelty</strong> only among memories that satisfy the percept's safety-critical constraints, so that four matching decorative features can never argue the system out of alarm. <strong>Retrieve in detail</strong> by expanding a small subgraph around the survivors and reading it three ways — action value, emotional colouring, and explanation — from a single retrieval pass. <strong>Update</strong> by appending to a delta and nudging the slot and fusion weights, never by rebuilding the index on the interactive path. The layering is the contribution; each layer is cheap precisely because the one before it did its job.</p>
+  </div>
+</section>
+
+<footer>
+  <p><strong>Sources.</strong> J. Chandra, S. K. Navneet &amp; Y. Zhang, <em>The Hybrid Multimodal Graph Index (HMGI)</em>, arXiv:2510.10123, 2025 · J. Myung, J. Park &amp; J. Han, <em>HyST: LLM-Powered Hybrid Retrieval over Semi-Structured Tabular Data</em>, arXiv:2508.18048, EARL '25 · F. Mohbat &amp; M. J. Zaki, <em>KERL: Knowledge-Enhanced Personalized Recipe Recommendation using LLMs</em>, arXiv:2505.14629, ACL 2025.</p>
+  <p><strong>System references.</strong> <code>Model/experimental/core/mcps_engine.py</code> (similarity kernel, dlCBF, memory system, contribution weighting, graph builder) · <code>docs/CurrentStatus.md</code> (named gaps: two-layer memory, emotion as first-class signal, triple-update loop) · <code>docs/MCPS_Report.html</code> (framework and visual language).</p>
+  <p>Illustrative figures in §8 are targets for measurement, not measurements. MPCS · Memory Indexing &amp; Retrieval Track · September 2026.</p>
+</footer>
+
+</div>
+</body>
+</html>
