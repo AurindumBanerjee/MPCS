@@ -11,10 +11,11 @@ Model/
   reference/     Frozen baselines: mpcs.py, BloomMPCS.py, their preset launchers, MPCS_Test.py
   experimental/  Active trunk — MPCS v2, one folder per implementation:
       core/                  the engine (four modalities, memory-derived reward)
-      dashboard_web/         local web dashboard, no dependencies
-      dashboard_tk/          Tkinter desktop dashboard, no dependencies
-      dashboard_streamlit/   Streamlit dashboard
-      dashboard_plotly/      Dash / Plotly dashboard
+      dashboards/
+        dashboard_web/         local web dashboard, no dependencies
+        dashboard_tk/          Tkinter desktop dashboard, no dependencies
+        dashboard_streamlit/   Streamlit dashboard
+        dashboard_plotly/      Dash / Plotly dashboard
       baseline_z/            MPCS_Z.py, the previous two-modality version
   data/          PresetMemory.txt, PresetMemory_v2.txt and other data artifacts
 docs/            MPCS_Report.html, CurrentStatus.md, Checklist.md
@@ -30,14 +31,14 @@ walkthrough and troubleshooting.
 Current version — a dashboard showing which memories produced each decision.
 Both of these need nothing installed:
 
-- `python Model/experimental/dashboard_web/MPCS_Test.py` (browser)
-- `python Model/experimental/dashboard_tk/mpcs_dash_tk.py` (desktop window)
+- `python Model/experimental/dashboards/dashboard_web/MPCS_Test.py` (browser)
+- `python Model/experimental/dashboards/dashboard_tk/mpcs_dash_tk.py` (desktop window)
 
 The same system through other front-ends (`pip install -r requirements.txt`,
 or `pip install streamlit pandas dash plotly`):
 
-- `streamlit run Model/experimental/dashboard_streamlit/mpcs_dash_streamlit.py`
-- `python Model/experimental/dashboard_plotly/mpcs_dash_plotly.py`
+- `streamlit run Model/experimental/dashboards/dashboard_streamlit/mpcs_dash_streamlit.py`
+- `python Model/experimental/dashboards/dashboard_plotly/mpcs_dash_plotly.py`
 
 Verify the engine with no UI involved:
 

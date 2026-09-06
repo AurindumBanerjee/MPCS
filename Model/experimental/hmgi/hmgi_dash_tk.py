@@ -1,52 +1,54 @@
 """
-MPCS v2 dashboard — Variant D: Tkinter desktop app
----------------------------------------------------
-The same cognition as the other dashboards (the shared engine in ../core),
-in a native desktop window. Needs nothing beyond the standard library, and
-unlike the web variants it starts instantly with no server and no browser.
+HMGI dashboard — Tkinter desktop app
+---------------------------------------
+Same visual language and layout skeleton as ../hyst/hyst_dash_tk.py and
+../dashboards/dashboard_tk/mpcs_dash_tk.py, driving an HmgiSession instead
+of the stock engine Session. Adds the controls the stock dashboard has no
+notion of:
 
-This supersedes the old baseline_z Tk UI: four modalities instead of two,
-reward derived from memory instead of random, and — the part the old window
-could not do at all — a contribution graph drawn on a Canvas showing which
-memories produced each decision.
+  * a scan instrumentation panel — per-step records-scanned vs. store-size,
+    percentage reduction, and elapsed time, which is the report's own gate
+    (section 11) for whether an actual ANN/graph index is worth building.
+    With the current preset bank (every record touches all four
+    modalities) this will honestly show ~0% reduction; the panel exists so
+    that changes to memory density are visible instead of assumed,
+  * a partition sizes readout, per modality,
+  * an episode graph panel showing the G-facet relational edges (previous
+    episode, same-action predecessor, same-object predecessor) for the
+    most recent handful of stored episodes — the report's "structure a
+    flat tuple cannot hold".
 
 Run:
-    python mpcs_dash_tk.py
-    python mpcs_dash_tk.py --scratch     start with empty memory
-    python mpcs_dash_tk.py --profile cautious --seed 42
+    python hmgi_dash_tk.py
+    python hmgi_dash_tk.py --scratch
+    python hmgi_dash_tk.py --profile cautious --seed 42
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-import math
 import os
 import sys
 import tkinter as tk
 from tkinter import filedialog, ttk
 
-# The engine lives in ../../core; add it to the path so this runs from anywhere.
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "core"))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "core"))
 
 import mpcs_engine as E
 from mpcs_preset_v2 import PROFILE_CONFIGS, build_preset_memory
 from mpcs_preset_v3 import build_preset_memory_v3
+from hmgi_layer import HmgiSession
 
 
-# Dark palette matching the web dashboards, so screenshots sit side by side.
+# Same dark palette as the other Tk dashboards, so screenshots sit side by side.
 BG, PANEL, LINE = "#10131a", "#171b24", "#3d465c"
 TEXT, MUTED, ACCENT = "#e6e9ef", "#8b94a7", "#4c8dff"
-# Raised surfaces: input fields sit lighter than their panel so the eye can
-# find them without needing a border.
 FIELD, FIELD_HOVER, SELECT = "#222839", "#2b3247", "#31527f"
 DISABLED = "#7a8397"
-# Primary-button fill: deeper than ACCENT so white text clears 4.5:1 on it.
 GO = "#2f5fb0"
-# Status text. Lighter than the equivalent node fills, because text needs more
-# contrast than a filled shape does: the graph's #d1483f withdraw red only
-# reaches 3.9:1 as text on the panel, which is under the 4.5:1 body-text bar.
 OK_FG, WARN_FG = "#4ecf95", "#ff7b70"
+SCAN_FG = "#c9a24c"   # instrumentation accent — distinct from HyST's teal/red
 
 PARAM_SPEC = [
     ("top_k",              "Top-k memories",      1,    20,   1),
@@ -58,7 +60,6 @@ PARAM_SPEC = [
     ("action_threshold",   "Action threshold",    0.00, 1.00, 0.01),
     ("learning_rate",      "Learning rate",       0.00, 0.20, 0.005),
     ("expert_weight_boost", "Expert boost",       1.00, 6.00, 0.25),
-    ("reflex_memory_boost", "Reflex memory boost", 1.00, 6.00, 0.25),
 ]
 
 
@@ -75,22 +76,16 @@ def _relative_luminance(colour: str) -> float:
 
 
 def ink_for(background: str) -> str:
-    """Pick black or white text for a filled shape, whichever reads better.
-
-    The action palette spans a wide lightness range — white on the alert
-    orange is only 2.6:1, while white on the observe blue is fine. Choosing
-    per colour keeps every node label legible instead of assuming white.
-    """
     return "#0d1017" if _relative_luminance(background) > 0.35 else "#ffffff"
 
 
-class CognitiveTkUI:
-    def __init__(self, root: tk.Tk, session: E.Session):
+class HmgiTkUI:
+    def __init__(self, root: tk.Tk, session: HmgiSession):
         self.root = root
         self.session = session
-        self.root.title("MPCS v2 — Cognitive Dashboard (Tk)")
+        self.root.title("MPCS — HMGI Dashboard (Tk)")
         self.root.configure(bg=BG)
-        self.root.minsize(1180, 760)
+        self.root.minsize(1240, 820)
 
         self._feature_vars: dict[str, tk.StringVar] = {}
         self._modality_vars: dict[str, tk.BooleanVar] = {}
@@ -99,25 +94,15 @@ class CognitiveTkUI:
 
         self._style()
         self._build()
-        self._refresh(f"Loaded {len(self.session.memory)} experiences.")
+        self._refresh(f"Loaded {len(self.session.memory)} experiences. "
+                       f"Partitions: {self.session.partitioned.partition_sizes()}")
 
-    # -- styling ---------------------------------------------------------
+    # -- styling (shared with the other Tk dashboards) ---------------------
     def _style(self) -> None:
-        """Apply a dark theme.
-
-        The subtlety here is that ttk's built-in themes carry *state maps*
-        that override whatever you pass to configure(). clam, for instance,
-        maps a readonly Combobox to a light grey field while leaving the
-        foreground near-white — light text on a light field, invisible. Every
-        widget that has such a map therefore needs an explicit map() call, not
-        just configure(). The same applies to the Checkbutton indicator and to
-        the Listbox that a Combobox pops up, which is a classic tk widget and
-        ignores ttk styling entirely (handled via option_add below).
-        """
         style = ttk.Style()
         try:
-            style.theme_use("clam")   # the only built-in theme that honours
-        except tk.TclError:           # background on most widgets
+            style.theme_use("clam")
+        except tk.TclError:
             pass
 
         style.configure(".", background=BG, foreground=TEXT,
@@ -137,13 +122,14 @@ class CognitiveTkUI:
                         font=("Segoe UI", 8, "bold"))
         style.configure("Action.TLabel", background=PANEL, foreground=TEXT,
                         font=("Segoe UI", 15, "bold"))
+        style.configure("Scan.TLabel", background=PANEL, foreground=SCAN_FG,
+                        font=("Segoe UI", 8, "bold"))
 
         style.configure("TLabelframe", background=PANEL, bordercolor=LINE,
                         borderwidth=1, relief="solid")
         style.configure("TLabelframe.Label", background=PANEL, foreground=ACCENT,
                         font=("Segoe UI", 8, "bold"))
 
-        # -- entries and comboboxes: the light-on-light offenders
         style.configure("TEntry", fieldbackground=FIELD, foreground=TEXT,
                         insertcolor=TEXT, bordercolor=LINE, borderwidth=1,
                         padding=4)
@@ -157,7 +143,6 @@ class CognitiveTkUI:
                         borderwidth=1, padding=4)
         style.map(
             "TCombobox",
-            # Without the explicit readonly entries here, clam paints #dcdad5.
             fieldbackground=[("readonly", "focus", FIELD_HOVER),
                              ("readonly", FIELD),
                              ("disabled", PANEL),
@@ -173,8 +158,6 @@ class CognitiveTkUI:
             selectforeground=[("readonly", TEXT), ("!focus", TEXT)],
         )
 
-        # -- checkbuttons: the indicator square needs its own map or it stays
-        # white-on-white and you cannot tell checked from unchecked
         style.configure("TCheckbutton", background=PANEL, foreground=TEXT,
                         indicatorcolor=FIELD, focuscolor=PANEL,
                         font=("Segoe UI", 9, "bold"), padding=2)
@@ -185,7 +168,6 @@ class CognitiveTkUI:
                                   ("pressed", FIELD_HOVER),
                                   ("!selected", FIELD)])
 
-        # -- buttons
         style.configure("TButton", background=FIELD, foreground=TEXT,
                         bordercolor=LINE, borderwidth=1, focusthickness=0,
                         font=("Segoe UI", 9), padding=5, relief="flat")
@@ -195,8 +177,6 @@ class CognitiveTkUI:
                   foreground=[("disabled", DISABLED), ("!disabled", TEXT)],
                   bordercolor=[("active", ACCENT), ("!active", LINE)])
 
-        # A deeper blue than ACCENT so white sits on it at ~5:1 rather than
-        # the 3.2:1 the lighter accent gives.
         style.configure("Go.TButton", background=GO, foreground="#ffffff",
                         bordercolor=GO, font=("Segoe UI", 9, "bold"))
         style.map("Go.TButton",
@@ -205,7 +185,6 @@ class CognitiveTkUI:
                   foreground=[("!disabled", "#ffffff")],
                   bordercolor=[("!disabled", GO)])
 
-        # -- sliders
         style.configure("TScale", background=PANEL, troughcolor=BG,
                         bordercolor=LINE, lightcolor=ACCENT, darkcolor=ACCENT)
         style.map("TScale", background=[("active", PANEL)])
@@ -215,7 +194,6 @@ class CognitiveTkUI:
         style.map("Vertical.TScrollbar",
                   background=[("active", FIELD_HOVER), ("!active", FIELD)])
 
-        # -- tables
         style.configure("Treeview", background=PANEL, fieldbackground=PANEL,
                         foreground=TEXT, bordercolor=LINE, borderwidth=0,
                         rowheight=20, font=("Consolas", 8))
@@ -228,8 +206,6 @@ class CognitiveTkUI:
         style.map("Treeview.Heading",
                   background=[("active", FIELD_HOVER), ("!active", FIELD)])
 
-        # -- the Combobox dropdown is a classic tk Listbox, not a ttk widget,
-        # so ttk styling never reaches it. These options do.
         self.root.option_add("*TCombobox*Listbox.background", FIELD)
         self.root.option_add("*TCombobox*Listbox.foreground", TEXT)
         self.root.option_add("*TCombobox*Listbox.selectBackground", ACCENT)
@@ -247,6 +223,7 @@ class CognitiveTkUI:
         main = ttk.Frame(outer)
         main.pack(side="left", fill="both", expand=True, padx=10, pady=10)
 
+        self._build_scan_panel(main)
         self._build_inputs(main)
 
         middle = ttk.Frame(main)
@@ -261,12 +238,11 @@ class CognitiveTkUI:
         bar.pack(side="left", fill="y")
         bar.pack_propagate(False)
 
-        ttk.Label(bar, text="MPCS v2", style="Panel.TLabel",
+        ttk.Label(bar, text="MPCS · HMGI", style="Panel.TLabel",
                   font=("Segoe UI", 14, "bold")).pack(anchor="w", padx=12, pady=(12, 0))
-        ttk.Label(bar, text="Multimodal cognitive simulator",
+        ttk.Label(bar, text="Partitioned scan + episode graph",
                   style="Muted.TLabel").pack(anchor="w", padx=12, pady=(0, 8))
 
-        # -- memory source
         ttk.Label(bar, text="MEMORY SOURCE", style="Head.TLabel").pack(
             anchor="w", padx=12, pady=(8, 4))
         self.source_var = tk.StringVar(value="preset v3")
@@ -288,10 +264,9 @@ class CognitiveTkUI:
         ttk.Button(row, text="Export", command=self._export).pack(side="left", padx=4)
         ttk.Button(row, text="Import", command=self._import).pack(side="left")
 
-        # -- parameters, scrollable because ten sliders do not fit
         ttk.Label(bar, text="PARAMETERS", style="Head.TLabel").pack(
             anchor="w", padx=12, pady=(8, 4))
-        canvas = tk.Canvas(bar, bg=PANEL, highlightthickness=0, height=290)
+        canvas = tk.Canvas(bar, bg=PANEL, highlightthickness=0, height=220)
         canvas.pack(fill="both", expand=True, padx=(12, 0))
         holder = ttk.Frame(canvas, style="Panel.TFrame")
         canvas.create_window((0, 0), window=holder, anchor="nw", width=232)
@@ -315,7 +290,6 @@ class CognitiveTkUI:
                       command=lambda _v, k=key: self._on_param(k)).pack(fill="x")
             self._on_param(key)
 
-        # -- reward and teaching
         ttk.Label(bar, text="REWARD & TEACHING", style="Head.TLabel").pack(
             anchor="w", padx=12, pady=(10, 4))
         ttk.Label(bar, text="Manual reward (blank = from memory)",
@@ -323,20 +297,38 @@ class CognitiveTkUI:
         self.reward_var = tk.StringVar()
         ttk.Entry(bar, textvariable=self.reward_var).pack(padx=12, fill="x", pady=2)
 
-        row = ttk.Frame(bar, style="Panel.TFrame")
-        row.pack(fill="x", padx=12, pady=4)
-        ttk.Button(row, text="Apply to last",
-                   command=self._apply_reward).pack(side="left")
-        self.expert_var = tk.StringVar(value=E.ACTIONS[0])
-        ttk.Combobox(row, textvariable=self.expert_var, state="readonly", width=10,
-                     values=tuple(E.ACTIONS)).pack(side="left", padx=4)
-        ttk.Button(bar, text="Teach expert",
-                   command=self._teach).pack(padx=12, fill="x")
-
         self.message = ttk.Label(bar, text="", style="Panel.TLabel",
                                  foreground=ACCENT, wraplength=240,
                                  font=("Segoe UI", 8))
         self.message.pack(anchor="w", padx=12, pady=8)
+
+    def _build_scan_panel(self, parent) -> None:
+        box = ttk.LabelFrame(
+            parent,
+            text="SCAN INSTRUMENTATION — the report's own gate before building a real index",
+        )
+        box.pack(fill="x", pady=(0, 10))
+
+        row = ttk.Frame(box, style="Panel.TFrame")
+        row.pack(fill="x", padx=8, pady=(8, 4))
+
+        self.scan_label = ttk.Label(row, text="", style="Scan.TLabel",
+                                    font=("Consolas", 9, "bold"))
+        self.scan_label.pack(side="left")
+
+        self.partition_label = ttk.Label(row, text="", style="Muted.TLabel",
+                                         font=("Consolas", 8))
+        self.partition_label.pack(side="right")
+
+        self.scan_note = ttk.Label(
+            box,
+            text="Partitioning cuts the scan only when stored memories omit "
+                 "modalities. The preset bank uses all four in every record, "
+                 "so expect ~0% reduction there — untick a modality above and "
+                 "compare.",
+            style="Muted.TLabel", wraplength=900, justify="left",
+        )
+        self.scan_note.pack(anchor="w", padx=8, pady=(0, 8))
 
     def _build_inputs(self, parent) -> None:
         box = ttk.LabelFrame(parent, text="SENSORY INPUT — untick a modality to "
@@ -408,23 +400,18 @@ class CognitiveTkUI:
     def _build_graph(self, parent) -> None:
         box = ttk.LabelFrame(
             parent,
-            text="MEMORY CONTRIBUTION GRAPH — which experiences produced this decision",
+            text="EPISODE GRAPH — G-facet relational edges (last 12 episodes)",
         )
         box.pack(side="left", fill="both", expand=True)
         self.graph_canvas = tk.Canvas(box, bg=PANEL, highlightthickness=0, height=340)
         self.graph_canvas.pack(fill="both", expand=True, padx=8, pady=8)
-        self.graph_canvas.bind("<Configure>", lambda _e: self._draw_graph())
+        self.graph_canvas.bind("<Configure>", lambda _e: self._draw_episode_graph())
 
         legend = ttk.Frame(box, style="Panel.TFrame")
         legend.pack(fill="x", padx=8, pady=(0, 8))
-        for action, colour in E.ACTION_COLORS.items():
-            chip = tk.Canvas(legend, width=9, height=9, bg=PANEL,
-                             highlightthickness=0)
-            chip.create_oval(1, 1, 8, 8, fill=colour, outline="")
-            chip.pack(side="left", padx=(6, 2))
-            ttk.Label(legend, text=action, style="Muted.TLabel").pack(side="left")
-        ttk.Label(legend, text="edge width = similarity x decay x boost",
-                  style="Muted.TLabel").pack(side="right")
+        ttk.Label(legend, text="solid = prev step", style="Muted.TLabel").pack(side="left", padx=(6, 12))
+        ttk.Label(legend, text="dashed = same action", style="Muted.TLabel").pack(side="left", padx=(0, 12))
+        ttk.Label(legend, text="dotted = same object", style="Muted.TLabel").pack(side="left")
 
     def _build_tables(self, parent) -> None:
         row = ttk.Frame(parent)
@@ -440,14 +427,14 @@ class CognitiveTkUI:
             self.contrib_tree.column(name, width=62, anchor="center")
         self.contrib_tree.pack(fill="both", expand=True, padx=6, pady=6)
 
-        box = ttk.LabelFrame(row, text="STEP HISTORY")
+        box = ttk.LabelFrame(row, text="STEP HISTORY — scan reduction per step")
         box.pack(side="left", fill="both", expand=True)
-        columns = ("step", "action", "mode", "policy", "reward", "source")
+        columns = ("step", "action", "policy", "reward", "scanned", "reduce%", "ms")
         self.history_tree = ttk.Treeview(box, columns=columns, show="headings",
                                          height=7)
         for name in columns:
             self.history_tree.heading(name, text=name)
-            self.history_tree.column(name, width=68, anchor="center")
+            self.history_tree.column(name, width=60, anchor="center")
         self.history_tree.pack(fill="both", expand=True, padx=6, pady=6)
 
     # -- actions ---------------------------------------------------------
@@ -524,13 +511,15 @@ class CognitiveTkUI:
     def _export(self) -> None:
         path = filedialog.asksaveasfilename(
             defaultextension=".json", filetypes=[("JSON", "*.json")],
-            initialfile="mpcs_memory.json")
+            initialfile="hmgi_memory.json")
         if not path:
             return
         with open(path, "w", encoding="utf-8") as handle:
-            json.dump({"memory": self.session.memory.to_json_obj(),
-                       "profile": self.session.profile,
-                       "config": self.session.cfg.to_dict()}, handle, indent=2)
+            json.dump({
+                "memory": self.session.memory.to_json_obj(),
+                "profile": self.session.profile,
+                "config": self.session.cfg.to_dict(),
+            }, handle, indent=2)
         self._refresh(f"Exported {len(self.session.memory)} experiences.")
 
     def _import(self) -> None:
@@ -547,18 +536,6 @@ class CognitiveTkUI:
         except Exception as exc:
             self._refresh(f"Import failed: {exc}")
 
-    def _apply_reward(self) -> None:
-        value = self._manual_reward()
-        if value is None:
-            self._refresh("Enter a reward between 0 and 1 first.")
-            return
-        self._refresh(self.session.apply_reward(value)["message"])
-
-    def _teach(self) -> None:
-        outcome = self.session.teach_expert(self.expert_var.get(),
-                                            self._manual_reward())
-        self._refresh(outcome["message"])
-
     # -- rendering -------------------------------------------------------
     def _refresh(self, message: str) -> None:
         self.message.config(text=message)
@@ -570,6 +547,7 @@ class CognitiveTkUI:
             self.stats_label.config(text="")
             self.note_label.config(text="")
             self.reward_label.config(text="")
+            self.scan_label.config(text="No step run yet.")
         else:
             self.action_label.config(text=result["action"].upper(),
                                      foreground=E.ACTION_COLORS[result["action"]])
@@ -596,8 +574,22 @@ class CognitiveTkUI:
             self.note_label.config(text=note, foreground=colour)
             self._render_reward(result)
 
+            scan = result["scan"]
+            self.scan_label.config(
+                text=f"scanned {scan['scanned']}/{scan['store_size']} records  "
+                     f"({scan['reduction_pct']:.1f}% reduction)  "
+                     f"in {scan['elapsed_ms']:.3f} ms  "
+                     f"[{scan['partitions_touched']}/{scan['partitions_total']} partitions touched]"
+            )
+
+        self.partition_label.config(
+            text="partitions: " + ", ".join(
+                f"{m}={n}" for m, n in self.session.partitioned.partition_sizes().items()
+            )
+        )
+
         self._render_scores(result)
-        self._draw_graph()
+        self._draw_episode_graph()
         self._render_tables(result)
 
     def _render_reward(self, result) -> None:
@@ -643,7 +635,6 @@ class CognitiveTkUI:
             canvas.create_text(14, y, anchor="w", text=action,
                                fill=TEXT if evidenced else MUTED,
                                font=("Segoe UI", 8, "bold" if chosen else "normal"))
-            # Track: a visible well, not a near-black rectangle lost on the panel.
             canvas.create_rectangle(70, y - 6, 230, y + 6,
                                     fill=BG, outline=LINE, width=1)
             width = max(0, min(1.0, score)) * 158
@@ -652,9 +643,6 @@ class CognitiveTkUI:
                     canvas.create_rectangle(71, y - 5, 71 + width, y + 5,
                                             fill=E.ACTION_COLORS[action], outline="")
                 else:
-                    # No supporting memory: the 0.50 is a default, not a
-                    # judgement. An outline says "nothing here" more clearly
-                    # than a stippled fill, which just reads as a dim bar.
                     canvas.create_rectangle(71, y - 5, 71 + width, y + 5,
                                             fill="", outline=DISABLED, dash=(2, 2))
             canvas.create_text(236, y, anchor="w", text=f"{score:.2f}",
@@ -667,76 +655,58 @@ class CognitiveTkUI:
                 canvas.create_text(8, y, anchor="w", text="▸", fill=ACCENT,
                                    font=("Segoe UI", 10, "bold"))
 
-    def _draw_graph(self) -> None:
+    def _draw_episode_graph(self) -> None:
+        """Draws the G-facet relational graph: the last dozen episodes laid
+        out left to right in step order, with edges for prev/same-action/
+        same-object. This is deliberately not the contribution graph — it
+        shows relational structure that exists whether or not this step's
+        decision used it, which is the point HMGI adds over a flat tuple.
+        """
         canvas = self.graph_canvas
         canvas.delete("all")
         result = self.session.last_result
         width = canvas.winfo_width() or 620
         height = canvas.winfo_height() or 340
-        cx, cy = width / 2, height / 2
 
-        if result is None:
-            canvas.create_text(cx, cy, text="No step run yet.",
+        if result is None or not result.get("episodes"):
+            canvas.create_text(width / 2, height / 2, text="No step run yet.",
                                fill=MUTED, font=("Segoe UI", 9, "italic"))
             return
 
-        graph = result["graph"]
-        if graph["empty"]:
-            canvas.create_text(
-                cx, cy, width=width - 40, justify="center", fill=MUTED,
-                font=("Segoe UI", 9, "italic"),
-                text="No memories contributed to this decision —\n"
-                     "the reward came from a cold-start prior.")
-            return
+        episodes = result["episodes"]
+        n = len(episodes)
+        margin = 50
+        span = max(1, n - 1)
+        xs = [margin + i * (width - 2 * margin) / span for i in range(n)]
+        y = height / 2
+        by_step = {ep["step"]: (xs[i], y) for i, ep in enumerate(episodes)}
 
-        scale_x, scale_y = width * 0.36, height * 0.36
-        positions = {n["id"]: (cx + n["x"] * scale_x, cy + n["y"] * scale_y)
-                     for n in graph["nodes"]}
-        max_weight = max((e["weight"] for e in graph["edges"]), default=1e-9) or 1e-9
+        for i, ep in enumerate(episodes):
+            x, _ = xs[i], y
+            edges = ep["edges"]
+            if edges["prev"] in by_step:
+                x0, y0 = by_step[edges["prev"]]
+                canvas.create_line(x0, y0, x, y, fill=ACCENT, width=1.6)
+            if edges["same_action_prev"] in by_step and edges["same_action_prev"] != edges["prev"]:
+                x0, y0 = by_step[edges["same_action_prev"]]
+                canvas.create_line(x0, y0 - 18, x, y - 18, fill=OK_FG,
+                                   width=1.2, dash=(4, 2))
+            if edges["same_object_prev"] in by_step and edges["same_object_prev"] != edges["prev"]:
+                x0, y0 = by_step[edges["same_object_prev"]]
+                canvas.create_line(x0, y0 + 18, x, y + 18, fill=SCAN_FG,
+                                   width=1.2, dash=(1, 2))
 
-        if result["penalty"]:
-            canvas.create_text(
-                10, 12, anchor="w", fill=WARN_FG, font=("Segoe UI", 8, "bold"),
-                text=f"memory advised {result['penalty']['recommended']} — "
-                     f"{result['action']} was taken instead")
-
-        for edge in graph["edges"]:
-            x0, y0 = positions[edge["source"]]
-            ratio = edge["weight"] / max_weight
-            canvas.create_line(x0, y0, cx, cy, fill=edge["color"],
-                               width=1 + 6 * ratio)
-
-        for node in graph["nodes"]:
-            if node["kind"] == "percept":
-                continue
-            x, y = positions[node["id"]]
-            radius = 11 + 12 * node["radius"]
-            if node["is_expert"]:
-                canvas.create_oval(x - radius - 4, y - radius - 4,
-                                   x + radius + 4, y + radius + 4,
-                                   outline="#ffd166", width=2)
-            canvas.create_oval(x - radius, y - radius, x + radius, y + radius,
-                               fill=node["color"], outline=PANEL, width=2)
-            if node["mode"] == "REFLEXIVE":
-                # White pip marks a memory that itself came from a reflex.
-                mark = radius * 0.7
-                canvas.create_oval(x + mark - 4, y - mark - 4,
-                                   x + mark + 4, y - mark + 4,
-                                   fill="#ffffff", outline=node["color"])
-            canvas.create_text(x, y, text=f"{node['reward']:.2f}",
-                               fill=ink_for(node["color"]),
-                               font=("Segoe UI", 8, "bold"))
-            canvas.create_text(x, y + radius + 9, text=f"s{node['step']}",
+        for i, ep in enumerate(episodes):
+            x = xs[i]
+            colour = E.ACTION_COLORS.get(ep["action"], "#666")
+            canvas.create_oval(x - 14, y - 14, x + 14, y + 14,
+                               fill=colour, outline=PANEL, width=2)
+            canvas.create_text(x, y, text=f"{ep['reward']:.2f}",
+                               fill=ink_for(colour), font=("Segoe UI", 7, "bold"))
+            canvas.create_text(x, y + 30, text=f"s{ep['step']}",
                                fill=TEXT, font=("Segoe UI", 7))
-
-        centre_fill = E.ACTION_COLORS[result["action"]]
-        centre_ink = ink_for(centre_fill)
-        canvas.create_oval(cx - 32, cy - 32, cx + 32, cy + 32,
-                           fill=centre_fill, outline="#ffffff", width=2)
-        canvas.create_text(cx, cy - 6, text="NOW", fill=centre_ink,
-                           font=("Segoe UI", 8, "bold"))
-        canvas.create_text(cx, cy + 7, text=result["action"].upper(),
-                           fill=centre_ink, font=("Segoe UI", 7))
+            canvas.create_text(x, y - 30, text=ep["action"],
+                               fill=MUTED, font=("Segoe UI", 7))
 
     def _render_tables(self, result) -> None:
         self.contrib_tree.delete(*self.contrib_tree.get_children())
@@ -752,13 +722,14 @@ class CognitiveTkUI:
         self.history_tree.delete(*self.history_tree.get_children())
         for entry in reversed(self.session.history[-40:]):
             self.history_tree.insert("", "end", values=(
-                entry["step"], entry["action"], entry["mode"], entry["policy"],
+                entry["step"], entry["action"], entry["policy"],
                 f"{entry['reward']:.2f}" + (" !" if entry["penalised"] else ""),
-                entry["reward_source"]))
+                "", f"{entry['scan_reduction_pct']:.0f}%",
+                f"{entry['scan_elapsed_ms']:.3f}"))
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="MPCS v2 dashboard (Tkinter).")
+    parser = argparse.ArgumentParser(description="MPCS HMGI dashboard (Tkinter).")
     parser.add_argument("--scratch", action="store_true",
                         help="Start with empty memory instead of the preset bank.")
     parser.add_argument("--profile", choices=tuple(PROFILE_CONFIGS),
@@ -766,13 +737,13 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=None)
     args = parser.parse_args()
 
-    session = E.Session(profile=args.profile, seed=args.seed)
+    session = HmgiSession(profile=args.profile, seed=args.seed)
     memory = E.MemorySystem() if args.scratch else build_preset_memory_v3(args.profile)
     session.reset(memory=memory, profile=args.profile, seed=args.seed)
     session.apply_profile(args.profile)
 
     root = tk.Tk()
-    CognitiveTkUI(root, session)
+    HmgiTkUI(root, session)
     root.mainloop()
 
 

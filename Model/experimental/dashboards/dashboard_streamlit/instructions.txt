@@ -5,7 +5,7 @@ MPCS v2 — DASHBOARD B: STREAMLIT
 WHAT THIS IS
 ------------
 The same cognition as the other two dashboards (the shared engine in
-../core), presented through Streamlit. Streamlit supplies the
+../../core), presented through Streamlit. Streamlit supplies the
 sidebar, layout, tables and charts, so this is the shortest of the
 three front-ends by a wide margin.
 
@@ -39,7 +39,7 @@ Verify:
 
 RUNNING
 -------
-    cd Model/experimental/dashboard_streamlit
+    cd Model/experimental/dashboards/dashboard_streamlit
     streamlit run mpcs_dash_streamlit.py
 
 Streamlit prints a local URL (usually http://localhost:8501) and
@@ -49,10 +49,10 @@ Note the command is "streamlit run", not "python". Running it with
 python directly produces a warning about missing ScriptRunContext
 and no interface.
 
-The script finds ../core on its own, so this also works from the
+The script finds ../../core on its own, so this also works from the
 repository root:
 
-    streamlit run Model/experimental/dashboard_streamlit/mpcs_dash_streamlit.py
+    streamlit run Model/experimental/dashboards/dashboard_streamlit/mpcs_dash_streamlit.py
 
 Run on a different port:
 
@@ -171,4 +171,4 @@ Memory resets unexpectedly
     You edited the file while it was running; see KNOWN QUIRKS.
 
 ModuleNotFoundError: mpcs_engine
-    Verify the engine first:  python ../core/engine_smoke.py
+    Verify the engine first:  python ../../core/engine_smoke.py

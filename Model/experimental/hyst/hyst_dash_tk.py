@@ -1,52 +1,53 @@
 """
-MPCS v2 dashboard — Variant D: Tkinter desktop app
----------------------------------------------------
-The same cognition as the other dashboards (the shared engine in ../core),
-in a native desktop window. Needs nothing beyond the standard library, and
-unlike the web variants it starts instantly with no server and no browser.
+HyST dashboard — Tkinter desktop app
+-------------------------------------
+Same visual language and layout skeleton as ../dashboard_tk/mpcs_dash_tk.py,
+driving a HystSession instead of the stock engine Session. Adds the controls
+the stock dashboard has no notion of:
 
-This supersedes the old baseline_z Tk UI: four modalities instead of two,
-reward derived from memory instead of random, and — the part the old window
-could not do at all — a contribution graph drawn on a Canvas showing which
-memories produced each decision.
+  * per-feature hard/soft toggles (seeded from REFLEX_RULES, editable),
+  * a Divergent thinking switch — soft-constraint exploration: hard-slot
+    mismatches are discounted, not excluded,
+  * an Urgent flag — sole convergent thinking: hard filter stays absolute
+    (urgency always overrides divergent), retrieval collapses to the single
+    nearest admissible memory, and the deliberation policy skips
+    explore/hesitate to commit directly to the best-scoring action,
+  * an admissible-count readout, since HyST's novelty is defined over the
+    hard-filtered candidate set rather than the whole store.
 
 Run:
-    python mpcs_dash_tk.py
-    python mpcs_dash_tk.py --scratch     start with empty memory
-    python mpcs_dash_tk.py --profile cautious --seed 42
+    python hyst_dash_tk.py
+    python hyst_dash_tk.py --scratch
+    python hyst_dash_tk.py --profile cautious --seed 42
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-import math
 import os
 import sys
 import tkinter as tk
 from tkinter import filedialog, ttk
 
-# The engine lives in ../../core; add it to the path so this runs from anywhere.
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "core"))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "core"))
 
 import mpcs_engine as E
 from mpcs_preset_v2 import PROFILE_CONFIGS, build_preset_memory
 from mpcs_preset_v3 import build_preset_memory_v3
+from hyst_layer import HystSession, SlotPolicy
 
 
-# Dark palette matching the web dashboards, so screenshots sit side by side.
+# Same dark palette as the stock Tk dashboard, so screenshots sit side by side.
 BG, PANEL, LINE = "#10131a", "#171b24", "#3d465c"
 TEXT, MUTED, ACCENT = "#e6e9ef", "#8b94a7", "#4c8dff"
-# Raised surfaces: input fields sit lighter than their panel so the eye can
-# find them without needing a border.
 FIELD, FIELD_HOVER, SELECT = "#222839", "#2b3247", "#31527f"
 DISABLED = "#7a8397"
-# Primary-button fill: deeper than ACCENT so white text clears 4.5:1 on it.
 GO = "#2f5fb0"
-# Status text. Lighter than the equivalent node fills, because text needs more
-# contrast than a filled shape does: the graph's #d1483f withdraw red only
-# reaches 3.9:1 as text on the panel, which is under the 4.5:1 body-text bar.
 OK_FG, WARN_FG = "#4ecf95", "#ff7b70"
+# HyST-specific accents: divergent (exploration, teal) and urgent (importance, amber-red).
+DIVERGENT_FG = "#4ecf95"
+URGENT_FG = "#ff7b70"
 
 PARAM_SPEC = [
     ("top_k",              "Top-k memories",      1,    20,   1),
@@ -58,7 +59,6 @@ PARAM_SPEC = [
     ("action_threshold",   "Action threshold",    0.00, 1.00, 0.01),
     ("learning_rate",      "Learning rate",       0.00, 0.20, 0.005),
     ("expert_weight_boost", "Expert boost",       1.00, 6.00, 0.25),
-    ("reflex_memory_boost", "Reflex memory boost", 1.00, 6.00, 0.25),
 ]
 
 
@@ -75,49 +75,34 @@ def _relative_luminance(colour: str) -> float:
 
 
 def ink_for(background: str) -> str:
-    """Pick black or white text for a filled shape, whichever reads better.
-
-    The action palette spans a wide lightness range — white on the alert
-    orange is only 2.6:1, while white on the observe blue is fine. Choosing
-    per colour keeps every node label legible instead of assuming white.
-    """
     return "#0d1017" if _relative_luminance(background) > 0.35 else "#ffffff"
 
 
-class CognitiveTkUI:
-    def __init__(self, root: tk.Tk, session: E.Session):
+class HystTkUI:
+    def __init__(self, root: tk.Tk, session: HystSession):
         self.root = root
         self.session = session
-        self.root.title("MPCS v2 — Cognitive Dashboard (Tk)")
+        self.root.title("MPCS — HyST Dashboard (Tk)")
         self.root.configure(bg=BG)
-        self.root.minsize(1180, 760)
+        self.root.minsize(1220, 800)
 
         self._feature_vars: dict[str, tk.StringVar] = {}
         self._modality_vars: dict[str, tk.BooleanVar] = {}
         self._param_vars: dict[str, tk.DoubleVar] = {}
         self._param_labels: dict[str, ttk.Label] = {}
+        self._hard_vars: dict[str, tk.BooleanVar] = {}
 
         self._style()
         self._build()
-        self._refresh(f"Loaded {len(self.session.memory)} experiences.")
+        self._refresh(f"Loaded {len(self.session.memory)} experiences. "
+                       f"{len(self.session.policy.hard_slots)} hard slots seeded from REFLEX_RULES.")
 
-    # -- styling ---------------------------------------------------------
+    # -- styling (identical to the stock Tk dashboard) --------------------
     def _style(self) -> None:
-        """Apply a dark theme.
-
-        The subtlety here is that ttk's built-in themes carry *state maps*
-        that override whatever you pass to configure(). clam, for instance,
-        maps a readonly Combobox to a light grey field while leaving the
-        foreground near-white — light text on a light field, invisible. Every
-        widget that has such a map therefore needs an explicit map() call, not
-        just configure(). The same applies to the Checkbutton indicator and to
-        the Listbox that a Combobox pops up, which is a classic tk widget and
-        ignores ttk styling entirely (handled via option_add below).
-        """
         style = ttk.Style()
         try:
-            style.theme_use("clam")   # the only built-in theme that honours
-        except tk.TclError:           # background on most widgets
+            style.theme_use("clam")
+        except tk.TclError:
             pass
 
         style.configure(".", background=BG, foreground=TEXT,
@@ -143,7 +128,6 @@ class CognitiveTkUI:
         style.configure("TLabelframe.Label", background=PANEL, foreground=ACCENT,
                         font=("Segoe UI", 8, "bold"))
 
-        # -- entries and comboboxes: the light-on-light offenders
         style.configure("TEntry", fieldbackground=FIELD, foreground=TEXT,
                         insertcolor=TEXT, bordercolor=LINE, borderwidth=1,
                         padding=4)
@@ -157,7 +141,6 @@ class CognitiveTkUI:
                         borderwidth=1, padding=4)
         style.map(
             "TCombobox",
-            # Without the explicit readonly entries here, clam paints #dcdad5.
             fieldbackground=[("readonly", "focus", FIELD_HOVER),
                              ("readonly", FIELD),
                              ("disabled", PANEL),
@@ -173,8 +156,6 @@ class CognitiveTkUI:
             selectforeground=[("readonly", TEXT), ("!focus", TEXT)],
         )
 
-        # -- checkbuttons: the indicator square needs its own map or it stays
-        # white-on-white and you cannot tell checked from unchecked
         style.configure("TCheckbutton", background=PANEL, foreground=TEXT,
                         indicatorcolor=FIELD, focuscolor=PANEL,
                         font=("Segoe UI", 9, "bold"), padding=2)
@@ -185,7 +166,26 @@ class CognitiveTkUI:
                                   ("pressed", FIELD_HOVER),
                                   ("!selected", FIELD)])
 
-        # -- buttons
+        # Distinct checkbutton styles for the divergent/urgent switches so
+        # they read as a different kind of control from ordinary toggles.
+        style.configure("Divergent.TCheckbutton", background=PANEL, foreground=DIVERGENT_FG,
+                        indicatorcolor=FIELD, focuscolor=PANEL,
+                        font=("Segoe UI", 10, "bold"), padding=4)
+        style.map("Divergent.TCheckbutton",
+                  background=[("active", PANEL)],
+                  indicatorcolor=[("selected", DIVERGENT_FG),
+                                  ("pressed", FIELD_HOVER),
+                                  ("!selected", FIELD)])
+
+        style.configure("Urgent.TCheckbutton", background=PANEL, foreground=URGENT_FG,
+                        indicatorcolor=FIELD, focuscolor=PANEL,
+                        font=("Segoe UI", 10, "bold"), padding=4)
+        style.map("Urgent.TCheckbutton",
+                  background=[("active", PANEL)],
+                  indicatorcolor=[("selected", URGENT_FG),
+                                  ("pressed", FIELD_HOVER),
+                                  ("!selected", FIELD)])
+
         style.configure("TButton", background=FIELD, foreground=TEXT,
                         bordercolor=LINE, borderwidth=1, focusthickness=0,
                         font=("Segoe UI", 9), padding=5, relief="flat")
@@ -195,8 +195,6 @@ class CognitiveTkUI:
                   foreground=[("disabled", DISABLED), ("!disabled", TEXT)],
                   bordercolor=[("active", ACCENT), ("!active", LINE)])
 
-        # A deeper blue than ACCENT so white sits on it at ~5:1 rather than
-        # the 3.2:1 the lighter accent gives.
         style.configure("Go.TButton", background=GO, foreground="#ffffff",
                         bordercolor=GO, font=("Segoe UI", 9, "bold"))
         style.map("Go.TButton",
@@ -205,7 +203,6 @@ class CognitiveTkUI:
                   foreground=[("!disabled", "#ffffff")],
                   bordercolor=[("!disabled", GO)])
 
-        # -- sliders
         style.configure("TScale", background=PANEL, troughcolor=BG,
                         bordercolor=LINE, lightcolor=ACCENT, darkcolor=ACCENT)
         style.map("TScale", background=[("active", PANEL)])
@@ -215,7 +212,6 @@ class CognitiveTkUI:
         style.map("Vertical.TScrollbar",
                   background=[("active", FIELD_HOVER), ("!active", FIELD)])
 
-        # -- tables
         style.configure("Treeview", background=PANEL, fieldbackground=PANEL,
                         foreground=TEXT, bordercolor=LINE, borderwidth=0,
                         rowheight=20, font=("Consolas", 8))
@@ -228,8 +224,6 @@ class CognitiveTkUI:
         style.map("Treeview.Heading",
                   background=[("active", FIELD_HOVER), ("!active", FIELD)])
 
-        # -- the Combobox dropdown is a classic tk Listbox, not a ttk widget,
-        # so ttk styling never reaches it. These options do.
         self.root.option_add("*TCombobox*Listbox.background", FIELD)
         self.root.option_add("*TCombobox*Listbox.foreground", TEXT)
         self.root.option_add("*TCombobox*Listbox.selectBackground", ACCENT)
@@ -247,6 +241,7 @@ class CognitiveTkUI:
         main = ttk.Frame(outer)
         main.pack(side="left", fill="both", expand=True, padx=10, pady=10)
 
+        self._build_hyst_controls(main)
         self._build_inputs(main)
 
         middle = ttk.Frame(main)
@@ -261,12 +256,11 @@ class CognitiveTkUI:
         bar.pack(side="left", fill="y")
         bar.pack_propagate(False)
 
-        ttk.Label(bar, text="MPCS v2", style="Panel.TLabel",
+        ttk.Label(bar, text="MPCS · HyST", style="Panel.TLabel",
                   font=("Segoe UI", 14, "bold")).pack(anchor="w", padx=12, pady=(12, 0))
-        ttk.Label(bar, text="Multimodal cognitive simulator",
+        ttk.Label(bar, text="Hard filters, soft residual",
                   style="Muted.TLabel").pack(anchor="w", padx=12, pady=(0, 8))
 
-        # -- memory source
         ttk.Label(bar, text="MEMORY SOURCE", style="Head.TLabel").pack(
             anchor="w", padx=12, pady=(8, 4))
         self.source_var = tk.StringVar(value="preset v3")
@@ -288,10 +282,9 @@ class CognitiveTkUI:
         ttk.Button(row, text="Export", command=self._export).pack(side="left", padx=4)
         ttk.Button(row, text="Import", command=self._import).pack(side="left")
 
-        # -- parameters, scrollable because ten sliders do not fit
         ttk.Label(bar, text="PARAMETERS", style="Head.TLabel").pack(
             anchor="w", padx=12, pady=(8, 4))
-        canvas = tk.Canvas(bar, bg=PANEL, highlightthickness=0, height=290)
+        canvas = tk.Canvas(bar, bg=PANEL, highlightthickness=0, height=220)
         canvas.pack(fill="both", expand=True, padx=(12, 0))
         holder = ttk.Frame(canvas, style="Panel.TFrame")
         canvas.create_window((0, 0), window=holder, anchor="nw", width=232)
@@ -315,7 +308,6 @@ class CognitiveTkUI:
                       command=lambda _v, k=key: self._on_param(k)).pack(fill="x")
             self._on_param(key)
 
-        # -- reward and teaching
         ttk.Label(bar, text="REWARD & TEACHING", style="Head.TLabel").pack(
             anchor="w", padx=12, pady=(10, 4))
         ttk.Label(bar, text="Manual reward (blank = from memory)",
@@ -323,20 +315,58 @@ class CognitiveTkUI:
         self.reward_var = tk.StringVar()
         ttk.Entry(bar, textvariable=self.reward_var).pack(padx=12, fill="x", pady=2)
 
-        row = ttk.Frame(bar, style="Panel.TFrame")
-        row.pack(fill="x", padx=12, pady=4)
-        ttk.Button(row, text="Apply to last",
-                   command=self._apply_reward).pack(side="left")
-        self.expert_var = tk.StringVar(value=E.ACTIONS[0])
-        ttk.Combobox(row, textvariable=self.expert_var, state="readonly", width=10,
-                     values=tuple(E.ACTIONS)).pack(side="left", padx=4)
-        ttk.Button(bar, text="Teach expert",
-                   command=self._teach).pack(padx=12, fill="x")
-
         self.message = ttk.Label(bar, text="", style="Panel.TLabel",
                                  foreground=ACCENT, wraplength=240,
                                  font=("Segoe UI", 8))
         self.message.pack(anchor="w", padx=12, pady=8)
+
+    def _build_hyst_controls(self, parent) -> None:
+        box = ttk.LabelFrame(
+            parent,
+            text="HyST CONTROLS — hard/soft slot split, divergent thinking, urgency",
+        )
+        box.pack(fill="x", pady=(0, 10))
+
+        top = ttk.Frame(box, style="Panel.TFrame")
+        top.pack(fill="x", padx=8, pady=(8, 4))
+
+        self.divergent_var = tk.BooleanVar(value=self.session.policy.divergent)
+        ttk.Checkbutton(
+            top, text="Divergent thinking (soft-constraint exploration)",
+            variable=self.divergent_var, style="Divergent.TCheckbutton",
+            command=self._on_divergent,
+        ).pack(side="left")
+
+        self.urgent_var = tk.BooleanVar(value=self.session.policy.urgent)
+        ttk.Checkbutton(
+            top, text="Urgent / important (sole convergent thinking)",
+            variable=self.urgent_var, style="Urgent.TCheckbutton",
+            command=self._on_urgent,
+        ).pack(side="left", padx=(24, 0))
+
+        self.hyst_note = ttk.Label(
+            box, text="Hard slots are exact-match and gate admissibility. "
+                      "Divergent relaxes that gate into a discount. "
+                      "Urgent always overrides divergent and collapses "
+                      "retrieval to the single nearest admissible memory.",
+            style="Muted.TLabel", wraplength=880, justify="left",
+        )
+        self.hyst_note.pack(anchor="w", padx=8, pady=(0, 6))
+
+        # -- per-feature hard/soft toggles, grouped by modality
+        slots = ttk.Frame(box, style="Panel.TFrame")
+        slots.pack(fill="x", padx=8, pady=(0, 8))
+        for column, modality in enumerate(E.MODALITY_ORDER):
+            cell = ttk.Frame(slots, style="Panel.TFrame")
+            cell.grid(row=0, column=column, sticky="nw", padx=(0, 18))
+            ttk.Label(cell, text=modality.upper(), style="Head.TLabel").pack(anchor="w")
+            for feature in E.MODALITIES[modality]:
+                var = tk.BooleanVar(value=self.session.policy.is_hard(feature))
+                self._hard_vars[feature] = var
+                ttk.Checkbutton(
+                    cell, text=feature.replace("_", " "), variable=var,
+                    command=lambda f=feature: self._on_hard_toggle(f),
+                ).pack(anchor="w")
 
     def _build_inputs(self, parent) -> None:
         box = ttk.LabelFrame(parent, text="SENSORY INPUT — untick a modality to "
@@ -408,7 +438,7 @@ class CognitiveTkUI:
     def _build_graph(self, parent) -> None:
         box = ttk.LabelFrame(
             parent,
-            text="MEMORY CONTRIBUTION GRAPH — which experiences produced this decision",
+            text="MEMORY CONTRIBUTION GRAPH — admissible experiences only",
         )
         box.pack(side="left", fill="both", expand=True)
         self.graph_canvas = tk.Canvas(box, bg=PANEL, highlightthickness=0, height=340)
@@ -442,13 +472,28 @@ class CognitiveTkUI:
 
         box = ttk.LabelFrame(row, text="STEP HISTORY")
         box.pack(side="left", fill="both", expand=True)
-        columns = ("step", "action", "mode", "policy", "reward", "source")
+        columns = ("step", "action", "mode", "policy", "reward", "admissible")
         self.history_tree = ttk.Treeview(box, columns=columns, show="headings",
                                          height=7)
         for name in columns:
             self.history_tree.heading(name, text=name)
             self.history_tree.column(name, width=68, anchor="center")
         self.history_tree.pack(fill="both", expand=True, padx=6, pady=6)
+
+    # -- HyST control actions ---------------------------------------------
+    def _on_divergent(self) -> None:
+        self.session.policy.divergent = self.divergent_var.get()
+        self._refresh(f"Divergent thinking {'ON' if self.session.policy.divergent else 'off'}.")
+
+    def _on_urgent(self) -> None:
+        self.session.policy.urgent = self.urgent_var.get()
+        note = "Urgent mode ON — sole convergent thinking, hard filter absolute." \
+            if self.session.policy.urgent else "Urgent mode off."
+        self._refresh(note)
+
+    def _on_hard_toggle(self, feature: str) -> None:
+        self.session.policy.set_hard(feature, self._hard_vars[feature].get())
+        self._refresh(f"'{feature}' is now {'hard' if self._hard_vars[feature].get() else 'soft'}.")
 
     # -- actions ---------------------------------------------------------
     def _on_param(self, key: str) -> None:
@@ -524,13 +569,18 @@ class CognitiveTkUI:
     def _export(self) -> None:
         path = filedialog.asksaveasfilename(
             defaultextension=".json", filetypes=[("JSON", "*.json")],
-            initialfile="mpcs_memory.json")
+            initialfile="hyst_memory.json")
         if not path:
             return
         with open(path, "w", encoding="utf-8") as handle:
-            json.dump({"memory": self.session.memory.to_json_obj(),
-                       "profile": self.session.profile,
-                       "config": self.session.cfg.to_dict()}, handle, indent=2)
+            json.dump({
+                "memory": self.session.memory.to_json_obj(),
+                "profile": self.session.profile,
+                "config": self.session.cfg.to_dict(),
+                "hard_slots": sorted(self.session.policy.hard_slots),
+                "divergent": self.session.policy.divergent,
+                "urgent": self.session.policy.urgent,
+            }, handle, indent=2)
         self._refresh(f"Exported {len(self.session.memory)} experiences.")
 
     def _import(self) -> None:
@@ -543,21 +593,19 @@ class CognitiveTkUI:
             records = data.get("memory", data)
             self.session.reset(memory=E.MemorySystem.from_json_obj(records),
                                profile=self.profile_var.get())
+            if "hard_slots" in data:
+                self.session.policy.hard_slots = set(data["hard_slots"])
+                for feature, var in self._hard_vars.items():
+                    var.set(self.session.policy.is_hard(feature))
+            if "divergent" in data:
+                self.session.policy.divergent = bool(data["divergent"])
+                self.divergent_var.set(self.session.policy.divergent)
+            if "urgent" in data:
+                self.session.policy.urgent = bool(data["urgent"])
+                self.urgent_var.set(self.session.policy.urgent)
             self._refresh(f"Imported {len(self.session.memory)} experiences.")
         except Exception as exc:
             self._refresh(f"Import failed: {exc}")
-
-    def _apply_reward(self) -> None:
-        value = self._manual_reward()
-        if value is None:
-            self._refresh("Enter a reward between 0 and 1 first.")
-            return
-        self._refresh(self.session.apply_reward(value)["message"])
-
-    def _teach(self) -> None:
-        outcome = self.session.teach_expert(self.expert_var.get(),
-                                            self._manual_reward())
-        self._refresh(outcome["message"])
 
     # -- rendering -------------------------------------------------------
     def _refresh(self, message: str) -> None:
@@ -577,9 +625,9 @@ class CognitiveTkUI:
                 text=f"{result['mode']} · {result['policy']} · step {result['step']}")
             self.stats_label.config(text="\n".join([
                 f"novelty     {fmt(result['novelty'])}",
+                f"admissible  {result['admissible_count']} / {result['memory_size']}",
                 f"epsilon     {fmt(result['epsilon'])}",
                 f"threshold   {fmt(result['state']['action_threshold'])}",
-                f"memory      {result['memory_size']}",
                 f"seen before {'yes' if result['dlcbf_hit'] else 'no'}",
                 f"channels    {', '.join(result['active_modalities']) or 'none'}",
             ]))
@@ -588,11 +636,18 @@ class CognitiveTkUI:
             if result["reflex_rule_label"]:
                 note = f"Reflex {result['reflex_rule']}: {result['reflex_rule_label']}"
                 colour = OK_FG
+            elif result["policy"] == "CONVERGE":
+                note = ("Urgent — sole convergent thinking: committed directly "
+                         f"to best-scoring '{result['action']}', no explore/hesitate.")
+                colour = URGENT_FG
             elif result["policy"] == "HESITATE":
                 note = (f"Best score {fmt(result['scores'][result['best_action']])} "
                         f"below threshold {fmt(result['threshold'])} — "
                         f"fell back to observe.")
                 colour = WARN_FG
+            elif result["divergent"]:
+                note = "Divergent thinking on — hard-slot mismatches admitted at a discount."
+                colour = DIVERGENT_FG
             self.note_label.config(text=note, foreground=colour)
             self._render_reward(result)
 
@@ -607,7 +662,7 @@ class CognitiveTkUI:
                          f"{len(result['contributions'])} memories")
             lines.append(f"+ variance → {fmt(result['reward'])}")
         elif result["reward_source"] == "cold-start":
-            lines.append(f"no relevant memory — prior {fmt(result['reward'])}")
+            lines.append(f"no admissible memory — prior {fmt(result['reward'])}")
         else:
             lines.append(f"reward {fmt(result['reward'])}")
 
@@ -643,7 +698,6 @@ class CognitiveTkUI:
             canvas.create_text(14, y, anchor="w", text=action,
                                fill=TEXT if evidenced else MUTED,
                                font=("Segoe UI", 8, "bold" if chosen else "normal"))
-            # Track: a visible well, not a near-black rectangle lost on the panel.
             canvas.create_rectangle(70, y - 6, 230, y + 6,
                                     fill=BG, outline=LINE, width=1)
             width = max(0, min(1.0, score)) * 158
@@ -652,9 +706,6 @@ class CognitiveTkUI:
                     canvas.create_rectangle(71, y - 5, 71 + width, y + 5,
                                             fill=E.ACTION_COLORS[action], outline="")
                 else:
-                    # No supporting memory: the 0.50 is a default, not a
-                    # judgement. An outline says "nothing here" more clearly
-                    # than a stippled fill, which just reads as a dim bar.
                     canvas.create_rectangle(71, y - 5, 71 + width, y + 5,
                                             fill="", outline=DISABLED, dash=(2, 2))
             canvas.create_text(236, y, anchor="w", text=f"{score:.2f}",
@@ -685,8 +736,8 @@ class CognitiveTkUI:
             canvas.create_text(
                 cx, cy, width=width - 40, justify="center", fill=MUTED,
                 font=("Segoe UI", 9, "italic"),
-                text="No memories contributed to this decision —\n"
-                     "the reward came from a cold-start prior.")
+                text="No memories were admissible for this decision —\n"
+                     "every stored memory failed the hard-slot predicate.")
             return
 
         scale_x, scale_y = width * 0.36, height * 0.36
@@ -718,7 +769,6 @@ class CognitiveTkUI:
             canvas.create_oval(x - radius, y - radius, x + radius, y + radius,
                                fill=node["color"], outline=PANEL, width=2)
             if node["mode"] == "REFLEXIVE":
-                # White pip marks a memory that itself came from a reflex.
                 mark = radius * 0.7
                 canvas.create_oval(x + mark - 4, y - mark - 4,
                                    x + mark + 4, y - mark + 4,
@@ -754,25 +804,30 @@ class CognitiveTkUI:
             self.history_tree.insert("", "end", values=(
                 entry["step"], entry["action"], entry["mode"], entry["policy"],
                 f"{entry['reward']:.2f}" + (" !" if entry["penalised"] else ""),
-                entry["reward_source"]))
+                entry["admissible_count"]))
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="MPCS v2 dashboard (Tkinter).")
+    parser = argparse.ArgumentParser(description="MPCS HyST dashboard (Tkinter).")
     parser.add_argument("--scratch", action="store_true",
                         help="Start with empty memory instead of the preset bank.")
     parser.add_argument("--profile", choices=tuple(PROFILE_CONFIGS),
                         default="balanced")
     parser.add_argument("--seed", type=int, default=None)
+    parser.add_argument("--divergent", action="store_true",
+                        help="Start with divergent thinking (exploration) enabled.")
+    parser.add_argument("--urgent", action="store_true",
+                        help="Start with urgent/convergent mode enabled.")
     args = parser.parse_args()
 
-    session = E.Session(profile=args.profile, seed=args.seed)
+    policy = SlotPolicy(divergent=args.divergent, urgent=args.urgent)
+    session = HystSession(profile=args.profile, seed=args.seed, policy=policy)
     memory = E.MemorySystem() if args.scratch else build_preset_memory_v3(args.profile)
     session.reset(memory=memory, profile=args.profile, seed=args.seed)
     session.apply_profile(args.profile)
 
     root = tk.Tk()
-    CognitiveTkUI(root, session)
+    HystTkUI(root, session)
     root.mainloop()
 
 
