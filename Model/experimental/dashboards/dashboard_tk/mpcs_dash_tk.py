@@ -26,11 +26,12 @@ import sys
 import tkinter as tk
 from tkinter import filedialog, ttk
 
-# The engine lives in ../core; add it to the path so this runs from anywhere.
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "core"))
+# The engine lives in ../../core; add it to the path so this runs from anywhere.
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "core"))
 
 import mpcs_engine as E
 from mpcs_preset_v2 import PROFILE_CONFIGS, build_preset_memory
+from mpcs_preset_v3 import build_preset_memory_v3
 
 
 # Dark palette matching the web dashboards, so screenshots sit side by side.
@@ -268,9 +269,9 @@ class CognitiveTkUI:
         # -- memory source
         ttk.Label(bar, text="MEMORY SOURCE", style="Head.TLabel").pack(
             anchor="w", padx=12, pady=(8, 4))
-        self.source_var = tk.StringVar(value="preset")
+        self.source_var = tk.StringVar(value="preset v3")
         ttk.Combobox(bar, textvariable=self.source_var, state="readonly", width=26,
-                     values=("preset", "scratch")).pack(padx=12, fill="x")
+                     values=("preset v3", "preset v2", "scratch")).pack(padx=12, fill="x")
         self.profile_var = tk.StringVar(value=self.session.profile)
         ttk.Label(bar, text="Profile", style="Muted.TLabel").pack(anchor="w", padx=12,
                                                                  pady=(6, 2))
@@ -502,10 +503,15 @@ class CognitiveTkUI:
         except ValueError:
             seed = None
         profile = self.profile_var.get()
-        if self.source_var.get() == "preset":
+        source = self.source_var.get()
+        if source == "preset v3":
+            self.session.reset(memory=build_preset_memory_v3(profile),
+                               profile=profile, seed=seed)
+            message = f"Loaded preset v3 bank: {len(self.session.memory)} experiences (partial modalities)."
+        elif source == "preset v2":
             self.session.reset(memory=build_preset_memory(profile),
                                profile=profile, seed=seed)
-            message = f"Loaded preset bank: {len(self.session.memory)} experiences."
+            message = f"Loaded preset v2 bank: {len(self.session.memory)} experiences."
         else:
             self.session.reset(memory=E.MemorySystem(), profile=profile, seed=seed)
             message = "Started from scratch with empty memory."
@@ -761,7 +767,7 @@ def main() -> None:
     args = parser.parse_args()
 
     session = E.Session(profile=args.profile, seed=args.seed)
-    memory = E.MemorySystem() if args.scratch else build_preset_memory(args.profile)
+    memory = E.MemorySystem() if args.scratch else build_preset_memory_v3(args.profile)
     session.reset(memory=memory, profile=args.profile, seed=args.seed)
     session.apply_profile(args.profile)
 

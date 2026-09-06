@@ -5,7 +5,7 @@ MPCS v2 — DASHBOARD C: DASH / PLOTLY
 WHAT THIS IS
 ------------
 The same cognition as the other two dashboards (the shared engine in
-../core), presented through Dash with Plotly figures.
+../../core), presented through Dash with Plotly figures.
 
 Plotly earns its place here through genuine hover interaction. In
 the other two dashboards the contribution graph is static SVG with
@@ -29,17 +29,17 @@ Verify:
 
 RUNNING
 -------
-    cd Model/experimental/dashboard_plotly
+    cd Model/experimental/dashboards/dashboard_plotly
     python mpcs_dash_plotly.py
 
 Then open http://127.0.0.1:8757/ in your browser. Unlike the other
 two dashboards this one does not open a browser for you. Press
 Ctrl+C in the terminal to stop.
 
-The script finds ../core on its own, so this also works from the
+The script finds ../../core on its own, so this also works from the
 repository root:
 
-    python Model/experimental/dashboard_plotly/mpcs_dash_plotly.py
+    python Model/experimental/dashboards/dashboard_plotly/mpcs_dash_plotly.py
 
 To change the port, edit the last line of mpcs_dash_plotly.py
 (app.run(debug=False, port=8757)).
@@ -151,4 +151,4 @@ Sliders appear to do nothing
     They apply on the NEXT step. Press "Run step" after moving one.
 
 ModuleNotFoundError: mpcs_engine
-    Verify the engine first:  python ../core/engine_smoke.py
+    Verify the engine first:  python ../../core/engine_smoke.py
