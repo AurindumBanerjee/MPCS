@@ -47,9 +47,9 @@ import time
 from dataclasses import dataclass, field
 from typing import Optional
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "core"))
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "hmgi"))
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "hyst"))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "02_core"))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "05_hmgi"))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "04_hyst"))
 
 import mpcs_engine as E
 from hmgi_layer import PartitionedMemory, ScanStats, build_episodes
@@ -71,6 +71,7 @@ class PipelineStats:
     after_hard_soft: int
     partition_elapsed_ms: float
     filter_elapsed_ms: float
+    relaxed: bool = False   # strict filter left nothing; evidence came from the divergent re-pass
 
     @property
     def partition_reduction_pct(self) -> float:
@@ -125,47 +126,92 @@ class ShmfPipeline:
     shared MemorySystem, and runs queries through both stages in order.
     """
 
-    def __init__(self, memory: E.MemorySystem, policy: Optional[SlotPolicy] = None):
+    def __init__(self, memory: E.MemorySystem, policy: Optional[SlotPolicy] = None,
+                 auto_relax: bool = True):
         self.memory = memory
         self.partitioned = PartitionedMemory(memory)
         self.policy = policy or SlotPolicy()
+        # When the strict filter admits nothing, re-run it in divergent mode
+        # rather than scoring from no evidence. Never under `urgent`: urgency
+        # keeps the hard filter absolute by definition.
+        self.auto_relax = auto_relax
         self.instrumentation = PipelineInstrumentation()
+        self._cache_key = None
+        self._cache_val = None
 
-    def scored_candidates(self, query_summary: tuple) -> tuple[list[tuple[float, dict]], PipelineStats]:
-        """Full pipeline for one query: partition, then hard/soft filter,
-        returning (similarity, record) pairs for every survivor plus the
-        stats for both stages.
+    def _key(self, query_summary: tuple) -> tuple:
+        p = self.policy
+        return (query_summary, len(self.memory), frozenset(p.hard_slots), p.divergent,
+                p.urgent, p.divergent_mismatch_discount, self.auto_relax)
+
+    def _evaluate(self, query_summary: tuple):
+        """Run both stages once per query and memoise. One cognitive step
+        asks for novelty plus a recall per action (six-plus calls); before
+        this cache each call re-ran the whole pipeline.
+
+        Returns (strict, effective, stats). `strict` is what the configured
+        policy admits and defines novelty; `effective` is what scoring uses,
+        which differs only when auto-relax fired.
         """
+        key = self._key(query_summary)
+        if key == self._cache_key:
+            return self._cache_val
+
         t0 = time.perf_counter()
-        partitioned_candidates = self.partitioned.candidates(query_summary)
+        candidates = self.partitioned.candidates(query_summary)
         t1 = time.perf_counter()
 
-        scored: list[tuple[float, dict]] = []
-        for record in partitioned_candidates:
-            sim = split_similarity(query_summary, record["summary"], self.policy)
-            if sim is not None:
-                scored.append((sim, record))
+        strict = self._filter(query_summary, candidates, self.policy)
+        effective, relaxed = strict, False
+        if not strict and candidates and self.auto_relax and not self.policy.urgent \
+                and not self.policy.divergent:
+            loose = SlotPolicy(hard_slots=self.policy.hard_slots, divergent=True,
+                               divergent_mismatch_discount=self.policy.divergent_mismatch_discount)
+            # Zero-similarity survivors carry no weight; keeping them would
+            # only inflate the funnel count.
+            effective = [(s, r) for s, r in self._filter(query_summary, candidates, loose) if s > 0.0]
+            relaxed = bool(effective)
         t2 = time.perf_counter()
 
         stats = PipelineStats(
             store_size=len(self.memory),
-            after_partition=len(partitioned_candidates),
-            after_hard_soft=len(scored),
+            after_partition=len(candidates),
+            after_hard_soft=len(effective),
             partition_elapsed_ms=(t1 - t0) * 1000.0,
             filter_elapsed_ms=(t2 - t1) * 1000.0,
+            relaxed=relaxed,
         )
         self.instrumentation.record(stats)
-        return scored, stats
+        self._cache_key, self._cache_val = key, (strict, effective, stats)
+        return self._cache_val
+
+    @staticmethod
+    def _filter(query_summary, candidates, policy) -> list[tuple[float, dict]]:
+        scored = []
+        for record in candidates:
+            sim = split_similarity(query_summary, record["summary"], policy)
+            if sim is not None:
+                scored.append((sim, record))
+        return scored
+
+    def scored_candidates(self, query_summary: tuple) -> tuple[list[tuple[float, dict]], PipelineStats]:
+        """Survivors used as evidence, plus stats for both stages."""
+        _strict, effective, stats = self._evaluate(query_summary)
+        return list(effective), stats
 
     def novelty(self, query_summary: tuple) -> tuple[float, PipelineStats]:
+        """Novelty is judged on the strict set only: a scene with no
+        precedent that satisfies its safety constraints is new, even if a
+        relaxed re-pass found loose analogies to score from.
+        """
         if len(self.memory) == 0:
             empty_stats = PipelineStats(0, 0, 0, 0.0, 0.0)
             self.instrumentation.record(empty_stats)
             return 1.0, empty_stats
-        scored, stats = self.scored_candidates(query_summary)
-        if not scored:
+        strict, _effective, stats = self._evaluate(query_summary)
+        if not strict:
             return 1.0, stats
-        best = max(sim for sim, _ in scored)
+        best = max(sim for sim, _ in strict)
         return E.clamp_unit(1.0 - best), stats
 
     def retrieve(self, query_summary: tuple, k: int = 5) -> list[dict]:
@@ -264,7 +310,7 @@ def shmf_step(
         action = reflex_action
         mode = "REFLEXIVE"
         policy_name = "REFLEX"
-        best_action = max(scores, key=scores.get)
+        best_action = E.best_evidenced_action(scores, supports)
         epsilon = 0.0
         hesitated = False
         threshold = state.get("action_threshold", cfg.action_threshold)
@@ -276,7 +322,7 @@ def shmf_step(
         contributions[action] = reflex_contribs or contributions[action]
     else:
         mode = "DELIBERATIVE"
-        best_action = max(scores, key=scores.get)
+        best_action = E.best_evidenced_action(scores, supports)
         if pipeline.policy.urgent:
             # Sole convergent thinking: commit directly to the best
             # admissible answer, no explore/hesitate — same semantics as
@@ -388,6 +434,7 @@ def shmf_step(
             "total_reduction_pct": pipeline_stats.total_reduction_pct,
             "partition_elapsed_ms": pipeline_stats.partition_elapsed_ms,
             "filter_elapsed_ms": pipeline_stats.filter_elapsed_ms,
+            "relaxed": pipeline_stats.relaxed,
         },
     }
 
@@ -488,7 +535,7 @@ def verify_pipeline_equivalence(memory: E.MemorySystem, policy: SlotPolicy,
     from hyst_layer import split_similarity as _split
 
     problems: list[str] = []
-    pipeline = ShmfPipeline(memory, policy)
+    pipeline = ShmfPipeline(memory, policy, auto_relax=False)
     for query in queries:
         piped_scored, _ = pipeline.scored_candidates(query)
         piped_steps = {r["step"] for _, r in piped_scored}

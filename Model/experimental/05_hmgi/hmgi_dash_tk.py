@@ -1,8 +1,8 @@
 """
 HMGI dashboard — Tkinter desktop app
 ---------------------------------------
-Same visual language and layout skeleton as ../hyst/hyst_dash_tk.py and
-../dashboards/dashboard_tk/mpcs_dash_tk.py, driving an HmgiSession instead
+Same visual language and layout skeleton as ../04_hyst/hyst_dash_tk.py and
+../03_dashboards/dashboard_tk/mpcs_dash_tk.py, driving an HmgiSession instead
 of the stock engine Session. Adds the controls the stock dashboard has no
 notion of:
 
@@ -33,7 +33,7 @@ import sys
 import tkinter as tk
 from tkinter import filedialog, ttk
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "core"))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "02_core"))
 
 import mpcs_engine as E
 from mpcs_preset_v2 import PROFILE_CONFIGS, build_preset_memory

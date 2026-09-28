@@ -32,9 +32,9 @@ import sys
 import tkinter as tk
 from tkinter import filedialog, ttk
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "core"))
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "hyst"))
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "hmgi"))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "02_core"))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "04_hyst"))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "05_hmgi"))
 
 import mpcs_engine as E
 from mpcs_preset_v2 import PROFILE_CONFIGS, build_preset_memory
@@ -84,10 +84,14 @@ def ink_for(background: str) -> str:
 
 
 class ShmfTkUI:
+    TITLE = "MPCS — SHMF Dashboard (Tk)"
+    BRAND = "MPCS · SHMF"
+    TAGLINE = "Smart Hybrid-Modality Filtering"
+
     def __init__(self, root: tk.Tk, session: ShmfSession):
         self.root = root
         self.session = session
-        self.root.title("MPCS — SHMF Dashboard (Tk)")
+        self.root.title(self.TITLE)
         self.root.configure(bg=BG)
         self.root.minsize(1260, 840)
 
@@ -262,9 +266,9 @@ class ShmfTkUI:
         bar.pack(side="left", fill="y")
         bar.pack_propagate(False)
 
-        ttk.Label(bar, text="MPCS · SHMF", style="Panel.TLabel",
+        ttk.Label(bar, text=self.BRAND, style="Panel.TLabel",
                   font=("Segoe UI", 14, "bold")).pack(anchor="w", padx=12, pady=(12, 0))
-        ttk.Label(bar, text="Smart Hybrid-Modality Filtering",
+        ttk.Label(bar, text=self.TAGLINE,
                   style="Muted.TLabel").pack(anchor="w", padx=12, pady=(0, 8))
 
         ttk.Label(bar, text="MEMORY SOURCE", style="Head.TLabel").pack(
@@ -464,6 +468,9 @@ class ShmfTkUI:
             text="EPISODE GRAPH — G-facet relational edges (last 12 episodes)",
         )
         box.pack(side="left", fill="both", expand=True)
+        self._fill_episode_graph(box)
+
+    def _fill_episode_graph(self, box) -> None:
         self.graph_canvas = tk.Canvas(box, bg=PANEL, highlightthickness=0, height=340)
         self.graph_canvas.pack(fill="both", expand=True, padx=8, pady=8)
         self.graph_canvas.bind("<Configure>", lambda _e: self._draw_episode_graph())
@@ -677,6 +684,8 @@ class ShmfTkUI:
                      f"(hard/soft, -{p['filter_reduction_pct']:.1f}%)   "
                      f"total -{p['total_reduction_pct']:.1f}%   "
                      f"[{p['partition_elapsed_ms']:.3f}ms + {p['filter_elapsed_ms']:.3f}ms]"
+                     + ("   RELAXED: no strict match, scored from divergent re-pass"
+                        if p.get("relaxed") else "")
             )
 
         self.partition_label.config(

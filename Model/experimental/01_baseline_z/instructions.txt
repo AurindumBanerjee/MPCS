@@ -8,7 +8,7 @@ The previous generation, kept unchanged for comparison. This is the
 implementation MPCS v2 was built from; nothing in v2 modifies it, so
 you can run both side by side and see what changed.
 
-Do not build on this file. New work belongs in ../core.
+Do not build on this file. New work belongs in ../02_core.
 
 
 SETUP
@@ -29,7 +29,7 @@ No other packages required.
 
 RUNNING
 -------
-    cd Model/experimental/baseline_z
+    cd Model/experimental/01_baseline_z
     python MPCS_Z.py
 
 A desktop window opens. Use "Run Step" to execute an action, then

@@ -43,7 +43,7 @@ import sys
 from dataclasses import dataclass, field
 from typing import Optional
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "core"))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "02_core"))
 
 import mpcs_engine as E
 
@@ -110,11 +110,11 @@ class SlotPolicy:
     divergent: bool = False   # soft-constraint switch: exploration
     urgent: bool = False      # urgency/importance flag: sole convergent thinking
 
-    # How much a hard-slot mismatch costs when `divergent` relaxes the
-    # filter instead of excluding outright. Small on purpose — divergent
-    # mode should surface distant analogies, not erase the hard/soft
-    # distinction altogether.
-    divergent_mismatch_discount: float = 0.15
+    # Per-mismatch cost when `divergent` relaxes the filter instead of
+    # excluding. Swept on the v3 bank: 0.15 re-admitted nearly everything
+    # (accuracy fell to stock's 33%, unsafe calls 34%); 0.6 keeps 56% accuracy
+    # at 10% unsafe. At >= 0.5 two mismatches already zero a memory's weight.
+    divergent_mismatch_discount: float = 0.6
 
     def is_hard(self, feature: str) -> bool:
         return feature in self.hard_slots
@@ -403,13 +403,13 @@ def hyst_step(
         action = reflex_action
         mode = "REFLEXIVE"
         decision_policy = "REFLEX"
-        best_action = max(scores, key=scores.get)
+        best_action = E.best_evidenced_action(scores, supports)
         epsilon = 0.0
         hesitated = False
         threshold = state.get("action_threshold", cfg.action_threshold)
     else:
         mode = "DELIBERATIVE"
-        best_action = max(scores, key=scores.get)
+        best_action = E.best_evidenced_action(scores, supports)
         if policy.urgent:
             # Sole convergent thinking: no exploration, no hesitation —
             # urgency means committing to the best admissible answer now.

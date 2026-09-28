@@ -6,8 +6,8 @@ import os
 import random
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "core"))
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "hyst"))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "02_core"))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "04_hyst"))
 
 import mpcs_engine as E
 from mpcs_preset_v3 import build_preset_memory_v3
@@ -53,7 +53,7 @@ def main() -> None:
     memory2 = E.MemorySystem()
     memory2.store(E.summary_of({"touch": {"thermal": "cold", "contact": "firm", "texture": "rough", "touch_intensity": "high"}}),
                   action="approach", reward=0.9, step=1)
-    pipeline2 = ShmfPipeline(memory2, SlotPolicy())
+    pipeline2 = ShmfPipeline(memory2, SlotPolicy(), auto_relax=False)
     hot_query = E.summary_of({"touch": {"thermal": "hot", "contact": "firm", "texture": "rough", "touch_intensity": "high"}})
 
     # HMGI alone would keep this record (same touch partition).
@@ -66,6 +66,30 @@ def main() -> None:
     assert stats.after_partition == 1 and stats.after_hard_soft == 0
     print("[ok] hard-slot exclusion survives the pipeline even when HMGI's "
           "partition alone would have kept the record")
+
+    # 3b. Auto-relax: same scene, fallback on. The strict set is empty, so the
+    # divergent re-pass admits the cold record at a discount for scoring —
+    # but novelty stays 1.0 because nothing satisfied the safety constraints.
+    relaxing = ShmfPipeline(memory2, SlotPolicy())
+    scored, stats = relaxing.scored_candidates(hot_query)
+    novelty, _ = relaxing.novelty(hot_query)
+    assert stats.relaxed and len(scored) == 1 and 0.0 < scored[0][0] < 1.0
+    assert novelty == 1.0
+    print(f"[ok] auto-relax admits the near-miss for scoring (sim {scored[0][0]:.2f}) "
+          f"while novelty stays 1.0")
+
+    urgent_relax = ShmfPipeline(memory2, SlotPolicy(urgent=True))
+    assert not urgent_relax.scored_candidates(hot_query)[1].relaxed
+    print("[ok] urgent mode never auto-relaxes")
+
+    # 3c. Cache: a full step (novelty + 5 actions + reward) runs the
+    # pipeline once, so instrumentation records exactly one entry.
+    cached = ShmfPipeline(build_preset_memory_v3("balanced"), SlotPolicy())
+    shmf_step({"vision": {"object_type": "human", "motion": "slow", "color": "bright"}},
+              step=900, state=E.init_state(), pipeline=cached,
+              rng=random.Random(0))
+    assert len(cached.instrumentation.history) == 1, len(cached.instrumentation.history)
+    print("[ok] pipeline evaluated once per step (cache hit for every later call)")
 
     # 4. Urgent flag still collapses retrieval to top-1 through the pipeline.
     pipeline2.policy.urgent = True

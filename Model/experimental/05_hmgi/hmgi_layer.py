@@ -54,7 +54,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Optional
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "core"))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "02_core"))
 
 import mpcs_engine as E
 
@@ -434,7 +434,7 @@ def hmgi_step(
         action = reflex_action
         mode = "REFLEXIVE"
         policy = "REFLEX"
-        best_action = max(scores, key=scores.get)
+        best_action = E.best_evidenced_action(scores, supports)
         epsilon = 0.0
         hesitated = False
         threshold = state.get("action_threshold", cfg.action_threshold)
@@ -445,7 +445,7 @@ def hmgi_step(
         supports[action] = max(supports[action], reflex_support)
         contributions[action] = reflex_contribs or contributions[action]
     else:
-        best = max(scores, key=scores.get)
+        best = E.best_evidenced_action(scores, supports)
         epsilon = E.clamp_unit(
             state.get("risk_bias", cfg.risk_bias) * (0.6 + 0.4 * novelty)
         )

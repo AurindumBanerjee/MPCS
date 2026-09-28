@@ -251,6 +251,10 @@ def similarity_z(s1: tuple, s2: tuple) -> float:
     Matching is key-aligned rather than positional: slots can differ in
     length when a modality is absent, and a positional walk would silently
     compare unrelated features.
+
+    A match counts min(c1, c2), not c1 * c2: normalised by the query's total
+    confidence, a product scores an exact repeat below 1.0 whenever any
+    channel's confidence is under 1 (0.9625 with audio at 0.9).
     """
     score = 0.0
     for slot1, slot2 in zip(s1, s2):
@@ -260,7 +264,7 @@ def similarity_z(s1: tuple, s2: tuple) -> float:
         for key, value, conf in slot1:
             match = other.get(key)
             if match is not None and match[0] == value:
-                score += conf * match[1]
+                score += min(conf, match[1])
     return score
 
 
@@ -696,6 +700,17 @@ def apply_off_recommendation_penalty(
 # ----------------------------------------------------------------------
 # 10. Deliberation
 # ----------------------------------------------------------------------
+def best_evidenced_action(scores: dict[str, float], supports: dict[str, float]) -> str:
+    """Highest-scoring action among those memory actually supports.
+
+    An unsupported action's 0.5 is a default, not a judgement; taking max()
+    over raw scores let those ties resolve to ACTIONS[0] (`ignore`) when
+    nothing was retrieved. With no evidence at all, fall back to `observe`.
+    """
+    evidenced = {a: s for a, s in scores.items() if supports.get(a, 0.0) > 0.0}
+    return max(evidenced, key=evidenced.get) if evidenced else "observe"
+
+
 def deliberate(
     afferent: AfferentObject,
     memory: MemorySystem,
@@ -717,7 +732,7 @@ def deliberate(
         supports[action] = support
         contributions[action] = contribs
 
-    best = max(scores, key=scores.get)
+    best = best_evidenced_action(scores, supports)
 
     # Novelty raises exploration pressure; risk_bias sets the base rate.
     epsilon = clamp_unit(state.get("risk_bias", cfg.risk_bias) * (0.6 + 0.4 * novelty))
@@ -814,7 +829,7 @@ def cognitive_step(
         action = reflex_action
         mode = "REFLEXIVE"
         policy = "REFLEX"
-        best_action = max(scores, key=scores.get)
+        best_action = best_evidenced_action(scores, supports)
         epsilon = 0.0
         hesitated = False
         threshold = state.get("action_threshold", cfg.action_threshold)

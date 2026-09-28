@@ -5,7 +5,7 @@ MPCS v2 — DASHBOARD A: LOCAL WEB APP (no dependencies)
 WHAT THIS IS
 ------------
 The reference dashboard. A small HTTP server serves one
-self-contained page and drives the shared engine in ../../core behind a
+self-contained page and drives the shared engine in ../../02_core behind a
 JSON API. The entire interface — markup, styling, graph drawing — is
 inline in MPCS_Test.py.
 
@@ -23,7 +23,7 @@ Python 3.10 or newer. No packages to install.
 
 RUNNING
 -------
-    cd Model/experimental/dashboards/dashboard_web
+    cd Model/experimental/03_dashboards/dashboard_web
     python MPCS_Test.py
 
 Your browser opens at http://127.0.0.1:8756/ automatically.
@@ -36,10 +36,10 @@ Options:
     python MPCS_Test.py --host 0.0.0.0   accept connections from
                                          other machines on your LAN
 
-The script finds ../../core on its own, so you can also run it from the
+The script finds ../../02_core on its own, so you can also run it from the
 repository root:
 
-    python Model/experimental/dashboards/dashboard_web/MPCS_Test.py
+    python Model/experimental/03_dashboards/dashboard_web/MPCS_Test.py
 
 If the port is already in use you will see "address already in use" —
 pass a different --port.
@@ -148,4 +148,4 @@ Blank page                 Check the terminal for a traceback.
 "address already in use"   Another process holds the port; use
                            --port with a different number.
 ModuleNotFoundError        Run engine checks first:
-                           python ../../core/engine_smoke.py
+                           python ../../02_core/engine_smoke.py
