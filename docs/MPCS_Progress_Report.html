@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MPCS Progress Report</title>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1815; --ink2: #3d3830; --ink3: #6b6258;
+    --page: #f9f7f3; --surface: #f2ede5; --border: #e0d8cc;
+    --accent: #2b4c7e; --accent2: #1e6e5b; --accent3: #8b3a1a;
+    --accent-pale: #e8eef6; --accent2-pale: #e4f0ec; --accent3-pale: #f4ede8;
+    --amber: #b07a12; --amber-pale: #fdf3e0;
+    --purple: #5a3d8a; --purple-pale: #ede9f6;
+    --rule: #cfc7b8;
+    --mono: 'DM Mono', monospace;
+    --serif: 'EB Garamond', Georgia, serif;
+    --sans: 'Outfit', system-ui, sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; scroll-behavior: smooth; }
+  body {
+    background: var(--page); color: var(--ink);
+    font-family: var(--serif); font-size: 1.0625rem; line-height: 1.78;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page-wrap { max-width: 900px; margin: 0 auto; padding: 0 2.5rem 6rem; }
+
+  /* Cover */
+  .cover { padding: 5rem 0 4rem; border-bottom: 1.5px solid var(--ink); margin-bottom: 3.5rem; }
+  .cover-badge { font-family: var(--sans); font-size: .7rem; font-weight: 600;
+    letter-spacing: .15em; text-transform: uppercase; color: var(--ink3); margin-bottom: 1.5rem; }
+  .cover h1 { font-size: 3rem; font-weight: 500; line-height: 1.12; letter-spacing: -.01em;
+    margin-bottom: .5rem; max-width: 720px; }
+  .cover-sub { font-style: italic; font-size: 1.3rem; color: var(--ink3); margin-bottom: 2.2rem; max-width: 660px; }
+  .cover-meta { font-family: var(--sans); font-size: .8rem; color: var(--ink3);
+    display: flex; gap: 2rem; flex-wrap: wrap; }
+
+  .abstract { background: var(--surface); border-left: 3px solid var(--accent);
+    padding: 1.5rem 2rem; border-radius: 0 8px 8px 0; margin-bottom: 3rem; }
+  .abstract-label { font-family: var(--sans); font-size: .65rem; font-weight: 600;
+    letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin-bottom: .6rem; }
+  .abstract p { font-size: .96rem; line-height: 1.7; color: var(--ink2); margin-bottom: .8rem; }
+  .abstract p:last-child { margin-bottom: 0; }
+
+  .toc { margin-bottom: 4rem; }
+  .toc-title { font-family: var(--sans); font-size: .65rem; font-weight: 600; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--ink3); margin-bottom: 1rem; padding-bottom: .5rem;
+    border-bottom: 1px solid var(--border); }
+  .toc ol { list-style: none; counter-reset: toc; column-count: 2; column-gap: 2rem; }
+  .toc ol li { counter-increment: toc; font-family: var(--sans); font-size: .83rem;
+    color: var(--ink3); padding: .22rem 0; display: flex; align-items: baseline; gap: .5rem; break-inside: avoid; }
+  .toc ol li::before { content: counter(toc, decimal-leading-zero); font-family: var(--mono);
+    font-size: .68rem; color: var(--rule); min-width: 1.8rem; }
+  .toc a { color: inherit; text-decoration: none; border-bottom: 1px solid transparent; }
+  .toc a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+  section { margin-bottom: 4rem; scroll-margin-top: 1rem; }
+  .section-num { font-family: var(--mono); font-size: .7rem; color: var(--rule);
+    letter-spacing: .08em; display: block; margin-bottom: .25rem; }
+  h2 { font-size: 2rem; font-weight: 500; line-height: 1.15; margin-bottom: 1.4rem;
+    padding-bottom: .75rem; border-bottom: 1px solid var(--border); }
+  h3 { font-family: var(--sans); font-size: .95rem; font-weight: 600; color: var(--ink2); margin: 2rem 0 .75rem; }
+  h4 { font-family: var(--sans); font-size: .78rem; font-weight: 600; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--ink3); margin: 1.5rem 0 .5rem; }
+  p { margin-bottom: 1rem; }
+  p:last-child { margin-bottom: 0; }
+  ul.plain { list-style: none; margin: 1rem 0; }
+  ul.plain li { font-family: var(--sans); font-size: .87rem; color: var(--ink2); line-height: 1.6;
+    padding: .35rem 0 .35rem 1.3rem; position: relative; }
+  ul.plain li::before { content: '▸'; position: absolute; left: 0; color: var(--rule); }
+  code { font-family: var(--mono); font-size: .84em; background: var(--surface);
+    padding: .1em .35em; border-radius: 4px; color: var(--accent3); }
+
+  /* Paper header */
+  .paper-head { display: flex; gap: 1.2rem; align-items: flex-start; background: #fff;
+    border: 1px solid var(--border); border-radius: 10px; padding: 1.2rem 1.4rem; margin-bottom: 1.6rem; }
+  .paper-sigil { flex-shrink: 0; width: 54px; height: 54px; border-radius: 10px;
+    display: grid; place-items: center; font-family: var(--sans); font-weight: 600;
+    font-size: .78rem; letter-spacing: .04em; color: #fff; }
+  .sig-a { background: var(--accent); } .sig-b { background: var(--accent2); } .sig-c { background: var(--purple); }
+  .paper-head-body h3 { margin: 0 0 .2rem; font-size: 1rem; }
+  .paper-head-body .cite { font-family: var(--sans); font-size: .76rem; color: var(--ink3); line-height: 1.5; }
+  .paper-head-body .oneline { font-family: var(--sans); font-size: .84rem; color: var(--ink2);
+    margin-top: .5rem; line-height: 1.55; }
+
+  /* Diagrams */
+  .diagram-wrap { margin: 2.2rem 0; background: #fff; border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden; }
+  .diagram-label { font-family: var(--sans); font-size: .7rem; font-weight: 600; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--ink3); padding: .6rem 1.2rem; border-bottom: 1px solid var(--border);
+    background: var(--surface); display: flex; align-items: center; gap: .5rem; }
+  .diagram-label::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  .diagram-body { padding: 1.4rem; overflow-x: auto; }
+  .diagram-cap { font-family: var(--sans); font-size: .76rem; color: var(--ink3);
+    padding: 0 1.4rem 1.1rem; line-height: 1.55; }
+  svg.diag { width: 100%; height: auto; display: block; }
+  svg text { font-family: 'Outfit', system-ui, sans-serif; }
+  .svg-t { font-size: 11px; fill: #3d3830; }
+  .svg-s { font-size: 9.5px; fill: #6b6258; }
+  .svg-h { font-size: 11.5px; font-weight: 600; fill: #1a1815; }
+  .svg-m { font-family: 'DM Mono', monospace; font-size: 9.5px; fill: #6b6258; }
+  .svg-w { font-size: 11px; fill: #ffffff; font-weight: 500; }
+  .svg-ws { font-size: 9.5px; fill: #ffffff; opacity: .85; }
+
+  /* Cards */
+  .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+  .info-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.1rem; }
+  .info-card-label { font-family: var(--sans); font-size: .66rem; font-weight: 600; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--ink3); margin-bottom: .35rem; }
+  .info-card-title { font-size: 1.03rem; font-weight: 500; margin-bottom: .3rem; }
+  .info-card-text { font-family: var(--sans); font-size: .79rem; line-height: 1.55; color: var(--ink3); }
+  .info-card.blue { border-left: 3px solid var(--accent); }
+  .info-card.green { border-left: 3px solid var(--accent2); }
+  .info-card.orange { border-left: 3px solid var(--accent3); }
+  .info-card.purple { border-left: 3px solid var(--purple); }
+  .info-card.amber { border-left: 3px solid var(--amber); }
+
+  .formula { background: var(--ink); color: #e8e2d8; font-family: var(--mono); font-size: .84rem;
+    padding: 1.1rem 1.4rem; border-radius: 8px; margin: 1.2rem 0; line-height: 1.7;
+    overflow-x: auto; white-space: pre; }
+  .formula .comment { color: #7a7060; }
+  .formula .key { color: #8ecfb0; }
+  .formula .val { color: #d4a96a; }
+  .formula .hot { color: #e0836a; }
+
+  .fkey { margin: -.4rem 0 1.4rem; font-family: var(--sans); font-size: .8rem; color: var(--ink3);
+    line-height: 1.6; border-left: 2px solid var(--border); padding-left: .9rem; }
+  .fkey b { color: var(--ink2); font-weight: 600; }
+
+  table { width: 100%; border-collapse: collapse; font-family: var(--sans); font-size: .82rem; margin: 1.2rem 0; }
+  th { background: var(--surface); color: var(--ink2); font-weight: 600; font-size: .7rem;
+    letter-spacing: .06em; text-transform: uppercase; text-align: left;
+    padding: .55rem .9rem; border-bottom: 1.5px solid var(--border); }
+  td { padding: .55rem .9rem; border-bottom: 1px solid var(--border); color: var(--ink2); vertical-align: top; line-height: 1.5; }
+  tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: var(--surface); }
+  .tbl-wrap { overflow-x: auto; margin: 1.2rem 0; }
+
+  .callout { border-left: 3px solid var(--amber); background: var(--amber-pale);
+    padding: 1rem 1.25rem; border-radius: 0 8px 8px 0; margin: 1.5rem 0; }
+  .callout.purple { border-color: var(--purple); background: var(--purple-pale); }
+  .callout.green  { border-color: var(--accent2); background: var(--accent2-pale); }
+  .callout.blue   { border-color: var(--accent); background: var(--accent-pale); }
+  .callout.rust   { border-color: var(--accent3); background: var(--accent3-pale); }
+  .callout .callout-label { font-family: var(--sans); font-size: .66rem; font-weight: 600;
+    letter-spacing: .1em; text-transform: uppercase; color: var(--amber); margin-bottom: .35rem; }
+  .callout.purple .callout-label { color: var(--purple); }
+  .callout.green .callout-label { color: var(--accent2); }
+  .callout.blue .callout-label { color: var(--accent); }
+  .callout.rust .callout-label { color: var(--accent3); }
+  .callout p { font-family: var(--sans); font-size: .855rem; color: var(--ink2); line-height: 1.62; margin: 0 0 .6rem; }
+  .callout p:last-child { margin-bottom: 0; }
+
+  /* provenance chips */
+  .chip { display: inline-block; font-family: var(--sans); font-size: .63rem; font-weight: 600;
+    letter-spacing: .08em; text-transform: uppercase; padding: .16rem .5rem; border-radius: 20px;
+    vertical-align: middle; }
+  .chip-paper { background: var(--accent2-pale); color: var(--accent2); border: 1px solid #bcd9d0; }
+  .chip-ours  { background: var(--purple-pale); color: var(--purple); border: 1px solid #cfc2e6; }
+  .chip-adapt { background: var(--amber-pale); color: var(--amber); border: 1px solid #ecd6a8; }
+
+  /* step ribbon */
+  .steps { counter-reset: st; margin: 1.5rem 0; }
+  .step { counter-increment: st; display: flex; gap: 1rem; padding: 1rem 0;
+    border-bottom: 1px solid var(--border); }
+  .step:last-child { border-bottom: none; }
+  .step-n { flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; background: var(--ink);
+    color: var(--page); display: grid; place-items: center; font-family: var(--mono);
+    font-size: .74rem; margin-top: .1rem; }
+  .step-n::before { content: counter(st, decimal-leading-zero); }
+  .step-body h4 { margin: 0 0 .3rem; color: var(--ink); font-size: .8rem; }
+  .step-body p { font-family: var(--sans); font-size: .845rem; color: var(--ink2); line-height: 1.6; margin-bottom: .5rem; }
+  .step-body .trace { font-family: var(--mono); font-size: .76rem; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 6px; padding: .6rem .8rem; color: var(--ink2);
+    white-space: pre-wrap; line-height: 1.6; }
+
+  .stack-row { display: flex; align-items: stretch; gap: 0; border: 1px solid var(--border);
+    border-radius: 8px; overflow: hidden; margin-bottom: .6rem; background: #fff; }
+  .stack-tag { flex-shrink: 0; width: 62px; display: grid; place-items: center;
+    font-family: var(--mono); font-size: .74rem; color: #fff; }
+  .stack-body { padding: .75rem 1rem; }
+  .stack-body .st-title { font-family: var(--sans); font-weight: 600; font-size: .87rem; color: var(--ink); }
+  .stack-body .st-text { font-family: var(--sans); font-size: .8rem; color: var(--ink3); line-height: 1.55; margin-top: .15rem; }
+
+  footer { border-top: 1.5px solid var(--ink); padding-top: 1.5rem; margin-top: 4rem;
+    font-family: var(--sans); font-size: .78rem; color: var(--ink3); line-height: 1.7; }
+
+  @media (max-width: 640px) {
+    .page-wrap { padding: 0 1.2rem 4rem; }
+    .cover h1 { font-size: 2.1rem; }
+    .toc ol { column-count: 1; }
+  }
+  /* additions for the progress report */
+  .bar-row { display: grid; grid-template-columns: 7.5rem 1fr 3.4rem; align-items: center; gap: .7rem;
+    font-family: var(--sans); font-size: .78rem; color: var(--ink2); padding: .22rem 0; }
+  .bar-track { background: var(--surface); border-radius: 4px; height: 14px; position: relative; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; background: var(--accent); }
+  .bar-fill.bad { background: var(--accent3); }
+  .bar-fill.good { background: var(--accent2); }
+  .bar-num { font-family: var(--mono); font-size: .74rem; text-align: right; color: var(--ink3); }
+  .bar-group-label { font-family: var(--sans); font-size: .66rem; font-weight: 600; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--ink3); margin: 1.2rem 0 .3rem; }
+  td.hi { font-weight: 600; color: var(--accent2); }
+  td.lo { color: var(--accent3); }
+  .gen { font-family: var(--mono); font-size: .72rem; color: var(--ink3); }
+  @media (max-width: 640px) { .bar-row { grid-template-columns: 5.5rem 1fr 3rem; } }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+<header class="cover">
+  <div class="cover-badge">MPCS · Progress Report · Experimental track</div>
+  <h1>From Feature Counting to Grounded Recall</h1>
+  <div class="cover-sub">How eight generations of the MPCS memory were built, measured, and improved — from a two-sense counter to a hybrid filter with an explanation head.</div>
+  <div class="cover-meta">
+    <span>Status as of 28 Sep 2026</span>
+    <span>Code: <code>Model/experimental/01–07</code>, <code>comparison/</code></span>
+    <span>Companion: <em>Perceptual Memory Indexing</em> gameplan</span>
+  </div>
+</header>
+
+<div class="abstract">
+  <div class="abstract-label">Summary</div>
+  <p>MPCS decides what to do with a percept by recalling similar past experiences and the rewards they earned. The original models counted matching features, used a Bloom filter to decide whether to look at memory at all, and supported two senses and four actions. On today's 700-memory bank they pick the right action 38–43% of the time and choose an unsafe action on 41–62% of queries.</p>
+  <p>We implemented the three ideas in the gameplan one at a time — <b>HyST</b> (hard/soft filtering), <b>HMGI</b> (modality-partitioned indexing) and <b>KERL</b> (graph-conditioned reading) — plus <b>SHMF</b>, our combination of the first two. Each was measured against every earlier model on every memory bank with one harness. The current models reach <b>75.6%</b> accuracy on fresh scenes and <b>68.1%</b> with sensor noise, with <b>1.7–3.8%</b> unsafe decisions.</p>
+  <p>The biggest single gain came from HyST's hard filter. The Bloom-filter gate never improved a decision. HMGI reduced scanning but not latency. KERL now adds interpretability more than accuracy.</p>
+</div>
+
+<nav class="toc">
+  <div class="toc-title">Contents</div>
+  <ol>
+    <li><a href="#s1">The problem, from scratch</a></li>
+    <li><a href="#s2">Building blocks: percepts, memories, similarity</a></li>
+    <li><a href="#s3">The legacy line: Basic, Bloom, Z-numbers</a></li>
+    <li><a href="#s4">Core v2: four senses and confidence</a></li>
+    <li><a href="#s5">HyST: hard filters, soft residual</a></li>
+    <li><a href="#s6">HMGI: partitioned memory</a></li>
+    <li><a href="#s7">SHMF: the hybrid</a></li>
+    <li><a href="#s8">KERL: grounded, explainable reading</a></li>
+    <li><a href="#s9">The datasets grew with the models</a></li>
+    <li><a href="#s10">Measured progress</a></li>
+    <li><a href="#s11">Bugs the benchmark found</a></li>
+    <li><a href="#s12">Where we are, and next steps</a></li>
+  </ol>
+</nav>
+
+<!-- 1 -->
+<section id="s1">
+  <span class="section-num">01</span>
+  <h2>The problem, from scratch</h2>
+  <p>An agent perceives a scene — something it sees, hears, touches and smells — and must choose one of a few actions: <code>approach</code>, <code>observe</code>, <code>alert</code>, <code>ignore</code> or <code>withdraw</code>. It has no rulebook for most scenes. What it has is memory: every past scene, the action taken, and the reward that followed.</p>
+  <p>The core idea of MPCS (case-based reasoning) is simple: <em>find past scenes like this one and do what worked there</em>. Almost everything in this report is about making the two halves of that sentence precise:</p>
+  <ul class="plain">
+    <li><b>"Like this one"</b> — which features must match, which may differ, and how much each difference should cost.</li>
+    <li><b>"What worked there"</b> — how to combine several memories that disagree, and what to do when no memory applies.</li>
+  </ul>
+  <p>Speed matters too: memory grows every step, so scanning all of it on every percept eventually becomes the bottleneck. That is where indexing comes in.</p>
+  <div class="callout blue">
+    <div class="callout-label">Why this is hard</div>
+    <p>A hot pan and a cool pan look identical. If similarity is "count matching features", they are 3/4 the same, and the pan you were rewarded for picking up yesterday votes for picking up this one. Some features are not just features — they decide whether the rest of the comparison matters at all.</p>
+  </div>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <span class="section-num">02</span>
+  <h2>Building blocks: percepts, memories, similarity</h2>
+  <h3>Percept</h3>
+  <p>A percept is a dictionary of senses, each a dictionary of discrete features:</p>
+  <div class="formula"><span class="key">vision</span>: {color: <span class="val">red</span>, shape: <span class="val">round</span>, motion: <span class="val">still</span>}
+<span class="key">audio</span>:  {sound_type: <span class="val">hiss</span>, audio_intensity: <span class="val">medium</span>}
+<span class="key">touch</span>:  {temperature: <span class="val">hot</span>, texture: <span class="val">smooth</span>}
+<span class="key">smell</span>:  {odor: <span class="val">burnt</span>}</div>
+  <p>Senses may be missing — a scene in the dark has no vision. Handling <em>partial</em> percepts turned out to matter a great deal (§9).</p>
+  <h3>Memory entry</h3>
+  <p>Each memory stores the percept's summary, the action taken, the reward (−1 to +1), the step at which it happened (for ageing), and flags such as <code>is_expert</code> for corrections supplied by a teacher.</p>
+  <h3>Z-numbers: value plus confidence</h3>
+  <p>A Z-number pairs a value with how sure we are of it: <code>(hot, 0.9)</code>. Every feature in a summary is stored as <code>(key, value, confidence)</code>, with confidence set per sense (e.g. touch is trusted more than smell). This lets similarity discount features we barely perceived.</p>
+  <div class="formula"><span class="comment"># similarity of query q to memory m (after the Sept fix)</span>
+sim(q, m) = Σ<sub>matching features</sub> <span class="key">min</span>(c<sub>q</sub>, c<sub>m</sub>)  /  Σ<sub>features of q</sub> c<sub>q</sub></div>
+  <p class="fkey">An exact repeat scores 1.0; a scene sharing nothing scores 0. The earlier product form <code>c<sub>q</sub>·c<sub>m</sub></code> capped exact repeats at ~0.96 (§11).</p>
+  <h3>From similar memories to a decision</h3>
+  <p>For each action, retrieve the most similar memories where that action was taken, then combine their rewards weighted by similarity and age. The action with the best supported value wins. <b>Novelty</b> — one minus the best similarity — tells the agent how unfamiliar the scene is, and drives exploration.</p>
+  <h3>Reflexes</h3>
+  <p>A few hard-coded rules (a loud alarm → alert, a hot surface → withdraw) fire before memory is consulted. They matter again in §5: they tell us which features are safety-critical.</p>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <span class="section-num">03</span>
+  <h2>The legacy line: Basic, Bloom, Z-numbers</h2>
+  <div class="info-grid">
+    <div class="info-card blue"><div class="info-card-label">G1 · reference/mpcs.py</div><div class="info-card-title">Basic</div><div class="info-card-text">Vision + audio, four actions. Similarity = number of equal features. Global top-5 recall, reward-weighted vote.</div></div>
+    <div class="info-card amber"><div class="info-card-label">G2 · reference/BloomMPCS.py</div><div class="info-card-title">Bloom gate</div><div class="info-card-text">A Bloom filter answers "have I seen exactly this before?". Memory is only consulted if the answer is yes — intended as a speed-up.</div></div>
+    <div class="info-card purple"><div class="info-card-label">G3 · 01_baseline_z/MPCS_Z.py</div><div class="info-card-title">Z-numbers + dlCBF</div><div class="info-card-text">Z-number summaries and a d-left counting Bloom filter (supports deletion as memories age out). Confidence fixed at 1.0.</div></div>
+  </div>
+  <p><b>Where the idea came from.</b> Bloom filters are the textbook structure for cheap set-membership tests; d-left counting Bloom filters (Bonomi et al.) extend them to deletions with less memory. Z-numbers come from Zadeh's (2011) proposal to attach reliability to fuzzy values.</p>
+  <h3>What the measurements showed</h3>
+  <ul class="plain">
+    <li><b>The gate never helps a decision.</b> When it opens, G2/G3 return exactly G1's decision (100% agreement on every <code>seen</code> set). When it closes, nothing is retrieved and the model rolls a random prior. On v1 <code>near</code> queries, accuracy falls from 45.7% to 31.2%.</li>
+    <li><b>Similarity needs near matches, a membership filter only knows exact ones.</b> Case-based reasoning is valuable precisely on scenes <em>not</em> seen verbatim — the ones the gate shuts out.</li>
+    <li><b>Collisions look like recognition.</b> On v2, once touch and smell are projected away, 44% of new scenes exactly match a stored one. The gate reports "seen" for scenes that differ in heat or smell.</li>
+    <li><b>Z at confidence 1.0 is just counting.</b> G3's outputs equal G2's everywhere; Z-numbers only pay off once confidences differ.</li>
+  </ul>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <span class="section-num">04</span>
+  <h2>Core v2: four senses and confidence</h2>
+  <p><code>02_core/mpcs_engine.py</code> is the shared engine every later model builds on. It adds touch and smell, the <code>withdraw</code> action, per-sense confidence, reflexes, a working-memory state, ageing, expert memories, and exploration. The dlCBF survives only as an exact-repeat hint, not a gate. Tkinter, Plotly, Streamlit and web dashboards (<code>03_dashboards</code>) visualise it.</p>
+  <div class="callout rust">
+    <div class="callout-label">A regression we had to explain</div>
+    <p>Core v2 scores <em>below</em> Basic (24.1% vs 51.7% on v1 <code>seen</code>; 34.2% vs 43.1% on v3 fresh scenes). It retrieves the top-5 memories <em>per action</em> and averages their rewards. An average does not care how similar its five members are, so a high-reward action backed by five loosely related memories can outvote the exact match. More senses gave the model more ways to find loosely related memories.</p>
+  </div>
+  <p>This diagnosis set up the next step: the problem is not the kernel, it is <em>who is allowed to vote</em>.</p>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <span class="section-num">05</span>
+  <h2>HyST: hard filters, soft residual</h2>
+  <div class="paper-head">
+    <div class="paper-sigil sig-b">HyST</div>
+    <div class="paper-head-body"><h3>Hybrid Structured–Textual retrieval</h3>
+      <div class="cite">Idea source: hybrid retrieval that splits a query into strict structured constraints and fuzzy residual (paper A of the gameplan). <span class="chip chip-adapt">adapted</span></div>
+      <div class="oneline">Some features must match exactly; the rest are ranked softly.</div></div>
+  </div>
+  <p><b>How it works.</b> Features are split into <em>hard slots</em> and <em>soft slots</em>. The hard slots are derived automatically from the reflex rules — if a reflex tests a feature, that feature is safety-critical. A memory is only eligible if every hard slot agrees with the query. Among eligible memories, a graded ordinal kernel scores the soft slots (<code>medium</code> is closer to <code>high</code> than <code>low</code> is).</p>
+  <div class="formula"><span class="comment"># HyST retrieval</span>
+eligible = { m : m.hard == q.hard }                 <span class="comment"># safety features must agree</span>
+score(m) = Σ soft_kernel(q.f, m.f) · min(c<sub>q</sub>, c<sub>m</sub>) / Σ c<sub>q</sub>
+<span class="key">SlotPolicy</span>(divergent=<span class="val">False</span>, urgent=<span class="val">False</span>, divergent_mismatch_discount=<span class="val">0.6</span>)</div>
+  <ul class="plain">
+    <li><b>Divergent switch (exploration).</b> Hard mismatches are no longer excluded; they are discounted by 0.6. The agent can reason by analogy across safety boundaries when it chooses to. The 0.6 value came from a sweep.</li>
+    <li><b>Urgent flag (convergent only).</b> Overrides divergence: strict filtering, no exploration. Under pressure, reason only from directly relevant experience.</li>
+  </ul>
+  <p><b>Result.</b> The largest step in the whole project: accuracy on hand-written banks rose from ~40% to 79–100%, and on 700-memory v3 fresh scenes from 34.2% to 64.0%, with unsafe decisions at 1.2%. <b>Cost:</b> on fresh or noisy scenes the strict filter often leaves nobody eligible (18% clean, 41% noisy). The model then observes — safe but uninformed.</p>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <span class="section-num">06</span>
+  <h2>HMGI: partitioned memory</h2>
+  <div class="paper-head">
+    <div class="paper-sigil sig-a">HMGI</div>
+    <div class="paper-head-body"><h3>Hybrid Multimodal Graph Index</h3>
+      <div class="cite">Idea source: partitioned multimodal indexing with graph links between items (paper B of the gameplan). We built the structural part only, plus instrumentation; no approximate-nearest-neighbour index. <span class="chip chip-adapt">adapted</span></div>
+      <div class="oneline">Index memories by which senses they carry, and link them into episodes.</div></div>
+  </div>
+  <ul class="plain">
+    <li><b>PartitionedMemory</b> — memories are bucketed by modality. A query only scans memories that share at least one sense with it.</li>
+    <li><b>Episode graph edges</b> — each memory links to the previous step, the previous time the same action was taken, and the previous time the same object was seen. KERL later uses these.</li>
+    <li><b>ScanInstrumentation</b> — records how many memories each query touches.</li>
+  </ul>
+  <p><b>Result.</b> Decisions identical to Core v2 by construction (100% agreement). Scanning drops from 700 to ~637–671 memories per query, but latency does not improve (equal to ~25% slower): building the candidate list costs about what it saves at this size. HMGI's value is structural — the partitions and graph that SHMF and KERL rest on — and it will pay off in speed only once memory is much larger.</p>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <span class="section-num">07</span>
+  <h2>SHMF: the hybrid</h2>
+  <div class="paper-head">
+    <div class="paper-sigil sig-c">SHMF</div>
+    <div class="paper-head-body"><h3>Smart Hybrid-Modality Filtering</h3>
+      <div class="cite">Our combination of HMGI and HyST. <span class="chip chip-ours">ours</span></div>
+      <div class="oneline">Partition first, then filter hard/soft — and relax when the filter leaves nothing.</div></div>
+  </div>
+  <div class="steps">
+    <div class="step"><div class="step-n"></div><div class="step-body"><h4>Partition</h4><p>HMGI narrows memory to modality-compatible entries.</p></div></div>
+    <div class="step"><div class="step-n"></div><div class="step-body"><h4>Strict filter</h4><p>HyST's hard slots remove safety-incompatible entries. Novelty is always measured on this strict set, so the agent still knows the scene is unfamiliar.</p></div></div>
+    <div class="step"><div class="step-n"></div><div class="step-body"><h4>Auto-relax</h4><p>If nothing survives, retry in divergent mode (discounted hard mismatches, zero-similarity entries dropped). <b>Never under the urgent flag.</b></p></div></div>
+    <div class="step"><div class="step-n"></div><div class="step-body"><h4>Score and decide</h4><p>Soft-kernel scoring, best evidenced action; results cached per query so one step does one scan.</p></div></div>
+  </div>
+  <p><b>Result.</b> Auto-relax cuts empty results from 18%/41% to 2%/5% (clean/noisy) and lifts accuracy to <b>75.6% / 68.1%</b> with 2.1% / 3.8% unsafe. It fixes HyST's main weakness while keeping its safety.</p>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <span class="section-num">08</span>
+  <h2>KERL: grounded, explainable reading</h2>
+  <div class="paper-head">
+    <div class="paper-sigil sig-c" style="background:var(--accent3)">KERL</div>
+    <div class="paper-head-body"><h3>Knowledge-Enhanced Retrieval &amp; Learning</h3>
+      <div class="cite">Idea source: reading a retrieved subgraph with several task heads rather than one score (paper C of the gameplan). <span class="chip chip-adapt">adapted</span></div>
+      <div class="oneline">SHMF's candidates, re-read through the episode graph, with affect and an explanation.</div></div>
+  </div>
+  <div class="formula"><span class="comment"># fused relevance, weights modulated by novelty</span>
+R = <span class="key">w_s</span>·sim_structural + <span class="key">w_e</span>·sim_emotional + <span class="key">w_g</span>·graph_2hop
+    w_s=<span class="val">0.7</span>  w_e=<span class="val">0.15</span>  w_g=<span class="val">0.3</span></div>
+  <ul class="plain">
+    <li><b>Near-miss guard</b> — memories that the strict filter rejected by a single feature are checked, so a useful near neighbour is not silently lost.</li>
+    <li><b>HEAD-A</b> (action value), <b>HEAD-E</b> (valence/arousal; when enabled, threat suppresses exploration), <b>HEAD-X</b> (a plain-language explanation naming the memories used).</li>
+    <li><b>UNGROUNDED</b> — if no evidence exists, KERL says so explicitly and observes.</li>
+    <li><b>Calibration</b> — near-miss pairs train a small pairwise perceptron over the fusion weights; a new weight set is accepted only if it strictly improves.</li>
+  </ul>
+  <p><b>Result.</b> 75.0% / 67.7% accuracy with 1.7% / 3.8% unsafe — level with SHMF. Its earlier safety lead came from observing on empty evidence; once we moved that behaviour into the shared engine (§11), every modern model got it. KERL's distinct contribution is now <em>interpretability and adaptivity</em>, not raw accuracy.</p>
+</section>
+
+<!-- 9 -->
+<section id="s9">
+  <span class="section-num">09</span>
+  <h2>The datasets grew with the models</h2>
+  <p>Each preset memory bank was built when the previous one could no longer tell models apart.</p>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Bank</th><th>Size</th><th>Senses</th><th>What it adds</th><th>Used for</th></tr></thead>
+    <tbody>
+      <tr><td><b>v1</b></td><td>30</td><td>vision, audio</td><td>Hand-written reference scenes</td><td>G1–G3</td></tr>
+      <tr><td><b>v2</b></td><td>70</td><td>all four</td><td>Hand-written; hot surfaces, impacts, <code>withdraw</code></td><td>Core v2, HyST development</td></tr>
+      <tr><td><b>v3</b></td><td>700</td><td>all four, often partial</td><td>Seeded generator over 16 scenario archetypes; ~70/30 unique/repeated; varied actions and rewards for similar inputs; ~18% contradicting twins; 36 expert corrections; nuanced ageing</td><td>HMGI, SHMF, KERL, the comparison</td></tr>
+    </tbody>
+  </table></div>
+  <p>v3 is deliberately hard: partial percepts break exact-match assumptions, contradicting twins punish models that trust a single memory, and expert entries test whether corrections outweigh noisy experience. It is reproducible from its seed (<code>DEFAULT_SEED = 20260907</code>) and documented in <code>Model/data/PresetMemory_v3.txt</code>.</p>
+  <p>Every model was then run on <em>every</em> bank. Old models on new data show their schema limits: they cannot express the right answer on 20% of v2 and 25–29% of v3 queries, and their unsafe rate climbs from 0% (v1) to 19–20% (v2) to 35–62% (v3).</p>
+</section>
+
+<!-- 10 -->
+<section id="s10">
+  <span class="section-num">10</span>
+  <h2>Measured progress</h2>
+  <p>One harness (<code>comparison/run_comparison.py</code>) calls each model's own code with exploration and reflexes off, so it measures what each model's <em>memory</em> recommends. Query sets are never stored in memory: <code>seen</code> (exact stored scenes), <code>near</code> (one non-safety feature changed), and for v3, <code>clean</code> and <code>noisy</code> fresh samples from the archetypes (480 each).</p>
+
+  <h3>v3 fresh scenes — the honest test</h3>
+  <div class="bar-group-label">Accuracy, clean (%)</div>
+  <div class="bar-row"><span>G1 Basic</span><div class="bar-track"><div class="bar-fill" style="width:43.1%"></div></div><span class="bar-num">43.1</span></div>
+  <div class="bar-row"><span>G2 Bloom</span><div class="bar-track"><div class="bar-fill" style="width:38.1%"></div></div><span class="bar-num">38.1</span></div>
+  <div class="bar-row"><span>G3 Z+dlCBF</span><div class="bar-track"><div class="bar-fill" style="width:38.1%"></div></div><span class="bar-num">38.1</span></div>
+  <div class="bar-row"><span>G4 Core v2</span><div class="bar-track"><div class="bar-fill" style="width:34.2%"></div></div><span class="bar-num">34.2</span></div>
+  <div class="bar-row"><span>G5 HyST</span><div class="bar-track"><div class="bar-fill" style="width:64.0%"></div></div><span class="bar-num">64.0</span></div>
+  <div class="bar-row"><span>G6 HMGI</span><div class="bar-track"><div class="bar-fill" style="width:34.2%"></div></div><span class="bar-num">34.2</span></div>
+  <div class="bar-row"><span>G7 SHMF</span><div class="bar-track"><div class="bar-fill good" style="width:75.6%"></div></div><span class="bar-num">75.6</span></div>
+  <div class="bar-row"><span>G8 KERL</span><div class="bar-track"><div class="bar-fill good" style="width:75.0%"></div></div><span class="bar-num">75.0</span></div>
+
+  <div class="bar-group-label">Unsafe decisions, noisy (%) — lower is better</div>
+  <div class="bar-row"><span>G1 Basic</span><div class="bar-track"><div class="bar-fill bad" style="width:41.2%"></div></div><span class="bar-num">41.2</span></div>
+  <div class="bar-row"><span>G2 Bloom</span><div class="bar-track"><div class="bar-fill bad" style="width:59.6%"></div></div><span class="bar-num">59.6</span></div>
+  <div class="bar-row"><span>G3 Z+dlCBF</span><div class="bar-track"><div class="bar-fill bad" style="width:59.6%"></div></div><span class="bar-num">59.6</span></div>
+  <div class="bar-row"><span>G4 Core v2</span><div class="bar-track"><div class="bar-fill bad" style="width:30.4%"></div></div><span class="bar-num">30.4</span></div>
+  <div class="bar-row"><span>G5 HyST</span><div class="bar-track"><div class="bar-fill bad" style="width:1.2%"></div></div><span class="bar-num">1.2</span></div>
+  <div class="bar-row"><span>G6 HMGI</span><div class="bar-track"><div class="bar-fill bad" style="width:30.4%"></div></div><span class="bar-num">30.4</span></div>
+  <div class="bar-row"><span>G7 SHMF</span><div class="bar-track"><div class="bar-fill bad" style="width:3.8%"></div></div><span class="bar-num">3.8</span></div>
+  <div class="bar-row"><span>G8 KERL</span><div class="bar-track"><div class="bar-fill bad" style="width:3.8%"></div></div><span class="bar-num">3.8</span></div>
+
+  <h3>Full table</h3>
+  <p>Accuracy % (unsafe % in brackets).</p>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Model</th><th>v1 seen</th><th>v1 near</th><th>v2 seen</th><th>v2 near</th><th>v3 seen</th><th>v3 near</th><th>v3 clean</th><th>v3 noisy</th></tr></thead>
+    <tbody>
+      <tr><td><span class="gen">G1</span> Basic</td><td>51.7</td><td>45.7</td><td>44.4 (20)</td><td>42.0 (19)</td><td>47.3 (35)</td><td>46.5 (35)</td><td>43.1 (47)</td><td>39.8 (41)</td></tr>
+      <tr><td><span class="gen">G2</span> Bloom</td><td>51.7</td><td class="lo">31.2</td><td>44.4 (20)</td><td class="lo">29.5 (10)</td><td>47.3 (35)</td><td class="lo">37.0 (62)</td><td class="lo">38.1 (62)</td><td class="lo">31.9 (60)</td></tr>
+      <tr><td><span class="gen">G3</span> Z+dlCBF</td><td>51.7</td><td class="lo">31.2</td><td>44.4 (20)</td><td class="lo">29.5 (10)</td><td>47.3 (35)</td><td class="lo">37.0 (62)</td><td class="lo">38.1 (62)</td><td class="lo">31.9 (60)</td></tr>
+      <tr><td><span class="gen">G4</span> Core v2</td><td class="lo">24.1</td><td class="lo">28.3</td><td>39.7 (16)</td><td>37.2 (17)</td><td>38.4 (22)</td><td>42.7 (25)</td><td>34.2 (31)</td><td>34.6 (30)</td></tr>
+      <tr><td><span class="gen">G5</span> HyST</td><td>79.3</td><td>80.9</td><td class="hi">100 (0)</td><td class="hi">100 (0)</td><td class="hi">82.3 (0)</td><td>88.5 (0)</td><td>64.0 (1.2)</td><td>46.7 (1.2)</td></tr>
+      <tr><td><span class="gen">G6</span> HMGI</td><td>24.1</td><td>28.3</td><td>39.7 (16)</td><td>37.2 (17)</td><td>38.4 (22)</td><td>42.7 (25)</td><td>34.2 (31)</td><td>34.6 (30)</td></tr>
+      <tr><td><span class="gen">G7</span> SHMF</td><td>79.3</td><td>80.9</td><td class="hi">100 (0)</td><td class="hi">100 (0)</td><td class="hi">82.3 (0)</td><td>88.5 (0)</td><td class="hi">75.6 (2.1)</td><td class="hi">68.1 (3.8)</td></tr>
+      <tr><td><span class="gen">G8</span> KERL</td><td>79.3</td><td>80.9</td><td class="hi">100 (0)</td><td class="hi">100 (0)</td><td>82.0 (0)</td><td class="hi">88.8 (0)</td><td>75.0 (1.7)</td><td>67.7 (3.8)</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Cost per query (v3 clean)</h3>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Model</th><th>Memories scanned</th><th>No evidence %</th><th>ms / query</th></tr></thead>
+    <tbody>
+      <tr><td>G1 Basic</td><td>700</td><td>14.0</td><td>0.85</td></tr>
+      <tr><td>G2 Bloom</td><td>605</td><td>27.5</td><td>0.82</td></tr>
+      <tr><td>G4 Core v2</td><td>700</td><td>0.0</td><td>5.47</td></tr>
+      <tr><td>G5 HyST</td><td>700</td><td>18.3</td><td>4.86</td></tr>
+      <tr><td>G6 HMGI</td><td>637</td><td>0.0</td><td>5.72</td></tr>
+      <tr><td>G7 SHMF</td><td>637</td><td>2.3</td><td>4.80</td></tr>
+      <tr><td>G8 KERL</td><td>637</td><td>3.5</td><td>4.89</td></tr>
+    </tbody>
+  </table></div>
+  <p>The four-sense models are ~6× slower than Basic because they compute graded Z-similarity over twice as many features; at 5 ms per query that is not yet a practical constraint. Latency is single-run Python wall-clock (±30%) — treat it as a ranking.</p>
+
+  <div class="callout">
+    <div class="callout-label">Reading these numbers fairly</div>
+    <p><code>near</code> queries change only non-safety features — exactly the ones HyST ignores for filtering — so the 100% on v2 partly reflects the test. The v3 <code>clean</code>/<code>noisy</code> sets have no such bias and are the numbers to quote. Labels are synthetic (inferred from stored rewards on v1/v2; the archetype's action on v3).</p>
+  </div>
+</section>
+
+<!-- 11 -->
+<section id="s11">
+  <span class="section-num">11</span>
+  <h2>Bugs the benchmark found</h2>
+  <p>Running every model side by side exposed two defects in the shared engine that no single-model smoke test had caught. Both were fixed in <code>02_core/mpcs_engine.py</code> and propagated to HyST, HMGI and SHMF.</p>
+  <div class="info-grid">
+    <div class="info-card orange"><div class="info-card-label">Fix 1</div><div class="info-card-title">Similarity kernel</div><div class="info-card-text">Matched features scored <code>c1 × c2</code> but were normalised by <code>Σ c1</code>, so an exact repeat scored 0.96, not 1. Now <code>min(c1, c2)</code>.</div></div>
+    <div class="info-card orange"><div class="info-card-label">Fix 2</div><div class="info-card-title">Empty-evidence decisions</div><div class="info-card-text">With nothing retrieved, every action held a default 0.5 and <code>max()</code> broke the tie toward <code>ignore</code> — including next to a hot surface. Now <code>best_evidenced_action</code> chooses among supported actions and observes otherwise.</div></div>
+  </div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Effect (v3)</th><th>Before</th><th>After</th></tr></thead>
+    <tbody>
+      <tr><td>Core v2 novelty on exact repeats</td><td>0.04–0.09</td><td>0</td></tr>
+      <tr><td>HyST unsafe, clean / noisy</td><td>22.9 / 43.8</td><td class="hi">1.2 / 1.2</td></tr>
+      <tr><td>HyST accuracy, clean / noisy</td><td>62.7 / 44.4</td><td>64.0 / 46.7</td></tr>
+      <tr><td>SHMF unsafe, clean / noisy</td><td>5.4 / 10.0</td><td class="hi">2.1 / 3.8</td></tr>
+      <tr><td>SHMF accuracy, clean / noisy</td><td>75.6 / 67.9</td><td>75.6 / 68.1</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 12 -->
+<section id="s12">
+  <span class="section-num">12</span>
+  <h2>Where we are, and next steps</h2>
+  <h3>Current state</h3>
+  <ul class="plain">
+    <li>Eight generations implemented, each in a numbered folder with a smoke suite and a Tkinter dashboard (<code>04_hyst</code> → <code>07_kerl</code>). All five smoke suites pass.</li>
+    <li>SHMF and KERL are the best models: ~75% accuracy on fresh scenes, ~68% under noise, ≤ 4% unsafe.</li>
+    <li>A reproducible comparison covers every model on every bank.</li>
+  </ul>
+  <h3>What we learned</h3>
+  <ul class="plain">
+    <li><b>Deciding who may vote beats tuning how votes are counted.</b> HyST's hard filter was worth more than every kernel change combined.</li>
+    <li><b>Exact-membership structures do not fit similarity-based recall.</b> The Bloom gates only removed evidence.</li>
+    <li><b>Safety comes from knowing when you don't know.</b> Most of the unsafe-rate drop came from observing when nothing applies.</li>
+  </ul>
+  <h3>Recommended next steps</h3>
+  <div class="steps">
+    <div class="step"><div class="step-n"></div><div class="step-body"><h4>Close the noisy gap</h4><p>68% under noise vs 76% clean. Try per-feature noise-aware confidence and letting KERL's near-miss guard feed the relaxed set.</p></div></div>
+    <div class="step"><div class="step-n"></div><div class="step-body"><h4>Full-loop evaluation</h4><p>The comparison scores memory recommendations only. Run closed-loop episodes with reflexes, exploration and learning on, and measure cumulative reward and time-to-safe-behaviour.</p></div></div>
+    <div class="step"><div class="step-n"></div><div class="step-body"><h4>Scale test for HMGI</h4><p>Generate 10k–100k memory banks to find where partitioning (and optionally an ANN index) starts to pay for itself in latency.</p></div></div>
+    <div class="step"><div class="step-n"></div><div class="step-body"><h4>Measure KERL's own value</h4><p>Evaluate HEAD-X explanations and HEAD-E affect directly, and test whether calibration improves accuracy over time on a drifting stream.</p></div></div>
+    <div class="step"><div class="step-n"></div><div class="step-body"><h4>Stronger labels</h4><p>Replace synthetic labels with a small hand-verified test set, so accuracy reflects correctness rather than agreement with the generator.</p></div></div>
+  </div>
+</section>
+
+</div>
+</body>
+</html>
