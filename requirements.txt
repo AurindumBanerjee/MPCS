@@ -1,7 +1,7 @@
 # MPCS optional dependencies
 #
-# The engine (Model/experimental/core/) and the web dashboard
-# (Model/experimental/dashboards/dashboard_web/MPCS_Test.py) need NOTHING from this file
+# The engine (Model/experimental/02_core/) and the web dashboard
+# (Model/experimental/03_dashboards/dashboard_web/MPCS_Test.py) need NOTHING from this file
 # — they use only the Python standard library. Install these only for the
 # optional dashboards and the legacy Bloom baseline.
 #

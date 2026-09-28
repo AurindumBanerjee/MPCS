@@ -31,7 +31,7 @@ RUNNING
 -------
 Verify the engine (recommended after any change):
 
-    cd Model/experimental/core
+    cd Model/experimental/02_core
     python engine_smoke.py
 
 Expected: "67/67 checks passed".
@@ -47,7 +47,7 @@ entry list itself, so the document cannot drift from the code.
 
 DRIVING THE ENGINE FROM YOUR OWN SCRIPT
 ---------------------------------------
-    import sys; sys.path.insert(0, "Model/experimental/core")
+    import sys; sys.path.insert(0, "Model/experimental/02_core")
     import mpcs_engine as E
     from mpcs_preset_v2 import build_preset_memory
 

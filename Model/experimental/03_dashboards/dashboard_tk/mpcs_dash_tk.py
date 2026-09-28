@@ -1,7 +1,7 @@
 """
 MPCS v2 dashboard — Variant D: Tkinter desktop app
 ---------------------------------------------------
-The same cognition as the other dashboards (the shared engine in ../core),
+The same cognition as the other dashboards (the shared engine in ../02_core),
 in a native desktop window. Needs nothing beyond the standard library, and
 unlike the web variants it starts instantly with no server and no browser.
 
@@ -26,8 +26,8 @@ import sys
 import tkinter as tk
 from tkinter import filedialog, ttk
 
-# The engine lives in ../../core; add it to the path so this runs from anywhere.
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "core"))
+# The engine lives in ../../02_core; add it to the path so this runs from anywhere.
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "02_core"))
 
 import mpcs_engine as E
 from mpcs_preset_v2 import PROFILE_CONFIGS, build_preset_memory

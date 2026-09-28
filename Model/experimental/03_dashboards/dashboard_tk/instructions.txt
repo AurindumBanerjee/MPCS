@@ -5,11 +5,11 @@ MPCS v2 — DASHBOARD D: TKINTER DESKTOP APP
 WHAT THIS IS
 ------------
 The same cognition as the other dashboards (the shared engine in
-../../core), in a native desktop window. Needs nothing beyond the
+../../02_core), in a native desktop window. Needs nothing beyond the
 standard library, and unlike the web variants it starts instantly —
 no server, no browser, no port.
 
-This is the successor to the old Tk window in ../../baseline_z: four
+This is the successor to the old Tk window in ../../01_baseline_z: four
 modalities instead of two, reward derived from memory instead of
 random, and a contribution graph the old window could not draw at
 all.
@@ -36,7 +36,7 @@ No other packages required.
 
 RUNNING
 -------
-    cd Model/experimental/dashboards/dashboard_tk
+    cd Model/experimental/03_dashboards/dashboard_tk
     python mpcs_dash_tk.py
 
 Options:
@@ -50,10 +50,10 @@ Options:
     python mpcs_dash_tk.py --seed 42
         fix the RNG for reproducible runs
 
-The script finds ../../core on its own, so this also works from the
+The script finds ../../02_core on its own, so this also works from the
 repository root:
 
-    python Model/experimental/dashboards/dashboard_tk/mpcs_dash_tk.py
+    python Model/experimental/03_dashboards/dashboard_tk/mpcs_dash_tk.py
 
 
 USING THE DASHBOARD
@@ -182,4 +182,4 @@ Sliders will not scroll
     Put the pointer over the slider area first, then use the wheel.
 
 ModuleNotFoundError: mpcs_engine
-    Verify the engine first:  python ../../core/engine_smoke.py
+    Verify the engine first:  python ../../02_core/engine_smoke.py

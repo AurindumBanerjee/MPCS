@@ -5,23 +5,35 @@ Active development trunk. New mechanisms are built here first.
 Each folder carries its own `instructions.txt` with setup, run commands, a
 walkthrough and troubleshooting.
 
+Folders are numbered in the order each model was created, so the listing
+reads as the project's timeline. Later layers import earlier ones; nothing
+imports a later layer.
+
 ```
-core/                  The engine. No UI. Everything else imports this.
-dashboards/
-  dashboard_web/         Dashboard A — local web app, no dependencies
-  dashboard_streamlit/   Dashboard B — Streamlit
-  dashboard_plotly/      Dashboard C — Dash / Plotly
-  dashboard_tk/          Dashboard D — Tkinter desktop app, no dependencies
-baseline_z/            The previous two-modality version, unchanged
+01_baseline_z/         The previous two-modality version, unchanged
+02_core/               The engine + preset banks (v2: 70, v3: 700). No UI.
+03_dashboards/         Four front-ends for the stock engine
+  dashboard_web/         A — local web app, no dependencies
+  dashboard_streamlit/   B — Streamlit
+  dashboard_plotly/      C — Dash / Plotly
+  dashboard_tk/          D — Tkinter desktop app, no dependencies
+04_hyst/               HyST — hard/soft slot filter, divergent + urgent modes
+05_hmgi/               HMGI — modality-partitioned scan + episode graph
+06_shmf/               SHMF — HMGI partition -> HyST filter (combined pipeline)
+07_kerl/               KERL — affect-aware constrained selection over SHMF
+comparison/            Every generation (legacy G1-G3 + 02-07) on every preset bank
 ```
+
+Each of 04–07 has `*_layer.py` (logic), `*_smoke.py` (checks) and
+`*_dash_tk.py` (desktop dashboard).
 
 ## Quick start
 
 No installation required — pick a browser or a desktop window:
 
 ```
-python dashboards/dashboard_web/MPCS_Test.py     # opens http://127.0.0.1:8756/
-python dashboards/dashboard_tk/mpcs_dash_tk.py   # native window, instant start
+python 03_dashboards/dashboard_web/MPCS_Test.py     # opens http://127.0.0.1:8756/
+python 03_dashboards/dashboard_tk/mpcs_dash_tk.py   # native window, instant start
 ```
 
 Both open with the 70-experience preset bank loaded. The other two dashboards
@@ -31,12 +43,12 @@ show the same thing through different technology — see their
 Verify the engine without any UI:
 
 ```
-python core/engine_smoke.py
+python 02_core/engine_smoke.py
 ```
 
 ## MPCS v2 — what changed
 
-Cognition is separate from presentation: one engine in `core/`, three
+Cognition is separate from presentation: one engine in `02_core/`, three
 interchangeable front-ends. Behaviour is identical whichever you run.
 
 **Four modalities.** Vision and audio are joined by **touch** (contact,
@@ -88,7 +100,7 @@ contradicted advice.
 | | A: web | B: Streamlit | C: Dash/Plotly | D: Tk |
 |---|---|---|---|---|
 | Install | nothing | `streamlit pandas` | `dash plotly` | nothing |
-| Launch | `python dashboards/dashboard_web/MPCS_Test.py` | `streamlit run …` | `python …` | `python …` |
+| Launch | `python 03_dashboards/dashboard_web/MPCS_Test.py` | `streamlit run …` | `python …` | `python …` |
 | Surface | browser | browser | browser | desktop window |
 | Startup | server + browser | server + browser | server, no browser | instant |
 | Graph | inline SVG | inline SVG | Plotly traces | Tk Canvas |

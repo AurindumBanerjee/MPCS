@@ -31,24 +31,24 @@ walkthrough and troubleshooting.
 Current version — a dashboard showing which memories produced each decision.
 Both of these need nothing installed:
 
-- `python Model/experimental/dashboards/dashboard_web/MPCS_Test.py` (browser)
-- `python Model/experimental/dashboards/dashboard_tk/mpcs_dash_tk.py` (desktop window)
+- `python Model/experimental/03_dashboards/dashboard_web/MPCS_Test.py` (browser)
+- `python Model/experimental/03_dashboards/dashboard_tk/mpcs_dash_tk.py` (desktop window)
 
 The same system through other front-ends (`pip install -r requirements.txt`,
 or `pip install streamlit pandas dash plotly`):
 
-- `streamlit run Model/experimental/dashboards/dashboard_streamlit/mpcs_dash_streamlit.py`
-- `python Model/experimental/dashboards/dashboard_plotly/mpcs_dash_plotly.py`
+- `streamlit run Model/experimental/03_dashboards/dashboard_streamlit/mpcs_dash_streamlit.py`
+- `python Model/experimental/03_dashboards/dashboard_plotly/mpcs_dash_plotly.py`
 
 Verify the engine with no UI involved:
 
-- `python Model/experimental/core/engine_smoke.py`
+- `python Model/experimental/02_core/engine_smoke.py`
 
 Earlier versions, kept for comparison. Install optional BloomMPCS dependency:
 - `pip install bloom-filter`
 
 - Previous Z-number Tk UI (two modalities, expert teaching):
-	- `python Model/experimental/baseline_z/MPCS_Z.py`
+	- `python Model/experimental/01_baseline_z/MPCS_Z.py`
 - Standard reference UI:
 	- `python Model/reference/mpcs.py`
 - Preset-memory reference UI (starts with ready-made experience):
@@ -84,7 +84,7 @@ engine, three interchangeable dashboards.
 - Per-step explanation of which memories produced the decision, drawn as a
   contribution graph
 
-Earlier versions (`Model/reference/`, `Model/experimental/baseline_z/`) keep
+Earlier versions (`Model/reference/`, `Model/experimental/01_baseline_z/`) keep
 the two-modality Tk implementations for comparison.
 
 ## Research-Aligned Improvement Roadmap
