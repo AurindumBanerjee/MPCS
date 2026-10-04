@@ -20,11 +20,13 @@ Requires `bloom-filter` (in the repo's `requirements.txt`) for the G2 model.
 | G1 | Basic | `Model/reference/mpcs.py` | global top-5 | exact-match count | vision+audio / 4 |
 | G2 | Bloom | `Model/reference/BloomMPCS.py` | G1, gated by a Bloom filter | as G1 | vision+audio / 4 |
 | G3 | Z+dlCBF | `01_baseline_z/MPCS_Z.py` | G1, gated by a d-left counting BF | Z-numbers, conf fixed at 1.0 | vision+audio / 4 |
+| B2 | Baseline v2 | `01_baseline_z/baseline_v2.py` | global top-5 (B2g: dlCBF-gated) | exact-match share | 4 / 5 |
 | G4 | Core v2 | `02_core/mpcs_engine.py` | top-5 per action | Z, per-modality conf | 4 / 5 |
 | G5 | HyST | `04_hyst` | hard filter, then top-5 per action | graded soft kernel | 4 / 5 |
 | G6 | HMGI | `05_hmgi` | modality partitions, then as G4 | as G4 | 4 / 5 |
 | G7 | SHMF | `06_shmf` | partitions -> hard filter (auto-relax) | as G5 | 4 / 5 |
 | G8 | KERL | `07_kerl` | G7 + near-miss guard + fusion | as G5 + graph term | 4 / 5 |
+| G9 | TIDE | `08_tide` | G8 + spreading activation, routed output | as G8, activation graph term | 4 / 5 |
 
 G1-G3 see a projection of each percept: touch and smell dropped, and no
 `withdraw` action. That is what those models can do; the harness does not
@@ -42,7 +44,7 @@ partial modalities, contradicting twins and expert corrections.
 
 **Decision rule:** each model's own greedy choice with exploration off. G1-G3
 take `max()` over raw scores (frozen code; an empty retrieval yields random
-priors). G4-G8 choose the best *evidenced* action and observe when nothing
+priors). G4-G9 choose the best *evidenced* action and observe when nothing
 is evidenced. Only memory-based recommendation is scored; reflex rules are out
 of scope.
 
@@ -55,11 +57,14 @@ Accuracy % (unsafe % in brackets — approach/ignore where alert/withdraw was ri
 | G1 Basic | 51.7 | 45.7 | 44.4 (20) | 42.0 (19) | 47.3 (35) | 46.5 (35) | 43.1 (47) | 39.8 (41) |
 | G2 Bloom | 51.7 | 31.2 | 44.4 (20) | 29.5 (10) | 47.3 (35) | 37.0 (62) | 38.1 (62) | 31.9 (60) |
 | G3 Z+dlCBF | 51.7 | 31.2 | 44.4 (20) | 29.5 (10) | 47.3 (35) | 37.0 (62) | 38.1 (62) | 31.9 (60) |
+| B2 Baseline v2 | 51.7 | 45.7 | 52.4 (16) | 52.0 (17) | 84.7 (0.5) | 82.0 (3.0) | 79.6 (0) | 73.3 (1.2) |
+| B2g Baseline v2+dlCBF | 51.7 | 31.2 | 52.4 (16) | 21.8 (0) | 84.7 (0.5) | 18.5 (0) | 45.6 (0) | 26.5 (0) |
 | G4 Core v2 | 24.1 | 28.3 | 39.7 (16) | 37.2 (17) | 38.4 (22) | 42.7 (25) | 34.2 (31) | 34.6 (30) |
 | G5 HyST | 79.3 | 80.9 | 100 (0) | 100 (0) | 82.3 (0) | 88.5 (0) | 64.0 (1.2) | 46.7 (1.2) |
 | G6 HMGI | 24.1 | 28.3 | 39.7 (16) | 37.2 (17) | 38.4 (22) | 42.7 (25) | 34.2 (31) | 34.6 (30) |
 | G7 SHMF | 79.3 | 80.9 | 100 (0) | 100 (0) | 82.3 (0) | 88.5 (0) | **75.6** (2.1) | **68.1** (3.8) |
 | G8 KERL | 79.3 | 80.9 | 100 (0) | 100 (0) | 82.0 (0) | **88.8** (0) | 75.0 (**1.7**) | 67.7 (3.8) |
+| G9 TIDE | 79.3 | 80.9 | 100 (0) | 100 (0) | 82.0 (0) | **88.8** (0) | 75.0 (**1.7**) | 67.7 (3.8) |
 
 v1 contains no danger scene the legacy schema can't see, so its unsafe rate is 0 throughout.
 
@@ -131,6 +136,30 @@ G5 lifts accuracy from ~40% to 79–100% on the hand-written banks and 82–89% 
   and G4–G7 now do the same. What still separates KERL is what it *adds*: the affect
   read-out, the plain-language explanation, near-miss calibration, and an explicit
   UNGROUNDED label.
+
+### 7. TIDE (G9) — same decisions, new behaviour
+
+TIDE decides exactly as KERL on every set here: replacing the fixed two-hop graph
+term with spreading activation re-weights voters, but not enough to change a top
+choice. It is benchmarked on what it adds instead (`08_tide/TIDE_BENCH.md`):
+
+- **Routing is a calibrated confidence signal.** On v3 `clean`, 7.7% of reads
+  route DIRECT, and those are 97.3% correct, against 76.1% for SUBGRAPH reads.
+- **The urgent deadline costs no accuracy.** Cutting the read to the 3–5 strongest
+  candidates *raised* urgent accuracy (clean 64.8 → 71.9, noisy 46.2 → 50.8) with the
+  unsafe rate unchanged at 1.2%. Weaker candidates were adding noise, not evidence.
+  The passive full read agrees with the partial decision 72–80% of the time.
+
+### 8. Baseline v2 (B2) — the baseline on matching inputs
+
+B2 is G1's algorithm (exact-match share, global top-5, reward-weighted vote) given
+the same four-sense percepts and five actions as G4-G9. On v3 it beats SHMF
+(79.6 / 73.3 vs 75.6 / 68.1 on `clean`/`noisy`), but scores only ~52% on the
+hand-written v1/v2 banks where HyST/SHMF reach 79-100%. Its v3 edge comes from the
+*global* top-5: G4-G9 all vote with a top-5 *per action*. A one-off test of SHMF's
+filter with B2's global vote scored 80.4 / 74.2 (unsafe 1.7 / 2.1), the best yet.
+`examples.py` writes side-by-side outputs for illustrative queries to
+`results/examples.json`.
 
 ## Fixes applied
 
