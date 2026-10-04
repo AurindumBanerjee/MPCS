@@ -109,8 +109,8 @@ def run(banks: list[str]) -> dict:
     return out
 
 
-GEN = {"Basic": "G1", "Bloom": "G2", "Z+dlCBF": "G3", "Core v2": "G4",
-       "HyST": "G5", "HMGI": "G6", "SHMF": "G7", "KERL": "G8"}
+GEN = {"Basic": "G1", "Bloom": "G2", "Z+dlCBF": "G3", "Baseline v2": "B2", "Baseline v2+dlCBF": "B2g", "Core v2": "G4",
+       "HyST": "G5", "HMGI": "G6", "SHMF": "G7", "KERL": "G8", "TIDE": "G9"}
 
 
 def write_markdown(results: dict, path: str) -> None:

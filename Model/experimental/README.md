@@ -21,10 +21,11 @@ imports a later layer.
 05_hmgi/               HMGI — modality-partitioned scan + episode graph
 06_shmf/               SHMF — HMGI partition -> HyST filter (combined pipeline)
 07_kerl/               KERL — affect-aware constrained selection over SHMF
-comparison/            Every generation (legacy G1-G3 + 02-07) on every preset bank
+08_tide/               TIDE — spreading activation, place, routed output, anytime deadline
+comparison/            Every generation (legacy G1-G3 + 02-08) on every preset bank
 ```
 
-Each of 04–07 has `*_layer.py` (logic), `*_smoke.py` (checks) and
+Each of 04–08 has `*_layer.py` (logic), `*_smoke.py` (checks) and
 `*_dash_tk.py` (desktop dashboard).
 
 ## Quick start

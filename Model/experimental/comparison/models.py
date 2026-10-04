@@ -11,11 +11,13 @@ Generation  Model        Source                                  Memory gate
 G1          Basic        Model/reference/mpcs.py                 none
 G2          Bloom        Model/reference/BloomMPCS.py            Bloom filter
 G3          Z+dlCBF      experimental/01_baseline_z/MPCS_Z.py    d-left counting BF
+B2/B2g      Baseline v2  experimental/01_baseline_z/baseline_v2  none / dlCBF gate
 G4          Core v2      experimental/02_core/mpcs_engine.py     none (dlCBF is a hint)
 G5          HyST         experimental/04_hyst                    hard/soft filter
 G6          HMGI         experimental/05_hmgi                    modality partitions
 G7          SHMF         experimental/06_shmf                    partition -> filter
 G8          KERL         experimental/07_kerl                    SHMF + near-miss guard
+G9          TIDE         experimental/08_tide                    KERL + activation, anytime
 
 G1-G3 only know vision + audio and four actions (no `withdraw`). They receive
 a projection of each percept with touch and smell dropped and
@@ -34,7 +36,8 @@ _EXP = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _REF = os.path.join(os.path.dirname(_EXP), "reference")
 for _p in (_REF, os.path.join(_EXP, "01_baseline_z"), os.path.join(_EXP, "02_core"),
            os.path.join(_EXP, "04_hyst"), os.path.join(_EXP, "05_hmgi"),
-           os.path.join(_EXP, "06_shmf"), os.path.join(_EXP, "07_kerl")):
+           os.path.join(_EXP, "06_shmf"), os.path.join(_EXP, "07_kerl"),
+           os.path.join(_EXP, "08_tide")):
     sys.path.insert(0, _p)
 
 import mpcs as G1
@@ -45,6 +48,8 @@ from hyst_layer import SlotPolicy, compute_novelty_hyst, score_action_hyst
 from hmgi_layer import PartitionedMemory, compute_novelty_partitioned, score_action_partitioned
 from shmf_layer import ShmfPipeline
 from kerl_layer import KerlReader
+from tide_layer import TideConfig, TideReader
+from baseline_v2 import BaselineV2
 
 LEGACY_ACTIONS = list(G1.ACTIONS)
 
@@ -199,6 +204,24 @@ class _Modern(Adapter):
                 "novelty": self._novelty(summary)}
 
 
+class BaseV2(_Modern):
+    """The G1 algorithm on the four-sense schema (01_baseline_z/baseline_v2.py)."""
+    name, generation, gate = "Baseline v2", "B2", False
+
+    def _after_load(self):
+        self.model = BaselineV2(self.mem, gate=self.gate)
+
+    def recommend(self, percept, step):
+        r = self.model.recommend(E.summary_of(percept), step)
+        return {"best": r["best"], "scores": r["scores"], "evidence": bool(r["cases"]),
+                "scanned": 0 if r["gate"] is False else len(self.mem),
+                "gate": r["gate"], "novelty": r["novelty"]}
+
+
+class BaseV2Gate(BaseV2):
+    name, generation, gate = "Baseline v2+dlCBF", "B2g", True
+
+
 class CoreV2(_Modern):
     name, generation = "Core v2", "G4"
 
@@ -270,4 +293,16 @@ class KERL(_Modern):
                 "gate": None, "novelty": reading["novelty"]}
 
 
-ALL_MODELS = [Basic, Bloom, ZdlCBF, CoreV2, HyST, HMGI, SHMF, KERL]
+class TIDE(KERL):
+    name, generation = "TIDE", "G9"
+
+    def _after_load(self):
+        self.reader = TideReader(self.mem, SlotPolicy(), TideConfig(verify_async=False))
+
+    def recommend(self, percept, step):
+        out = super().recommend(percept, step)
+        out["route"] = self.reader.last_tide["route"]
+        return out
+
+
+ALL_MODELS = [Basic, Bloom, ZdlCBF, BaseV2, BaseV2Gate, CoreV2, HyST, HMGI, SHMF, KERL, TIDE]

@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MPCS Data Structures</title>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1815; --ink2: #3d3830; --ink3: #6b6258;
+    --page: #f9f7f3; --surface: #f2ede5; --border: #e0d8cc;
+    --accent: #2b4c7e; --accent2: #1e6e5b; --accent3: #8b3a1a;
+    --accent-pale: #e8eef6; --accent2-pale: #e4f0ec; --accent3-pale: #f4ede8;
+    --amber: #b07a12; --amber-pale: #fdf3e0;
+    --purple: #5a3d8a; --purple-pale: #ede9f6;
+    --rule: #cfc7b8;
+    --mono: 'DM Mono', monospace;
+    --serif: 'EB Garamond', Georgia, serif;
+    --sans: 'Outfit', system-ui, sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; scroll-behavior: smooth; }
+  body {
+    background: var(--page); color: var(--ink);
+    font-family: var(--serif); font-size: 1.0625rem; line-height: 1.78;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page-wrap { max-width: 900px; margin: 0 auto; padding: 0 2.5rem 6rem; }
+
+  /* Cover */
+  .cover { padding: 5rem 0 4rem; border-bottom: 1.5px solid var(--ink); margin-bottom: 3.5rem; }
+  .cover-badge { font-family: var(--sans); font-size: .7rem; font-weight: 600;
+    letter-spacing: .15em; text-transform: uppercase; color: var(--ink3); margin-bottom: 1.5rem; }
+  .cover h1 { font-size: 3rem; font-weight: 500; line-height: 1.12; letter-spacing: -.01em;
+    margin-bottom: .5rem; max-width: 720px; }
+  .cover-sub { font-style: italic; font-size: 1.3rem; color: var(--ink3); margin-bottom: 2.2rem; max-width: 660px; }
+  .cover-meta { font-family: var(--sans); font-size: .8rem; color: var(--ink3);
+    display: flex; gap: 2rem; flex-wrap: wrap; }
+
+  .abstract { background: var(--surface); border-left: 3px solid var(--accent);
+    padding: 1.5rem 2rem; border-radius: 0 8px 8px 0; margin-bottom: 3rem; }
+  .abstract-label { font-family: var(--sans); font-size: .65rem; font-weight: 600;
+    letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin-bottom: .6rem; }
+  .abstract p { font-size: .96rem; line-height: 1.7; color: var(--ink2); margin-bottom: .8rem; }
+  .abstract p:last-child { margin-bottom: 0; }
+
+  .toc { margin-bottom: 4rem; }
+  .toc-title { font-family: var(--sans); font-size: .65rem; font-weight: 600; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--ink3); margin-bottom: 1rem; padding-bottom: .5rem;
+    border-bottom: 1px solid var(--border); }
+  .toc ol { list-style: none; counter-reset: toc; column-count: 2; column-gap: 2rem; }
+  .toc ol li { counter-increment: toc; font-family: var(--sans); font-size: .83rem;
+    color: var(--ink3); padding: .22rem 0; display: flex; align-items: baseline; gap: .5rem; break-inside: avoid; }
+  .toc ol li::before { content: counter(toc, decimal-leading-zero); font-family: var(--mono);
+    font-size: .68rem; color: var(--rule); min-width: 1.8rem; }
+  .toc a { color: inherit; text-decoration: none; border-bottom: 1px solid transparent; }
+  .toc a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+  section { margin-bottom: 4rem; scroll-margin-top: 1rem; }
+  .section-num { font-family: var(--mono); font-size: .7rem; color: var(--rule);
+    letter-spacing: .08em; display: block; margin-bottom: .25rem; }
+  h2 { font-size: 2rem; font-weight: 500; line-height: 1.15; margin-bottom: 1.4rem;
+    padding-bottom: .75rem; border-bottom: 1px solid var(--border); }
+  h3 { font-family: var(--sans); font-size: .95rem; font-weight: 600; color: var(--ink2); margin: 2rem 0 .75rem; }
+  h4 { font-family: var(--sans); font-size: .78rem; font-weight: 600; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--ink3); margin: 1.5rem 0 .5rem; }
+  p { margin-bottom: 1rem; }
+  p:last-child { margin-bottom: 0; }
+  ul.plain { list-style: none; margin: 1rem 0; }
+  ul.plain li { font-family: var(--sans); font-size: .87rem; color: var(--ink2); line-height: 1.6;
+    padding: .35rem 0 .35rem 1.3rem; position: relative; }
+  ul.plain li::before { content: '▸'; position: absolute; left: 0; color: var(--rule); }
+  code { font-family: var(--mono); font-size: .84em; background: var(--surface);
+    padding: .1em .35em; border-radius: 4px; color: var(--accent3); }
+
+  /* Paper header */
+  .paper-head { display: flex; gap: 1.2rem; align-items: flex-start; background: #fff;
+    border: 1px solid var(--border); border-radius: 10px; padding: 1.2rem 1.4rem; margin-bottom: 1.6rem; }
+  .paper-sigil { flex-shrink: 0; width: 54px; height: 54px; border-radius: 10px;
+    display: grid; place-items: center; font-family: var(--sans); font-weight: 600;
+    font-size: .78rem; letter-spacing: .04em; color: #fff; }
+  .sig-a { background: var(--accent); } .sig-b { background: var(--accent2); } .sig-c { background: var(--purple); }
+  .paper-head-body h3 { margin: 0 0 .2rem; font-size: 1rem; }
+  .paper-head-body .cite { font-family: var(--sans); font-size: .76rem; color: var(--ink3); line-height: 1.5; }
+  .paper-head-body .oneline { font-family: var(--sans); font-size: .84rem; color: var(--ink2);
+    margin-top: .5rem; line-height: 1.55; }
+
+  /* Diagrams */
+  .diagram-wrap { margin: 2.2rem 0; background: #fff; border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden; }
+  .diagram-label { font-family: var(--sans); font-size: .7rem; font-weight: 600; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--ink3); padding: .6rem 1.2rem; border-bottom: 1px solid var(--border);
+    background: var(--surface); display: flex; align-items: center; gap: .5rem; }
+  .diagram-label::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  .diagram-body { padding: 1.4rem; overflow-x: auto; }
+  .diagram-cap { font-family: var(--sans); font-size: .76rem; color: var(--ink3);
+    padding: 0 1.4rem 1.1rem; line-height: 1.55; }
+  svg.diag { width: 100%; height: auto; display: block; }
+  svg text { font-family: 'Outfit', system-ui, sans-serif; }
+  .svg-t { font-size: 11px; fill: #3d3830; }
+  .svg-s { font-size: 9.5px; fill: #6b6258; }
+  .svg-h { font-size: 11.5px; font-weight: 600; fill: #1a1815; }
+  .svg-m { font-family: 'DM Mono', monospace; font-size: 9.5px; fill: #6b6258; }
+  .svg-w { font-size: 11px; fill: #ffffff; font-weight: 500; }
+  .svg-ws { font-size: 9.5px; fill: #ffffff; opacity: .85; }
+
+  /* Cards */
+  .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+  .info-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.1rem; }
+  .info-card-label { font-family: var(--sans); font-size: .66rem; font-weight: 600; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--ink3); margin-bottom: .35rem; }
+  .info-card-title { font-size: 1.03rem; font-weight: 500; margin-bottom: .3rem; }
+  .info-card-text { font-family: var(--sans); font-size: .79rem; line-height: 1.55; color: var(--ink3); }
+  .info-card.blue { border-left: 3px solid var(--accent); }
+  .info-card.green { border-left: 3px solid var(--accent2); }
+  .info-card.orange { border-left: 3px solid var(--accent3); }
+  .info-card.purple { border-left: 3px solid var(--purple); }
+  .info-card.amber { border-left: 3px solid var(--amber); }
+
+  .formula { background: var(--ink); color: #e8e2d8; font-family: var(--mono); font-size: .84rem;
+    padding: 1.1rem 1.4rem; border-radius: 8px; margin: 1.2rem 0; line-height: 1.7;
+    overflow-x: auto; white-space: pre; }
+  .formula .comment { color: #7a7060; }
+  .formula .key { color: #8ecfb0; }
+  .formula .val { color: #d4a96a; }
+  .formula .hot { color: #e0836a; }
+
+  .fkey { margin: -.4rem 0 1.4rem; font-family: var(--sans); font-size: .8rem; color: var(--ink3);
+    line-height: 1.6; border-left: 2px solid var(--border); padding-left: .9rem; }
+  .fkey b { color: var(--ink2); font-weight: 600; }
+
+  table { width: 100%; border-collapse: collapse; font-family: var(--sans); font-size: .82rem; margin: 1.2rem 0; }
+  th { background: var(--surface); color: var(--ink2); font-weight: 600; font-size: .7rem;
+    letter-spacing: .06em; text-transform: uppercase; text-align: left;
+    padding: .55rem .9rem; border-bottom: 1.5px solid var(--border); }
+  td { padding: .55rem .9rem; border-bottom: 1px solid var(--border); color: var(--ink2); vertical-align: top; line-height: 1.5; }
+  tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: var(--surface); }
+  .tbl-wrap { overflow-x: auto; margin: 1.2rem 0; }
+
+  .callout { border-left: 3px solid var(--amber); background: var(--amber-pale);
+    padding: 1rem 1.25rem; border-radius: 0 8px 8px 0; margin: 1.5rem 0; }
+  .callout.purple { border-color: var(--purple); background: var(--purple-pale); }
+  .callout.green  { border-color: var(--accent2); background: var(--accent2-pale); }
+  .callout.blue   { border-color: var(--accent); background: var(--accent-pale); }
+  .callout.rust   { border-color: var(--accent3); background: var(--accent3-pale); }
+  .callout .callout-label { font-family: var(--sans); font-size: .66rem; font-weight: 600;
+    letter-spacing: .1em; text-transform: uppercase; color: var(--amber); margin-bottom: .35rem; }
+  .callout.purple .callout-label { color: var(--purple); }
+  .callout.green .callout-label { color: var(--accent2); }
+  .callout.blue .callout-label { color: var(--accent); }
+  .callout.rust .callout-label { color: var(--accent3); }
+  .callout p { font-family: var(--sans); font-size: .855rem; color: var(--ink2); line-height: 1.62; margin: 0 0 .6rem; }
+  .callout p:last-child { margin-bottom: 0; }
+
+  /* provenance chips */
+  .chip { display: inline-block; font-family: var(--sans); font-size: .63rem; font-weight: 600;
+    letter-spacing: .08em; text-transform: uppercase; padding: .16rem .5rem; border-radius: 20px;
+    vertical-align: middle; }
+  .chip-paper { background: var(--accent2-pale); color: var(--accent2); border: 1px solid #bcd9d0; }
+  .chip-ours  { background: var(--purple-pale); color: var(--purple); border: 1px solid #cfc2e6; }
+  .chip-adapt { background: var(--amber-pale); color: var(--amber); border: 1px solid #ecd6a8; }
+
+  /* step ribbon */
+  .steps { counter-reset: st; margin: 1.5rem 0; }
+  .step { counter-increment: st; display: flex; gap: 1rem; padding: 1rem 0;
+    border-bottom: 1px solid var(--border); }
+  .step:last-child { border-bottom: none; }
+  .step-n { flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; background: var(--ink);
+    color: var(--page); display: grid; place-items: center; font-family: var(--mono);
+    font-size: .74rem; margin-top: .1rem; }
+  .step-n::before { content: counter(st, decimal-leading-zero); }
+  .step-body h4 { margin: 0 0 .3rem; color: var(--ink); font-size: .8rem; }
+  .step-body p { font-family: var(--sans); font-size: .845rem; color: var(--ink2); line-height: 1.6; margin-bottom: .5rem; }
+  .step-body .trace { font-family: var(--mono); font-size: .76rem; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 6px; padding: .6rem .8rem; color: var(--ink2);
+    white-space: pre-wrap; line-height: 1.6; }
+
+  .stack-row { display: flex; align-items: stretch; gap: 0; border: 1px solid var(--border);
+    border-radius: 8px; overflow: hidden; margin-bottom: .6rem; background: #fff; }
+  .stack-tag { flex-shrink: 0; width: 62px; display: grid; place-items: center;
+    font-family: var(--mono); font-size: .74rem; color: #fff; }
+  .stack-body { padding: .75rem 1rem; }
+  .stack-body .st-title { font-family: var(--sans); font-weight: 600; font-size: .87rem; color: var(--ink); }
+  .stack-body .st-text { font-family: var(--sans); font-size: .8rem; color: var(--ink3); line-height: 1.55; margin-top: .15rem; }
+
+  footer { border-top: 1.5px solid var(--ink); padding-top: 1.5rem; margin-top: 4rem;
+    font-family: var(--sans); font-size: .78rem; color: var(--ink3); line-height: 1.7; }
+
+  @media (max-width: 640px) {
+    .page-wrap { padding: 0 1.2rem 4rem; }
+    .cover h1 { font-size: 2.1rem; }
+    .toc ol { column-count: 1; }
+  }
+  /* additions for the progress report */
+  .bar-row { display: grid; grid-template-columns: 7.5rem 1fr 3.4rem; align-items: center; gap: .7rem;
+    font-family: var(--sans); font-size: .78rem; color: var(--ink2); padding: .22rem 0; }
+  .bar-track { background: var(--surface); border-radius: 4px; height: 14px; position: relative; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; background: var(--accent); }
+  .bar-fill.bad { background: var(--accent3); }
+  .bar-fill.good { background: var(--accent2); }
+  .bar-num { font-family: var(--mono); font-size: .74rem; text-align: right; color: var(--ink3); }
+  .bar-group-label { font-family: var(--sans); font-size: .66rem; font-weight: 600; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--ink3); margin: 1.2rem 0 .3rem; }
+  td.hi { font-weight: 600; color: var(--accent2); }
+  td.lo { color: var(--accent3); }
+  .gen { font-family: var(--mono); font-size: .72rem; color: var(--ink3); }
+  @media (max-width: 640px) { .bar-row { grid-template-columns: 5.5rem 1fr 3rem; } }
+  .cx { font-family: var(--mono); font-size: .74rem; color: var(--accent2); white-space: nowrap; }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+<header class="cover">
+  <div class="cover-badge">MPCS · Background Report · Data Structures</div>
+  <h1>How Memory Is Organised</h1>
+  <div class="cover-sub">From arrays and hash tables to knowledge graphs, spatial and temporal indexes — and where the MPCS episodic memory fits among them.</div>
+  <div class="cover-meta">
+    <span>Requested 08 Sep 2026 · written 28 Sep 2026</span>
+    <span>Companion: <em>MPCS Progress Report</em></span>
+  </div>
+</header>
+
+<div class="abstract">
+  <div class="abstract-label">Summary</div>
+  <p>A memory system is only as good as its ability to find the right record quickly. This report starts from the basic structures every index is built from, then covers how three families of systems organise data: <b>LLM knowledge graphs</b> (facts and relations), <b>spatial</b> structures (where things are), and <b>temporal</b> and <b>spatio-temporal</b> structures (when things happened, and where they were then).</p>
+  <p>MPCS memory is an <b>episodic</b> store: percepts, actions and rewards ordered in time and linked into a graph. Today it is temporal with sensory content; it has no notion of place. The last sections map our structures onto the public ones and propose how to make MPCS truly spatio-temporal.</p>
+</div>
+
+<nav class="toc">
+  <div class="toc-title">Contents</div>
+  <ol>
+    <li><a href="#d1">Why structure matters</a></li>
+    <li><a href="#d2">The basic building blocks</a></li>
+    <li><a href="#d3">Graphs</a></li>
+    <li><a href="#d4">Finding similar things</a></li>
+    <li><a href="#d5">Knowledge graphs for LLMs</a></li>
+    <li><a href="#d6">Spatial data structures</a></li>
+    <li><a href="#d7">Temporal data structures</a></li>
+    <li><a href="#d8">Spatio-temporal data structures</a></li>
+    <li><a href="#d9">Side-by-side comparison</a></li>
+    <li><a href="#d10">Where MPCS fits</a></li>
+    <li><a href="#d11">Proposal: a spatio-temporal MPCS</a></li>
+    <li><a href="#d12">References</a></li>
+  </ol>
+</nav>
+
+<!-- 1 -->
+<section id="d1">
+  <span class="section-num">01</span>
+  <h2>Why structure matters</h2>
+  <p>Suppose memory is a list of <i>n</i> records and a query asks for "the records most like this one". Without structure, the only method is to look at every record: the work grows in proportion to <i>n</i>, written <span class="cx">O(n)</span>. At 700 MPCS memories this takes about 5 ms. At a million it would take seconds — too slow for an agent that must react.</p>
+  <p>A <b>data structure</b> arranges records so a query can skip most of them. The trick is always the same: precompute something at insert time (a sort order, a hash, a tree, a set of links) that lets the query rule out large groups at once.</p>
+  <div class="info-grid">
+    <div class="info-card blue"><div class="info-card-label">Cost 1</div><div class="info-card-title">Query time</div><div class="info-card-text">How many records a lookup touches.</div></div>
+    <div class="info-card green"><div class="info-card-label">Cost 2</div><div class="info-card-title">Update time</div><div class="info-card-text">How expensive it is to insert, change or delete. Memory changes every step, so this matters.</div></div>
+    <div class="info-card amber"><div class="info-card-label">Cost 3</div><div class="info-card-title">Space</div><div class="info-card-text">Extra memory the index uses beyond the records themselves.</div></div>
+    <div class="info-card purple"><div class="info-card-label">Cost 4</div><div class="info-card-title">Exactness</div><div class="info-card-text">Some structures trade a small chance of a wrong answer for large speed-ups.</div></div>
+  </div>
+  <p>Every structure below is a different trade-off between these four, tuned to a different kind of question.</p>
+</section>
+
+<!-- 2 -->
+<section id="d2">
+  <span class="section-num">02</span>
+  <h2>The basic building blocks</h2>
+
+  <h3>Arrays and lists</h3>
+  <p>Records stored one after another. Reading record number <i>i</i> is instant; finding a record by content means scanning <span class="cx">O(n)</span>. If the array is <b>sorted</b>, binary search halves the range each step: <span class="cx">O(log n)</span>. A sorted array of timestamps is already a simple temporal index.</p>
+
+  <h3>Hash tables</h3>
+  <p>A hash function turns a key into a bucket number, so looking up an exact key takes <span class="cx">O(1)</span> on average. Hashing destroys order and closeness: <code>hot</code> and <code>warm</code> land in unrelated buckets. Hash tables answer <em>"is this exact thing here?"</em>, never <em>"what is near this?"</em>.</p>
+  <div class="callout">
+    <div class="callout-label">Bloom filters — the hash table that forgets</div>
+    <p>A Bloom filter (Bloom, 1970) keeps only a bit array and several hash functions. It answers "definitely not seen" or "probably seen", using a fraction of the space. Counting and d-left variants (Fan et al. 2000; Bonomi et al. 2006) support deletion. MPCS generations G2 and G3 used these as a gate before memory — and our benchmark showed why that fails: similarity search needs near matches, and a membership filter only knows exact ones.</p>
+  </div>
+
+  <h3>Trees</h3>
+  <p>A <b>binary search tree</b> keeps smaller keys to the left and larger to the right, so a lookup walks one path from root to leaf: <span class="cx">O(log n)</span>. Databases use the <b>B+-tree</b> (Bayer &amp; McCreight 1972; Comer 1979), which gives each node hundreds of children so the tree stays only 3–4 levels deep even for billions of keys. Leaves are chained, so <em>range queries</em> ("all keys between 10 and 20") are a single walk along the leaves.</p>
+  <p>Trees are the key idea behind spatial and temporal indexes: nest regions (of space, or of time) inside larger regions, and skip every region that cannot contain an answer.</p>
+
+  <h3>Inverted indexes</h3>
+  <p>Instead of record → features, store feature → list of records that have it. A query intersects the lists for its features. Search engines work this way, and it is what MPCS's HMGI partitions and HyST hard-slot filter amount to: "only look at records whose <code>thermal = hot</code>".</p>
+</section>
+
+<!-- 3 -->
+<section id="d3">
+  <span class="section-num">03</span>
+  <h2>Graphs</h2>
+  <p>A graph is a set of <b>nodes</b> (things) joined by <b>edges</b> (relationships). Edges may be <em>directed</em> (A causes B), <em>labelled</em> (A <code>is_part_of</code> B) and <em>weighted</em> (how strong the link is).</p>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Representation</th><th>How</th><th>Good for</th></tr></thead>
+    <tbody>
+      <tr><td>Adjacency matrix</td><td>n × n grid; cell (i, j) holds the edge weight</td><td>Dense graphs, matrix maths (PageRank, GNNs). Space <span class="cx">O(n²)</span>.</td></tr>
+      <tr><td>Adjacency list</td><td>Each node keeps a list of its neighbours</td><td>Sparse graphs — nearly all real ones. Space <span class="cx">O(n + edges)</span>. MPCS's episode graph uses this.</td></tr>
+      <tr><td>Edge list / triple table</td><td>One row per edge: (from, label, to)</td><td>Storage and bulk loading; the basis of RDF stores.</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Moving through a graph</h3>
+  <ul class="plain">
+    <li><b>Breadth-first search</b> explores all neighbours at distance 1, then 2, … — "everything within <i>k</i> hops". KERL's two-hop graph term is a bounded BFS.</li>
+    <li><b>Random walks and PageRank</b> (Page et al. 1999) — importance is the chance a random walker ends up at a node. <em>Personalized</em> PageRank restarts the walk from chosen seed nodes, so it measures importance <em>relative to a query</em>.</li>
+    <li><b>Spreading activation</b> (Collins &amp; Loftus 1975) — a model of human semantic memory. Activating one concept passes a decaying share of activation to its neighbours; weakly activated nodes drop out. It is essentially Personalized PageRank with a threshold, and it is the planned "activation and pruning" step for MPCS.</li>
+  </ul>
+</section>
+
+<!-- 4 -->
+<section id="d4">
+  <span class="section-num">04</span>
+  <h2>Finding similar things</h2>
+  <p>Most AI memory questions are <em>similarity</em> questions, not exact lookups. Two families of methods exist.</p>
+  <h3>Symbolic features</h3>
+  <p>Records are sets of discrete features (MPCS: <code>thermal=hot</code>, <code>sound_type=alarm</code>). Similarity counts or weights matching features. Indexes are inverted lists per feature; the hard part is deciding which features must match and which may differ — the problem HyST addresses.</p>
+  <h3>Vectors (embeddings)</h3>
+  <p>A neural encoder turns text, an image or a percept into a list of a few hundred numbers such that similar things end up close together. Similarity is cosine or Euclidean distance. Exact nearest-neighbour search in high dimensions degrades to a full scan (the "curse of dimensionality"), so systems use <b>approximate nearest-neighbour</b> (ANN) indexes:</p>
+  <div class="info-grid">
+    <div class="info-card blue"><div class="info-card-label">Graph-based</div><div class="info-card-title">HNSW</div><div class="info-card-text">Malkov &amp; Yashunin (2018). A layered "small-world" graph; search greedily hops toward the query from coarse to fine layers. The default in most vector databases.</div></div>
+    <div class="info-card green"><div class="info-card-label">Clustering</div><div class="info-card-title">IVF</div><div class="info-card-text">Cluster vectors with k-means; search only the few clusters nearest the query (FAISS, Johnson et al. 2019).</div></div>
+    <div class="info-card amber"><div class="info-card-label">Compression</div><div class="info-card-title">Product quantisation</div><div class="info-card-text">Jégou et al. (2011). Store short codes instead of full vectors, trading accuracy for memory.</div></div>
+    <div class="info-card purple"><div class="info-card-label">Hashing</div><div class="info-card-title">LSH</div><div class="info-card-text">Indyk &amp; Motwani (1998). Hash functions that keep near points in the same bucket — the "similarity-preserving" cousin of a Bloom filter.</div></div>
+  </div>
+  <p>MPCS deliberately stayed symbolic (HMGI was built "structural only", without an ANN index): features are few and interpretable, and at 700 records a scan is fast enough. An ANN layer becomes relevant beyond ~10⁵ memories.</p>
+</section>
+
+<!-- 5 -->
+<section id="d5">
+  <span class="section-num">05</span>
+  <h2>Knowledge graphs for LLMs</h2>
+  <p>A <b>knowledge graph</b> (KG) is a graph whose nodes are entities (people, objects, concepts) and whose labelled edges are facts about them. LLMs are fluent but forget, hallucinate and cannot cite; KGs are precise and inspectable but rigid. Pairing them is one of the main routes to grounded AI (Pan et al. 2024).</p>
+
+  <h3>5.1 Storage models</h3>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th></th><th>RDF triples</th><th>Property graph</th></tr></thead>
+    <tbody>
+      <tr><td>Unit</td><td><code>(subject, predicate, object)</code> e.g. <code>(pan, has_temperature, hot)</code></td><td>Nodes and edges, each with key–value properties</td></tr>
+      <tr><td>Examples</td><td>Wikidata, DBpedia; queried with SPARQL</td><td>Neo4j; queried with Cypher / GQL</td></tr>
+      <tr><td>Index</td><td>The same triples sorted in several orders (SPO, POS, OSP …) so any pattern with one or two known parts is a range scan (RDF-3X, Neumann &amp; Weikum 2008)</td><td>Adjacency lists per node ("index-free adjacency"), plus property indexes</td></tr>
+      <tr><td>Adding context (time, source, confidence)</td><td>Awkward: needs reification or named graphs</td><td>Natural: put it on the edge</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>5.2 How an LLM builds a KG</h3>
+  <div class="steps">
+    <div class="step"><div class="step-n"></div><div class="step-body"><h4>Chunk</h4><p>Split source documents into passages.</p></div></div>
+    <div class="step"><div class="step-n"></div><div class="step-body"><h4>Extract</h4><p>An LLM (or a trained model like REBEL, Huguet Cabot &amp; Navigli 2021) lists entities and the relations between them in each chunk.</p><div class="trace">"The pan on the stove is hot" → (pan, located_on, stove), (pan, has_state, hot)</div></div></div>
+    <div class="step"><div class="step-n"></div><div class="step-body"><h4>Resolve</h4><p>Merge duplicates ("the pan", "it", "frying pan") into one node, usually by embedding similarity plus LLM confirmation.</p></div></div>
+    <div class="step"><div class="step-n"></div><div class="step-body"><h4>Ground</h4><p>Every node and edge keeps a pointer back to the chunk it came from, so answers can cite evidence.</p></div></div>
+    <div class="step"><div class="step-n"></div><div class="step-body"><h4>Summarise (optional)</h4><p>GraphRAG (Edge et al. 2024) clusters the graph into communities (Leiden algorithm) and has the LLM write a summary per community, for "global" questions about the whole corpus.</p></div></div>
+  </div>
+
+  <h3>5.3 How an LLM queries a KG</h3>
+  <ul class="plain">
+    <li><b>Seed then expand</b> — embed the question, find the closest nodes in a vector index, then gather their neighbourhood. Used by most GraphRAG-style systems; LightRAG (Guo et al. 2024) does this at two levels (specific entities and broad themes).</li>
+    <li><b>Activation</b> — HippoRAG (Gutiérrez et al. 2024) runs Personalized PageRank from the seed nodes, modelled on the hippocampal indexing theory of memory. Relevance is whatever activation reaches, which handles multi-hop questions in one step.</li>
+    <li><b>Reasoning walks</b> — Think-on-Graph (Sun et al. 2024) lets the LLM pick which edges to follow, beam-search style, pruning weak paths as it goes.</li>
+    <li><b>Structured queries</b> — the LLM writes SPARQL or Cypher directly (text-to-query).</li>
+  </ul>
+
+  <h3>5.4 Learning on the graph</h3>
+  <p><b>KG embeddings</b> give each node and relation a vector so missing facts can be predicted. TransE (Bordes et al. 2013) asks that <code>head + relation ≈ tail</code>; RotatE (Sun et al. 2019) uses rotations to model symmetry and inversion. <b>Graph neural networks</b> (e.g. GCN, Kipf &amp; Welling 2017) pass messages along edges so each node's vector reflects its neighbourhood.</p>
+
+  <div class="callout green">
+    <div class="callout-label">What carries over to MPCS</div>
+    <p>MPCS nodes are <em>episodes</em>, not entities, but the retrieval pattern is the same: seed by similarity (SHMF), expand through edges (KERL's episode graph), rank by propagated relevance (planned activation step), and cite the evidence (HEAD-X). HippoRAG is the closest precedent.</p>
+  </div>
+</section>
+
+<!-- 6 -->
+<section id="d6">
+  <span class="section-num">06</span>
+  <h2>Spatial data structures</h2>
+  <p>Spatial data answers <em>where</em>: points (a sensor), lines (a road), regions (a room). Typical queries are <b>range</b> ("everything in this box"), <b>nearest neighbour</b> ("closest exit") and <b>spatial join</b> ("which objects are on which tables"). A sorted list fails here because space has two or three dimensions — sorting by x scatters things that are close in y.</p>
+
+  <div class="diagram-wrap">
+    <div class="diagram-label">Four ways to divide space</div>
+    <div class="diagram-body">
+      <svg viewBox="0 0 800 190" width="100%" font-family="Outfit, sans-serif">
+        <!-- grid -->
+        <g transform="translate(10,10)">
+          <rect x="0" y="0" width="160" height="140" fill="#f2ede5" stroke="#cfc7b8"/>
+          <g stroke="#cfc7b8"><line x1="40" y1="0" x2="40" y2="140"/><line x1="80" y1="0" x2="80" y2="140"/><line x1="120" y1="0" x2="120" y2="140"/><line x1="0" y1="35" x2="160" y2="35"/><line x1="0" y1="70" x2="160" y2="70"/><line x1="0" y1="105" x2="160" y2="105"/></g>
+          <g fill="#2b4c7e"><circle cx="20" cy="20" r="3"/><circle cx="30" cy="28" r="3"/><circle cx="100" cy="90" r="3"/><circle cx="140" cy="120" r="3"/><circle cx="60" cy="55" r="3"/></g>
+          <text x="80" y="165" text-anchor="middle" class="svg-h">Uniform grid</text>
+        </g>
+        <!-- quadtree -->
+        <g transform="translate(210,10)">
+          <rect x="0" y="0" width="160" height="140" fill="#f2ede5" stroke="#cfc7b8"/>
+          <g stroke="#1e6e5b"><line x1="80" y1="0" x2="80" y2="140"/><line x1="0" y1="70" x2="160" y2="70"/><line x1="40" y1="0" x2="40" y2="70"/><line x1="0" y1="35" x2="80" y2="35"/><line x1="20" y1="0" x2="20" y2="35"/><line x1="0" y1="17" x2="40" y2="17"/></g>
+          <g fill="#1e6e5b"><circle cx="15" cy="10" r="3"/><circle cx="30" cy="25" r="3"/><circle cx="25" cy="8" r="3"/><circle cx="120" cy="110" r="3"/><circle cx="60" cy="50" r="3"/></g>
+          <text x="80" y="165" text-anchor="middle" class="svg-h">Quadtree</text>
+        </g>
+        <!-- kd -->
+        <g transform="translate(410,10)">
+          <rect x="0" y="0" width="160" height="140" fill="#f2ede5" stroke="#cfc7b8"/>
+          <g stroke="#5a3d8a"><line x1="70" y1="0" x2="70" y2="140"/><line x1="0" y1="60" x2="70" y2="60"/><line x1="70" y1="95" x2="160" y2="95"/><line x1="35" y1="60" x2="35" y2="140"/></g>
+          <g fill="#5a3d8a"><circle cx="70" cy="40" r="3"/><circle cx="30" cy="60" r="3"/><circle cx="120" cy="95" r="3"/><circle cx="35" cy="110" r="3"/><circle cx="140" cy="40" r="3"/></g>
+          <text x="80" y="165" text-anchor="middle" class="svg-h">k-d tree</text>
+        </g>
+        <!-- rtree -->
+        <g transform="translate(610,10)">
+          <rect x="0" y="0" width="160" height="140" fill="#f2ede5" stroke="#cfc7b8"/>
+          <rect x="10" y="10" width="70" height="60" fill="none" stroke="#8b3a1a" stroke-dasharray="4 2"/>
+          <rect x="60" y="55" width="90" height="75" fill="none" stroke="#8b3a1a" stroke-dasharray="4 2"/>
+          <g fill="#8b3a1a"><rect x="18" y="18" width="20" height="14"/><rect x="45" y="40" width="28" height="22"/><rect x="70" y="100" width="25" height="20"/><rect x="110" y="65" width="30" height="18"/></g>
+          <text x="80" y="165" text-anchor="middle" class="svg-h">R-tree</text>
+        </g>
+      </svg>
+    </div>
+    <div class="diagram-cap">Grids cut space into equal cells; quadtrees split a cell only where points crowd; k-d trees alternate x and y splits at data points; R-trees group nearby objects into (possibly overlapping) bounding boxes.</div>
+  </div>
+
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Structure</th><th>Idea</th><th>Strength / weakness</th></tr></thead>
+    <tbody>
+      <tr><td>Uniform grid, geohash, S2, H3</td><td>Fixed cells, each with an ID; geohash / S2 / H3 give hierarchical cell IDs usable as hash or B+-tree keys</td><td>Simple and fast to update; wastes cells where data is sparse</td></tr>
+      <tr><td>Quadtree / octree (Finkel &amp; Bentley 1974)</td><td>Recursively split a square into 4 (a cube into 8) where it holds too many points</td><td>Adapts to density; the standard for 3D robot maps (OctoMap)</td></tr>
+      <tr><td>k-d tree (Bentley 1975)</td><td>Binary tree splitting on one coordinate per level</td><td>Excellent nearest-neighbour search in low dimensions; costly to rebalance</td></tr>
+      <tr><td>R-tree (Guttman 1984), R*-tree</td><td>B-tree of bounding rectangles</td><td>Handles regions, not just points; the index in PostGIS and most spatial databases</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Spatial graphs: scene graphs</h3>
+  <p>Where coordinates are unknown or unimportant, space can be stored as relations. A <b>scene graph</b> (Johnson et al. 2015) has objects as nodes and relations such as <code>on</code>, <code>left_of</code>, <code>near</code> as edges. <b>3D scene graphs</b> (Armeni et al. 2019; Hydra, Hughes et al. 2022) stack layers — building → rooms → places → objects — giving robots both geometry and meaning. This is the most natural spatial form for an agent like MPCS.</p>
+</section>
+
+<!-- 7 -->
+<section id="d7">
+  <span class="section-num">07</span>
+  <h2>Temporal data structures</h2>
+  <p>Temporal data answers <em>when</em>. Time is one-dimensional, which helps, but it comes in two shapes — <b>instants</b> (an alarm sounded at step 42) and <b>intervals</b> (the pan was hot from step 40 to step 55) — and facts can stop being true.</p>
+
+  <h3>7.1 Logs and time-ordered indexes</h3>
+  <p>Events arrive in time order, so the simplest structure is an <b>append-only log</b>. A B+-tree keyed on time turns "what happened between t₁ and t₂" into a range scan. Time-series databases partition data into time chunks (per hour, per day) so old chunks can be compressed or dropped wholesale; many use log-structured merge trees (O'Neil et al. 1996), which make writes cheap.</p>
+
+  <h3>7.2 Intervals</h3>
+  <p>An <b>interval tree</b> (Edelsbrunner 1980; Cormen et al.) stores intervals so "which intervals contain time t" or "overlap [a, b]" run in <span class="cx">O(log n + answers)</span>. Allen's <b>interval algebra</b> (Allen 1983) defines the thirteen possible relations between two intervals — <code>before</code>, <code>meets</code>, <code>overlaps</code>, <code>during</code>, <code>starts</code>, <code>finishes</code>, <code>equals</code> and their inverses — the vocabulary for reasoning like "the smell started before the alarm and overlapped it".</p>
+
+  <h3>7.3 Two clocks: bitemporal data</h3>
+  <p>Databases distinguish <b>valid time</b> (when a fact was true in the world) from <b>transaction time</b> (when the system learned it) (Snodgrass &amp; Ahn 1985). Keeping both lets a system answer "what did I believe at step 50?" — essential when a later observation corrects an earlier one, as expert corrections do in MPCS.</p>
+
+  <h3>7.4 Temporal knowledge graphs</h3>
+  <p>A static triple becomes a <b>quadruple</b> <code>(subject, predicate, object, time)</code> or carries a validity interval. Models learn over them:</p>
+  <ul class="plain">
+    <li><b>TTransE</b> (Leblay &amp; Chekol 2018) and <b>HyTE</b> (Dasgupta et al. 2018) — time-aware embeddings; HyTE projects each time step onto its own hyperplane.</li>
+    <li><b>Know-Evolve</b> (Trivedi et al. 2017) and <b>RE-NET</b> (Jin et al. 2020) — treat facts as an event sequence and predict future events.</li>
+    <li><b>TGN</b> (Rossi et al. 2020) — graph networks where each node keeps a memory updated by timestamped interactions.</li>
+    <li><b>Zep / Graphiti</b> (Rasmussen et al. 2025) — a bitemporal KG as long-term memory for LLM agents: edges are invalidated, not deleted, when contradicted.</li>
+  </ul>
+
+  <h3>7.5 Episodic memory streams</h3>
+  <p>Tulving (1972) separated <b>episodic</b> memory (personal events at a time and place) from <b>semantic</b> memory (general facts). LLM agents copy this split. Generative Agents (Park et al. 2023) store an episodic <em>memory stream</em> and retrieve by a weighted sum of <b>recency</b> (exponential decay), <b>importance</b> (a rated score) and <b>relevance</b> (embedding similarity). MemGPT (Packer et al. 2023) pages memories between a small working context and a large archive, like an operating system.</p>
+</section>
+
+<!-- 8 -->
+<section id="d8">
+  <span class="section-num">08</span>
+  <h2>Spatio-temporal data structures</h2>
+  <p>Spatio-temporal data answers <em>where, and when</em>: a moving robot, a spreading fire, an object that was on the table and is now in the sink. It is harder than either alone because <b>the spatial index goes stale as things move</b>.</p>
+
+  <h3>8.1 Three strategies for moving data</h3>
+  <div class="info-grid">
+    <div class="info-card blue"><div class="info-card-label">Time as a dimension</div><div class="info-card-title">3D R-tree</div><div class="info-card-text">Treat (x, y, t) as one space and index boxes in it (Theodoridis et al. 1996). Good for history; poor for "now".</div></div>
+    <div class="info-card green"><div class="info-card-label">Versions</div><div class="info-card-title">MV3R-tree, HR-tree</div><div class="info-card-text">Keep a spatial tree per moment, sharing unchanged nodes between versions (Tao &amp; Papadias 2001). Fast "as of time t" queries.</div></div>
+    <div class="info-card amber"><div class="info-card-label">Motion</div><div class="info-card-title">TPR-tree</div><div class="info-card-text">Store position <em>and velocity</em>; bounding boxes grow with time, so the tree answers "where will it be" without constant updates (Šaltenis et al. 2000).</div></div>
+  </div>
+  <p><b>Trajectories</b> — sequences of (x, y, t) points — are indexed by segment (TB-tree, Pfoser et al. 2000) and compared by trajectory distances such as dynamic time warping. Time geography (Hägerstrand 1970) gives the conceptual picture: each life is a path through a space-time cube.</p>
+
+  <h3>8.2 Spatio-temporal graphs</h3>
+  <ul class="plain">
+    <li><b>Fixed nodes, changing signals</b> — sensors on a road network; STGCN (Yu et al. 2018) combines graph convolution over space with convolution over time for traffic forecasting.</li>
+    <li><b>Changing nodes and edges</b> — dynamic scene graphs where objects appear, move and change state; the 3D scene graph line of work (Rosinol et al. 2020, "3D Dynamic Scene Graphs") adds agents and time to Hydra-style layers.</li>
+    <li><b>Event graphs</b> — nodes are events located in space and time; edges are temporal order, causality and co-location. This is the closest form to an episodic agent memory.</li>
+  </ul>
+</section>
+
+<!-- 9 -->
+<section id="d9">
+  <span class="section-num">09</span>
+  <h2>Side-by-side comparison</h2>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th></th><th>Knowledge graph</th><th>Spatial</th><th>Temporal</th><th>Spatio-temporal</th></tr></thead>
+    <tbody>
+      <tr><td><b>Question</b></td><td>What is related to what?</td><td>What is near here?</td><td>What happened before / during / after?</td><td>What was near here then, and where is it going?</td></tr>
+      <tr><td><b>Unit</b></td><td>Entity, relation (triple)</td><td>Point, region</td><td>Instant, interval, event</td><td>Trajectory, event at (x, y, t)</td></tr>
+      <tr><td><b>Index</b></td><td>Triple permutations, adjacency lists, vector index on nodes</td><td>Grid, quadtree, k-d tree, R-tree</td><td>B+-tree on time, interval tree, time-chunked logs</td><td>3D R-tree, MV3R-tree, TPR-tree, TB-tree</td></tr>
+      <tr><td><b>Graph form</b></td><td>Labelled multigraph</td><td>Scene graph</td><td>Temporal KG (quadruples), event sequence</td><td>Dynamic scene graph, event graph</td></tr>
+      <tr><td><b>Learning</b></td><td>TransE, RotatE, GNNs</td><td>Spatial GNNs, point-cloud nets</td><td>HyTE, RE-NET, TGN</td><td>STGCN, dynamic GNNs</td></tr>
+      <tr><td><b>Hard part</b></td><td>Extraction quality, entity resolution</td><td>Dimensionality, overlap</td><td>Validity, contradiction, recency</td><td>Staleness as things move; both at once</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 10 -->
+<section id="d10">
+  <span class="section-num">10</span>
+  <h2>Where MPCS fits</h2>
+  <p>MPCS memory is an <b>episodic event store</b>: each node is one experience — what was sensed, what was done, and the reward. The table maps each MPCS structure to its public counterpart.</p>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>MPCS structure</th><th>Public counterpart</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Memory list, scanned per query</td><td>Array / append-only log</td><td><span class="cx">O(n)</span>; fine at 700 records</td></tr>
+      <tr><td>Z-number summary <code>(key, value, conf)</code></td><td>Property on a node; symbolic feature vector</td><td>Confidence is like per-feature reliability in a property graph</td></tr>
+      <tr><td>dlCBF (G3; hint only since G4)</td><td>d-left counting Bloom filter</td><td>Exact-membership; retired as a gate</td></tr>
+      <tr><td>HMGI modality partitions</td><td>Inverted index / partitioning</td><td>Skips records that share no sense with the query</td></tr>
+      <tr><td>HyST hard-slot filter</td><td>Inverted index on safety features + predicate filter</td><td>Like a filtered vector search: filter first, rank the rest</td></tr>
+      <tr><td>Episode graph (prev, same_action_prev, same_object_prev)</td><td>Adjacency list; event graph</td><td>Temporal and identity edges only</td></tr>
+      <tr><td>KERL two-hop graph term</td><td>Bounded BFS / seed-and-expand (GraphRAG, HippoRAG)</td><td>Fixed weights; no propagation</td></tr>
+      <tr><td>Reward ageing, <code>step</code></td><td>Recency decay (Generative Agents)</td><td>Instants only</td></tr>
+      <tr><td>Expert corrections</td><td>Transaction-time override</td><td>Not bitemporal: the old belief is not kept as history</td></tr>
+      <tr><td>Affect (valence, arousal) in KERL</td><td>Importance score (Generative Agents)</td><td>Not yet used to weight retrieval or graph activation</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout blue">
+    <div class="callout-label">Verdict</div>
+    <p>MPCS today is <b>temporal-episodic with sensory content</b>. It orders and links events in time, but has no place, no intervals and no activation. Space enters only indirectly, through sensory features such as motion or distance cues. It is not yet spatio-temporal.</p>
+  </div>
+</section>
+
+<!-- 11 -->
+<section id="d11">
+  <span class="section-num">11</span>
+  <h2>Proposal: a spatio-temporal MPCS</h2>
+  <p>Each step borrows a proven structure and can be added without breaking the current pipeline.</p>
+  <div class="steps">
+    <div class="step"><div class="step-n"></div><div class="step-body"><h4>Add place and identity to percepts</h4><p>Optional <code>location</code> (a coarse cell or a named place such as <code>kitchen/stove</code>) and <code>object_id</code>. Use hierarchical cell IDs (quadtree or H3-style) so "same place" works at several scales.</p><div class="trace">percept.where = "kitchen/stove"   cell = quadtree_id(x, y, level=3)</div></div></div>
+    <div class="step"><div class="step-n"></div><div class="step-body"><h4>Place as a third partition key</h4><p>Next to HMGI's modality partitions: an inverted index <code>cell → episodes</code>. Queries can then prefer memories from the same or neighbouring places, like an R-tree range query at our scale.</p></div></div>
+    <div class="step"><div class="step-n"></div><div class="step-body"><h4>Spatial edges in the episode graph</h4><p>Add <code>same_place_prev</code> and scene relations (<code>on</code>, <code>near</code>) alongside the time, action and object edges. The episode graph becomes a small dynamic scene/event graph.</p></div></div>
+    <div class="step"><div class="step-n"></div><div class="step-body"><h4>Intervals and bitemporal facts</h4><p>States that persist ("the pan is hot") get <code>valid_from</code> / <code>valid_to</code>; corrections close an interval rather than overwrite (as in Zep/Graphiti). Allen relations become available to KERL's explanation.</p></div></div>
+    <div class="step"><div class="step-n"></div><div class="step-body"><h4>Spreading activation over the graph</h4><p>Seed with SHMF similarity, scale by affect/importance, propagate with per-hop and recency decay, prune below a threshold (Collins &amp; Loftus; HippoRAG). This also delivers the planned HMGI activation-and-pruning task and gives an anytime latency budget a natural visiting order.</p></div></div>
+    <div class="step"><div class="step-n"></div><div class="step-body"><h4>Scale path</h4><p>Beyond ~10⁵ episodes, add an ANN index (HNSW) over percept embeddings for seeding, keeping the symbolic hard filter in front of it.</p></div></div>
+  </div>
+</section>
+
+<!-- 12 -->
+<section id="d12">
+  <span class="section-num">12</span>
+  <h2>References</h2>
+  <p class="fkey">Cited from public knowledge and not re-checked against the sources; verify details before formal use.</p>
+  <ul class="plain">
+    <li>Allen, J. F. (1983). Maintaining knowledge about temporal intervals. <i>CACM</i>.</li>
+    <li>Armeni, I. et al. (2019). 3D Scene Graph: a structure for unified semantics, 3D space, and camera. <i>ICCV</i>.</li>
+    <li>Bayer, R. &amp; McCreight, E. (1972). Organization and maintenance of large ordered indexes. <i>Acta Informatica</i>.</li>
+    <li>Bentley, J. L. (1975). Multidimensional binary search trees used for associative searching. <i>CACM</i>.</li>
+    <li>Bloom, B. H. (1970). Space/time trade-offs in hash coding with allowable errors. <i>CACM</i>.</li>
+    <li>Bonomi, F. et al. (2006). An improved construction for counting Bloom filters. <i>ESA</i>.</li>
+    <li>Bordes, A. et al. (2013). Translating embeddings for modeling multi-relational data (TransE). <i>NeurIPS</i>.</li>
+    <li>Collins, A. M. &amp; Loftus, E. F. (1975). A spreading-activation theory of semantic processing. <i>Psychological Review</i>.</li>
+    <li>Dasgupta, S. S. et al. (2018). HyTE: hyperplane-based temporally aware knowledge graph embedding. <i>EMNLP</i>.</li>
+    <li>Edge, D. et al. (2024). From local to global: a graph RAG approach to query-focused summarization. <i>arXiv</i>.</li>
+    <li>Finkel, R. &amp; Bentley, J. L. (1974). Quad trees: a data structure for retrieval on composite keys. <i>Acta Informatica</i>.</li>
+    <li>Guo, Z. et al. (2024). LightRAG: simple and fast retrieval-augmented generation. <i>arXiv</i>.</li>
+    <li>Gutiérrez, B. J. et al. (2024). HippoRAG: neurobiologically inspired long-term memory for LLMs. <i>NeurIPS</i>.</li>
+    <li>Guttman, A. (1984). R-trees: a dynamic index structure for spatial searching. <i>SIGMOD</i>.</li>
+    <li>Hägerstrand, T. (1970). What about people in regional science? <i>Papers of the Regional Science Association</i>.</li>
+    <li>Hughes, N. et al. (2022). Hydra: a real-time spatial perception system for 3D scene graph construction. <i>RSS</i>.</li>
+    <li>Huguet Cabot, P.-L. &amp; Navigli, R. (2021). REBEL: relation extraction by end-to-end language generation. <i>EMNLP Findings</i>.</li>
+    <li>Jin, W. et al. (2020). Recurrent event network (RE-NET). <i>EMNLP</i>.</li>
+    <li>Johnson, J. et al. (2015). Image retrieval using scene graphs. <i>CVPR</i>.</li>
+    <li>Leblay, J. &amp; Chekol, M. W. (2018). Deriving validity time in knowledge graph (TTransE). <i>WWW Companion</i>.</li>
+    <li>Malkov, Y. &amp; Yashunin, D. (2018). Efficient and robust approximate nearest neighbor search using HNSW graphs. <i>IEEE TPAMI</i>.</li>
+    <li>Pan, S. et al. (2024). Unifying large language models and knowledge graphs: a roadmap. <i>IEEE TKDE</i>.</li>
+    <li>Park, J. S. et al. (2023). Generative Agents: interactive simulacra of human behavior. <i>UIST</i>.</li>
+    <li>Rasmussen, P. et al. (2025). Zep: a temporal knowledge graph architecture for agent memory. <i>arXiv</i>.</li>
+    <li>Rossi, E. et al. (2020). Temporal graph networks for deep learning on dynamic graphs. <i>arXiv / ICML GRL workshop</i>.</li>
+    <li>Šaltenis, S. et al. (2000). Indexing the positions of continuously moving objects (TPR-tree). <i>SIGMOD</i>.</li>
+    <li>Snodgrass, R. &amp; Ahn, I. (1985). A taxonomy of time in databases. <i>SIGMOD</i>.</li>
+    <li>Sun, J. et al. (2024). Think-on-Graph: deep and responsible reasoning of LLMs on knowledge graphs. <i>ICLR</i>.</li>
+    <li>Tao, Y. &amp; Papadias, D. (2001). MV3R-tree: a spatio-temporal access method for timestamp and interval queries. <i>VLDB</i>.</li>
+    <li>Tulving, E. (1972). Episodic and semantic memory. In <i>Organization of Memory</i>.</li>
+    <li>Yu, B., Yin, H. &amp; Zhu, Z. (2018). Spatio-temporal graph convolutional networks. <i>IJCAI</i>.</li>
+  </ul>
+</section>
+
+</div>
+</body>
+</html>

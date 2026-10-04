@@ -243,7 +243,9 @@
     <li><a href="#s9">The datasets grew with the models</a></li>
     <li><a href="#s10">Measured progress</a></li>
     <li><a href="#s11">Bugs the benchmark found</a></li>
-    <li><a href="#s12">Where we are, and next steps</a></li>
+    <li><a href="#s12">Task audit: planned vs. built</a></li>
+    <li><a href="#s13">Data structures: KGs, space, time, ours</a></li>
+    <li><a href="#s14">Where we are, and next steps</a></li>
   </ol>
 </nav>
 
@@ -505,6 +507,44 @@ R = <span class="key">w_s</span>·sim_structural + <span class="key">w_e</span>�
 <!-- 12 -->
 <section id="s12">
   <span class="section-num">12</span>
+  <h2>Task audit: what the plan asked for vs. what is built</h2>
+  <p>Each item from the working checklist was checked against the code on 28 Sep 2026. The "Evidence / gap" column records the state before TIDE.</p>
+  <div class="callout green">
+    <div class="callout-label">Update — gaps closed in G9 TIDE</div>
+    <p><b>TIDE</b> (Time-bounded Inference over Dynamic Episodes, <code>08_tide</code>) builds every open item on top of KERL. It adds spreading activation with pruning over typed episode edges, seeded by similarity × affect/intensity salience; a place field with same-place edges; DIRECT / SUBGRAPH / UNGROUNDED routing by evidence margin; and an urgent deadline that commits on the strongest candidates and verifies with a passive full read in a background thread.</p>
+    <p>Measured on v3: DIRECT reads are 97.3% correct (vs 76.1% for SUBGRAPH), and cutting urgent reads to the 3–5 strongest candidates raised accuracy (64.8 → 71.9 clean, 46.2 → 50.8 noisy) with no change in unsafe rate. Non-urgent decisions are identical to KERL's.</p>
+  </div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Model</th><th>Requirement</th><th>Status</th><th>Evidence / gap</th></tr></thead>
+    <tbody>
+      <tr><td>HMGI</td><td>Intensity and affective input</td><td class="hi">Built in TIDE</td><td>Intensity channels are ordinary features. Affect is a declared but unset slot in HMGI (<code>affect: Optional[dict] = None</code>). It is computed in KERL (<code>affect_of</code>: threat from reflex hits, valence from hedonic cues, arousal from intensity channels) and read by HEAD-E. Missing: affect or intensity does not influence HMGI's indexing, partitions or edge weights.</td></tr>
+      <tr><td>HMGI</td><td>Activation and pruning, graph-wise</td><td class="hi">Built in TIDE</td><td>The episode graph has fixed, unweighted edges (prev, same action, same object). KERL's <code>graph_term</code> averages similarity over two hops but nothing spreads activation, decays it, or removes weak nodes/edges. The only forgetting is per-memory reward ageing in the engine.</td></tr>
+      <tr><td>HyST</td><td>Soft-constraint switch for divergent thinking</td><td class="hi">Done</td><td><code>SlotPolicy.divergent</code>: hard-slot mismatches are discounted by 0.6 instead of excluded. Toggle in the HyST, SHMF and KERL dashboards.</td></tr>
+      <tr><td>HyST</td><td>Urgency/importance flag → sole convergent thinking</td><td class="hi">Done</td><td><code>SlotPolicy.urgent</code> makes the hard filter absolute regardless of <code>divergent</code>. SHMF never auto-relaxes under it, KERL uses k = 1, and a smoke test covers it.</td></tr>
+      <tr><td>KERL</td><td>Much information → reach output directly</td><td class="hi">Built in TIDE</td><td>KERL always runs every head. There is no evidence-sufficiency test that short-circuits once a decision is clear. Only <code>urgent</code> shortens the read (k = 1).</td></tr>
+      <tr><td>KERL</td><td>Little information → return the entire connected structure</td><td class="hi">Built in TIDE</td><td>Weak evidence is labelled <code>UNGROUNDED</code> and near misses are returned in <code>rejected</code>, but the connected episode subgraph around the query is not returned as the output.</td></tr>
+      <tr><td>Latency</td><td>Time limit for urgent deliberation; decide on partial data; move pending graph threads to passive</td><td class="hi">Built in TIDE</td><td>There are no deadlines, no incremental (anytime) scoring and no background threads. Every query scans its candidate set to completion (~5 ms at 700 memories).</td></tr>
+      <tr><td>Latency</td><td>Passive threads verify the decision afterwards</td><td class="hi">Built in TIDE</td><td>Depends on the item above. KERL's calibration pairs are the nearest existing mechanism to learn from a verification that disagrees.</td></tr>
+    </tbody>
+  </table></div>
+  <h3>How the missing pieces would fit</h3>
+  <ul class="plain">
+    <li><b>Activation and pruning</b> — spreading activation (Collins &amp; Loftus, 1975) over the episode graph. Seed nodes get activation equal to their SHMF similarity, which propagates with per-hop decay. Nodes below a threshold are pruned from the read, so fan-out stays bounded. ACT-R's base-level activation (Anderson) gives a principled recency/frequency decay for edges. Affect and intensity scale the seed activation (salience), which closes the HMGI affect gap.</li>
+    <li><b>KERL adaptive output</b> — define sufficiency as the margin between the best and second-best evidenced action, weighted by support. Above a threshold, return HEAD-A directly. Below it, return the activated subgraph (nodes, edges, activations) for inspection or further reasoning. Retrieval systems such as Self-RAG (Asai et al., 2023) and Adaptive-RAG (Jeong et al., 2024) use the same "retrieve more only when unsure" logic.</li>
+    <li><b>Latency budget</b> — an anytime algorithm (Dean &amp; Boddy, 1988; Zilberstein, 1996). Visit candidates in priority order (hard-filter survivors first, then by activation) and keep the current best evidenced action. When the urgent deadline expires, commit to it and mark unvisited frontier nodes <em>passive</em>. A background pass finishes them, and if its answer differs, it logs a disagreement that feeds KERL calibration. This matches the anytime structure: an answer is always available, and quality rises monotonically with time.</li>
+  </ul>
+</section>
+
+<!-- 13 -->
+<section id="s13">
+  <span class="section-num">13</span>
+  <h2>Data structures</h2>
+  <p>The breakdown of how knowledge-graph, spatial, temporal and spatio-temporal data structures work, and where MPCS fits among them, is now a separate report: <a href="MPCS_Data_Structures_Report.html">MPCS Data Structures</a>. In short, MPCS memory today is <b>temporal-episodic with sensory content</b>, not yet spatio-temporal; the report proposes place partitions, spatial edges, validity intervals and spreading activation to get there.</p>
+</section>
+
+<!-- 14 -->
+<section id="s14">
+  <span class="section-num">14</span>
   <h2>Where we are, and next steps</h2>
   <h3>Current state</h3>
   <ul class="plain">
@@ -520,6 +560,7 @@ R = <span class="key">w_s</span>·sim_structural + <span class="key">w_e</span>�
   </ul>
   <h3>Recommended next steps</h3>
   <div class="steps">
+    <div class="step"><div class="step-n"></div><div class="step-body"><h4>Finish the audit gaps (§12)</h4><p>Spreading activation with pruning on the episode graph, KERL sufficiency-based output, and an anytime latency budget with passive verification threads.</p></div></div>
     <div class="step"><div class="step-n"></div><div class="step-body"><h4>Close the noisy gap</h4><p>68% under noise vs 76% clean. Try per-feature noise-aware confidence and letting KERL's near-miss guard feed the relaxed set.</p></div></div>
     <div class="step"><div class="step-n"></div><div class="step-body"><h4>Full-loop evaluation</h4><p>The comparison scores memory recommendations only. Run closed-loop episodes with reflexes, exploration and learning on, and measure cumulative reward and time-to-safe-behaviour.</p></div></div>
     <div class="step"><div class="step-n"></div><div class="step-body"><h4>Scale test for HMGI</h4><p>Generate 10k–100k memory banks to find where partitioning (and optionally an ANN index) starts to pay for itself in latency.</p></div></div>
