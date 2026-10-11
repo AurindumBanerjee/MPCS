@@ -1,0 +1,507 @@
+{
+ "bank": [
+  {
+   "kind": "full - all four senses",
+   "percept": {
+    "vision": {
+     "object_type": "vehicle",
+     "motion": "fast",
+     "color": "dark"
+    },
+    "audio": {
+     "sound_type": "noise",
+     "audio_intensity": "low"
+    },
+    "smell": {
+     "odor_type": "organic",
+     "odor_intensity": "faint",
+     "pleasantness": "neutral"
+    },
+    "touch": {
+     "contact": "none",
+     "texture": "smooth",
+     "thermal": "neutral",
+     "touch_intensity": "low"
+    }
+   },
+   "action": "observe",
+   "reward": 0.7684256143341461,
+   "step": 7,
+   "expert": false
+  },
+  {
+   "kind": "partial - one sense only",
+   "percept": {
+    "audio": {
+     "sound_type": "alarm",
+     "audio_intensity": "high"
+    }
+   },
+   "action": "alert",
+   "reward": 0.8153825526719463,
+   "step": 6,
+   "expert": false
+  },
+  {
+   "kind": "contradicting twin (A)",
+   "percept": {
+    "smell": {
+     "odor_type": "smoke",
+     "odor_intensity": "strong",
+     "pleasantness": "neutral"
+    }
+   },
+   "action": "alert",
+   "reward": 0.9464360721072241,
+   "step": 26,
+   "expert": true
+  },
+  {
+   "kind": "contradicting twin (B)",
+   "percept": {
+    "smell": {
+     "odor_type": "smoke",
+     "odor_intensity": "strong",
+     "pleasantness": "neutral"
+    }
+   },
+   "action": "ignore",
+   "reward": 0.2587988733883423,
+   "step": 419,
+   "expert": false
+  },
+  {
+   "kind": "expert correction",
+   "percept": {
+    "touch": {
+     "contact": "firm",
+     "texture": "smooth",
+     "thermal": "hot",
+     "touch_intensity": "high"
+    },
+    "audio": {
+     "sound_type": "noise",
+     "audio_intensity": "low"
+    },
+    "vision": {
+     "object_type": "vehicle",
+     "motion": "static",
+     "color": "bright"
+    },
+    "smell": {
+     "odor_type": "none",
+     "odor_intensity": "strong",
+     "pleasantness": "neutral"
+    }
+   },
+   "action": "withdraw",
+   "reward": 0.9147860041570323,
+   "step": 1,
+   "expert": true
+  }
+ ],
+ "queries": [
+  {
+   "set": "clean",
+   "percept": {
+    "vision": {
+     "object_type": "animal",
+     "motion": "static",
+     "color": "bright"
+    },
+    "touch": {
+     "contact": "light",
+     "texture": "rough",
+     "thermal": "warm",
+     "touch_intensity": "low"
+    },
+    "smell": {
+     "odor_type": "food",
+     "odor_intensity": "moderate",
+     "pleasantness": "neutral"
+    },
+    "audio": {
+     "sound_type": "speech",
+     "audio_intensity": "low"
+    }
+   },
+   "label": "approach",
+   "outputs": {
+    "Baseline v2": {
+     "best": "approach",
+     "evidence": true,
+     "scanned": 700
+    },
+    "Baseline v2+dlCBF": {
+     "best": "approach",
+     "evidence": true,
+     "scanned": 700
+    },
+    "Core v2": {
+     "best": "approach",
+     "evidence": true,
+     "scanned": 700
+    },
+    "HyST": {
+     "best": "approach",
+     "evidence": true,
+     "scanned": 700
+    },
+    "HMGI": {
+     "best": "approach",
+     "evidence": true,
+     "scanned": 700
+    },
+    "SHMF": {
+     "best": "approach",
+     "evidence": true,
+     "scanned": 700
+    }
+   },
+   "title": "all models agree and are right",
+   "pool": 40
+  },
+  {
+   "set": "noisy",
+   "percept": {
+    "touch": {
+     "contact": "firm",
+     "texture": "sharp",
+     "thermal": "warm",
+     "touch_intensity": "low"
+    },
+    "audio": {
+     "sound_type": "speech",
+     "audio_intensity": "low"
+    },
+    "smell": {
+     "odor_type": "food",
+     "odor_intensity": "moderate",
+     "pleasantness": "pleasant"
+    },
+    "vision": {
+     "object_type": "human",
+     "motion": "slow",
+     "color": "bright"
+    }
+   },
+   "label": "withdraw",
+   "outputs": {
+    "Baseline v2": {
+     "best": "withdraw",
+     "evidence": true,
+     "scanned": 700
+    },
+    "Baseline v2+dlCBF": {
+     "best": "observe",
+     "evidence": false,
+     "scanned": 0
+    },
+    "Core v2": {
+     "best": "approach",
+     "evidence": true,
+     "scanned": 700
+    },
+    "HyST": {
+     "best": "withdraw",
+     "evidence": true,
+     "scanned": 700
+    },
+    "HMGI": {
+     "best": "approach",
+     "evidence": true,
+     "scanned": 700
+    },
+    "SHMF": {
+     "best": "withdraw",
+     "evidence": true,
+     "scanned": 700
+    }
+   },
+   "title": "danger scene: HyST/SHMF right, Core v2 unsafe",
+   "pool": 139
+  },
+  {
+   "set": "noisy",
+   "percept": {
+    "touch": {
+     "contact": "firm",
+     "texture": "wet",
+     "thermal": "warm",
+     "touch_intensity": "medium"
+    },
+    "vision": {
+     "object_type": "unknown",
+     "motion": "static",
+     "color": "dark"
+    },
+    "audio": {
+     "sound_type": "alarm",
+     "audio_intensity": "low"
+    }
+   },
+   "label": "observe",
+   "outputs": {
+    "Baseline v2": {
+     "best": "observe",
+     "evidence": true,
+     "scanned": 700
+    },
+    "Baseline v2+dlCBF": {
+     "best": "observe",
+     "evidence": false,
+     "scanned": 0
+    },
+    "Core v2": {
+     "best": "withdraw",
+     "evidence": true,
+     "scanned": 700
+    },
+    "HyST": {
+     "best": "observe",
+     "evidence": false,
+     "scanned": 700
+    },
+    "HMGI": {
+     "best": "withdraw",
+     "evidence": true,
+     "scanned": 682
+    },
+    "SHMF": {
+     "best": "observe",
+     "evidence": true,
+     "scanned": 682
+    }
+   },
+   "title": "HyST finds nothing (observes), SHMF relaxes and is right",
+   "pool": 199
+  },
+  {
+   "set": "noisy",
+   "percept": {
+    "smell": {
+     "odor_type": "smoke",
+     "odor_intensity": "strong",
+     "pleasantness": "foul"
+    },
+    "audio": {
+     "sound_type": "none",
+     "audio_intensity": "low"
+    },
+    "vision": {
+     "object_type": "vehicle",
+     "motion": "slow",
+     "color": "dark"
+    },
+    "touch": {
+     "contact": "none",
+     "texture": "smooth",
+     "thermal": "neutral",
+     "touch_intensity": "low"
+    }
+   },
+   "label": "alert",
+   "outputs": {
+    "Baseline v2": {
+     "best": "alert",
+     "evidence": true,
+     "scanned": 700
+    },
+    "Baseline v2+dlCBF": {
+     "best": "observe",
+     "evidence": false,
+     "scanned": 0
+    },
+    "Core v2": {
+     "best": "alert",
+     "evidence": true,
+     "scanned": 700
+    },
+    "HyST": {
+     "best": "observe",
+     "evidence": false,
+     "scanned": 700
+    },
+    "HMGI": {
+     "best": "alert",
+     "evidence": true,
+     "scanned": 700
+    },
+    "SHMF": {
+     "best": "observe",
+     "evidence": false,
+     "scanned": 700
+    }
+   },
+   "title": "Baseline v2 right, SHMF wrong",
+   "pool": 117
+  },
+  {
+   "set": "clean",
+   "percept": {
+    "smell": {
+     "odor_type": "smoke",
+     "odor_intensity": "moderate",
+     "pleasantness": "foul"
+    },
+    "vision": {
+     "object_type": "vehicle",
+     "motion": "slow",
+     "color": "bright"
+    }
+   },
+   "label": "alert",
+   "outputs": {
+    "Baseline v2": {
+     "best": "withdraw",
+     "evidence": true,
+     "scanned": 700
+    },
+    "Baseline v2+dlCBF": {
+     "best": "withdraw",
+     "evidence": true,
+     "scanned": 700
+    },
+    "Core v2": {
+     "best": "withdraw",
+     "evidence": true,
+     "scanned": 700
+    },
+    "HyST": {
+     "best": "alert",
+     "evidence": true,
+     "scanned": 700
+    },
+    "HMGI": {
+     "best": "withdraw",
+     "evidence": true,
+     "scanned": 626
+    },
+    "SHMF": {
+     "best": "alert",
+     "evidence": true,
+     "scanned": 626
+    }
+   },
+   "title": "SHMF right, Baseline v2 wrong",
+   "pool": 73
+  },
+  {
+   "set": "clean",
+   "percept": {
+    "vision": {
+     "object_type": "animal",
+     "motion": "static",
+     "color": "bright"
+    },
+    "audio": {
+     "sound_type": "speech",
+     "audio_intensity": "low"
+    },
+    "smell": {
+     "odor_type": "food",
+     "odor_intensity": "faint",
+     "pleasantness": "pleasant"
+    }
+   },
+   "label": "approach",
+   "outputs": {
+    "Baseline v2": {
+     "best": "approach",
+     "evidence": true,
+     "scanned": 700
+    },
+    "Baseline v2+dlCBF": {
+     "best": "observe",
+     "evidence": false,
+     "scanned": 0
+    },
+    "Core v2": {
+     "best": "approach",
+     "evidence": true,
+     "scanned": 700
+    },
+    "HyST": {
+     "best": "approach",
+     "evidence": true,
+     "scanned": 700
+    },
+    "HMGI": {
+     "best": "approach",
+     "evidence": true,
+     "scanned": 658
+    },
+    "SHMF": {
+     "best": "approach",
+     "evidence": true,
+     "scanned": 658
+    }
+   },
+   "title": "dlCBF gate shuts; the same model ungated is right",
+   "pool": 466
+  },
+  {
+   "set": "noisy",
+   "percept": {
+    "vision": {
+     "object_type": "unknown",
+     "motion": "slow",
+     "color": "blue"
+    },
+    "smell": {
+     "odor_type": "none",
+     "odor_intensity": "faint",
+     "pleasantness": "neutral"
+    },
+    "audio": {
+     "sound_type": "none",
+     "audio_intensity": "low"
+    }
+   },
+   "label": "ignore",
+   "outputs": {
+    "Baseline v2": {
+     "best": "observe",
+     "evidence": true,
+     "scanned": 700
+    },
+    "Baseline v2+dlCBF": {
+     "best": "observe",
+     "evidence": false,
+     "scanned": 0
+    },
+    "Core v2": {
+     "best": "alert",
+     "evidence": true,
+     "scanned": 700
+    },
+    "HyST": {
+     "best": "observe",
+     "evidence": true,
+     "scanned": 700
+    },
+    "HMGI": {
+     "best": "alert",
+     "evidence": true,
+     "scanned": 658
+    },
+    "SHMF": {
+     "best": "observe",
+     "evidence": true,
+     "scanned": 658
+    }
+   },
+   "title": "noisy scene: every model wrong",
+   "pool": 59
+  }
+ ],
+ "models": [
+  "Baseline v2",
+  "Baseline v2+dlCBF",
+  "Core v2",
+  "HyST",
+  "HMGI",
+  "SHMF"
+ ],
+ "total_queries": 960
+}

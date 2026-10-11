@@ -3,7 +3,7 @@ MPCS v2 — Preset Memory Bank
 
 70 experiences: 50 novel contexts + 20 near-repetitions.
 Every entry carries all four modalities (vision, audio, touch, smell).
-Generated from mcps_preset_v2.py — do not edit by hand.
+Generated from mpcs_preset_v2.py — do not edit by hand.
 
 Action distribution
 ------------------------------------------------------------

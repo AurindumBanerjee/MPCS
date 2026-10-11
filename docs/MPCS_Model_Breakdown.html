@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MPCS Model Breakdown</title>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1815; --ink2: #3d3830; --ink3: #6b6258;
+    --page: #f9f7f3; --surface: #f2ede5; --border: #e0d8cc;
+    --accent: #2b4c7e; --accent2: #1e6e5b; --accent3: #8b3a1a;
+    --accent-pale: #e8eef6; --accent2-pale: #e4f0ec; --accent3-pale: #f4ede8;
+    --amber: #b07a12; --amber-pale: #fdf3e0;
+    --purple: #5a3d8a; --purple-pale: #ede9f6;
+    --rule: #cfc7b8;
+    --mono: 'DM Mono', monospace;
+    --serif: 'EB Garamond', Georgia, serif;
+    --sans: 'Outfit', system-ui, sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; scroll-behavior: smooth; }
+  body {
+    background: var(--page); color: var(--ink);
+    font-family: var(--serif); font-size: 1.0625rem; line-height: 1.78;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page-wrap { max-width: 900px; margin: 0 auto; padding: 0 2.5rem 6rem; }
+
+  /* Cover */
+  .cover { padding: 5rem 0 4rem; border-bottom: 1.5px solid var(--ink); margin-bottom: 3.5rem; }
+  .cover-badge { font-family: var(--sans); font-size: .7rem; font-weight: 600;
+    letter-spacing: .15em; text-transform: uppercase; color: var(--ink3); margin-bottom: 1.5rem; }
+  .cover h1 { font-size: 3rem; font-weight: 500; line-height: 1.12; letter-spacing: -.01em;
+    margin-bottom: .5rem; max-width: 720px; }
+  .cover-sub { font-style: italic; font-size: 1.3rem; color: var(--ink3); margin-bottom: 2.2rem; max-width: 660px; }
+  .cover-meta { font-family: var(--sans); font-size: .8rem; color: var(--ink3);
+    display: flex; gap: 2rem; flex-wrap: wrap; }
+
+  .abstract { background: var(--surface); border-left: 3px solid var(--accent);
+    padding: 1.5rem 2rem; border-radius: 0 8px 8px 0; margin-bottom: 3rem; }
+  .abstract-label { font-family: var(--sans); font-size: .65rem; font-weight: 600;
+    letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin-bottom: .6rem; }
+  .abstract p { font-size: .96rem; line-height: 1.7; color: var(--ink2); margin-bottom: .8rem; }
+  .abstract p:last-child { margin-bottom: 0; }
+
+  .toc { margin-bottom: 4rem; }
+  .toc-title { font-family: var(--sans); font-size: .65rem; font-weight: 600; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--ink3); margin-bottom: 1rem; padding-bottom: .5rem;
+    border-bottom: 1px solid var(--border); }
+  .toc ol { list-style: none; counter-reset: toc; column-count: 2; column-gap: 2rem; }
+  .toc ol li { counter-increment: toc; font-family: var(--sans); font-size: .83rem;
+    color: var(--ink3); padding: .22rem 0; display: flex; align-items: baseline; gap: .5rem; break-inside: avoid; }
+  .toc ol li::before { content: counter(toc, decimal-leading-zero); font-family: var(--mono);
+    font-size: .68rem; color: var(--rule); min-width: 1.8rem; }
+  .toc a { color: inherit; text-decoration: none; border-bottom: 1px solid transparent; }
+  .toc a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+  section { margin-bottom: 4rem; scroll-margin-top: 1rem; }
+  .section-num { font-family: var(--mono); font-size: .7rem; color: var(--rule);
+    letter-spacing: .08em; display: block; margin-bottom: .25rem; }
+  h2 { font-size: 2rem; font-weight: 500; line-height: 1.15; margin-bottom: 1.4rem;
+    padding-bottom: .75rem; border-bottom: 1px solid var(--border); }
+  h3 { font-family: var(--sans); font-size: .95rem; font-weight: 600; color: var(--ink2); margin: 2rem 0 .75rem; }
+  h4 { font-family: var(--sans); font-size: .78rem; font-weight: 600; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--ink3); margin: 1.5rem 0 .5rem; }
+  p { margin-bottom: 1rem; }
+  p:last-child { margin-bottom: 0; }
+  ul.plain { list-style: none; margin: 1rem 0; }
+  ul.plain li { font-family: var(--sans); font-size: .87rem; color: var(--ink2); line-height: 1.6;
+    padding: .35rem 0 .35rem 1.3rem; position: relative; }
+  ul.plain li::before { content: '▸'; position: absolute; left: 0; color: var(--rule); }
+  code { font-family: var(--mono); font-size: .84em; background: var(--surface);
+    padding: .1em .35em; border-radius: 4px; color: var(--accent3); }
+
+  /* Paper header */
+  .paper-head { display: flex; gap: 1.2rem; align-items: flex-start; background: #fff;
+    border: 1px solid var(--border); border-radius: 10px; padding: 1.2rem 1.4rem; margin-bottom: 1.6rem; }
+  .paper-sigil { flex-shrink: 0; width: 54px; height: 54px; border-radius: 10px;
+    display: grid; place-items: center; font-family: var(--sans); font-weight: 600;
+    font-size: .78rem; letter-spacing: .04em; color: #fff; }
+  .sig-a { background: var(--accent); } .sig-b { background: var(--accent2); } .sig-c { background: var(--purple); }
+  .paper-head-body h3 { margin: 0 0 .2rem; font-size: 1rem; }
+  .paper-head-body .cite { font-family: var(--sans); font-size: .76rem; color: var(--ink3); line-height: 1.5; }
+  .paper-head-body .oneline { font-family: var(--sans); font-size: .84rem; color: var(--ink2);
+    margin-top: .5rem; line-height: 1.55; }
+
+  /* Diagrams */
+  .diagram-wrap { margin: 2.2rem 0; background: #fff; border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden; }
+  .diagram-label { font-family: var(--sans); font-size: .7rem; font-weight: 600; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--ink3); padding: .6rem 1.2rem; border-bottom: 1px solid var(--border);
+    background: var(--surface); display: flex; align-items: center; gap: .5rem; }
+  .diagram-label::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  .diagram-body { padding: 1.4rem; overflow-x: auto; }
+  .diagram-cap { font-family: var(--sans); font-size: .76rem; color: var(--ink3);
+    padding: 0 1.4rem 1.1rem; line-height: 1.55; }
+  svg.diag { width: 100%; height: auto; display: block; }
+  svg text { font-family: 'Outfit', system-ui, sans-serif; }
+  .svg-t { font-size: 11px; fill: #3d3830; }
+  .svg-s { font-size: 9.5px; fill: #6b6258; }
+  .svg-h { font-size: 11.5px; font-weight: 600; fill: #1a1815; }
+  .svg-m { font-family: 'DM Mono', monospace; font-size: 9.5px; fill: #6b6258; }
+  .svg-w { font-size: 11px; fill: #ffffff; font-weight: 500; }
+  .svg-ws { font-size: 9.5px; fill: #ffffff; opacity: .85; }
+
+  /* Cards */
+  .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+  .info-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.1rem; }
+  .info-card-label { font-family: var(--sans); font-size: .66rem; font-weight: 600; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--ink3); margin-bottom: .35rem; }
+  .info-card-title { font-size: 1.03rem; font-weight: 500; margin-bottom: .3rem; }
+  .info-card-text { font-family: var(--sans); font-size: .79rem; line-height: 1.55; color: var(--ink3); }
+  .info-card.blue { border-left: 3px solid var(--accent); }
+  .info-card.green { border-left: 3px solid var(--accent2); }
+  .info-card.orange { border-left: 3px solid var(--accent3); }
+  .info-card.purple { border-left: 3px solid var(--purple); }
+  .info-card.amber { border-left: 3px solid var(--amber); }
+
+  .formula { background: var(--ink); color: #e8e2d8; font-family: var(--mono); font-size: .84rem;
+    padding: 1.1rem 1.4rem; border-radius: 8px; margin: 1.2rem 0; line-height: 1.7;
+    overflow-x: auto; white-space: pre; }
+  .formula .comment { color: #7a7060; }
+  .formula .key { color: #8ecfb0; }
+  .formula .val { color: #d4a96a; }
+  .formula .hot { color: #e0836a; }
+
+  .fkey { margin: -.4rem 0 1.4rem; font-family: var(--sans); font-size: .8rem; color: var(--ink3);
+    line-height: 1.6; border-left: 2px solid var(--border); padding-left: .9rem; }
+  .fkey b { color: var(--ink2); font-weight: 600; }
+
+  table { width: 100%; border-collapse: collapse; font-family: var(--sans); font-size: .82rem; margin: 1.2rem 0; }
+  th { background: var(--surface); color: var(--ink2); font-weight: 600; font-size: .7rem;
+    letter-spacing: .06em; text-transform: uppercase; text-align: left;
+    padding: .55rem .9rem; border-bottom: 1.5px solid var(--border); }
+  td { padding: .55rem .9rem; border-bottom: 1px solid var(--border); color: var(--ink2); vertical-align: top; line-height: 1.5; }
+  tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: var(--surface); }
+  .tbl-wrap { overflow-x: auto; margin: 1.2rem 0; }
+
+  .callout { border-left: 3px solid var(--amber); background: var(--amber-pale);
+    padding: 1rem 1.25rem; border-radius: 0 8px 8px 0; margin: 1.5rem 0; }
+  .callout.purple { border-color: var(--purple); background: var(--purple-pale); }
+  .callout.green  { border-color: var(--accent2); background: var(--accent2-pale); }
+  .callout.blue   { border-color: var(--accent); background: var(--accent-pale); }
+  .callout.rust   { border-color: var(--accent3); background: var(--accent3-pale); }
+  .callout .callout-label { font-family: var(--sans); font-size: .66rem; font-weight: 600;
+    letter-spacing: .1em; text-transform: uppercase; color: var(--amber); margin-bottom: .35rem; }
+  .callout.purple .callout-label { color: var(--purple); }
+  .callout.green .callout-label { color: var(--accent2); }
+  .callout.blue .callout-label { color: var(--accent); }
+  .callout.rust .callout-label { color: var(--accent3); }
+  .callout p { font-family: var(--sans); font-size: .855rem; color: var(--ink2); line-height: 1.62; margin: 0 0 .6rem; }
+  .callout p:last-child { margin-bottom: 0; }
+
+  /* provenance chips */
+  .chip { display: inline-block; font-family: var(--sans); font-size: .63rem; font-weight: 600;
+    letter-spacing: .08em; text-transform: uppercase; padding: .16rem .5rem; border-radius: 20px;
+    vertical-align: middle; }
+  .chip-paper { background: var(--accent2-pale); color: var(--accent2); border: 1px solid #bcd9d0; }
+  .chip-ours  { background: var(--purple-pale); color: var(--purple); border: 1px solid #cfc2e6; }
+  .chip-adapt { background: var(--amber-pale); color: var(--amber); border: 1px solid #ecd6a8; }
+
+  /* step ribbon */
+  .steps { counter-reset: st; margin: 1.5rem 0; }
+  .step { counter-increment: st; display: flex; gap: 1rem; padding: 1rem 0;
+    border-bottom: 1px solid var(--border); }
+  .step:last-child { border-bottom: none; }
+  .step-n { flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; background: var(--ink);
+    color: var(--page); display: grid; place-items: center; font-family: var(--mono);
+    font-size: .74rem; margin-top: .1rem; }
+  .step-n::before { content: counter(st, decimal-leading-zero); }
+  .step-body h4 { margin: 0 0 .3rem; color: var(--ink); font-size: .8rem; }
+  .step-body p { font-family: var(--sans); font-size: .845rem; color: var(--ink2); line-height: 1.6; margin-bottom: .5rem; }
+  .step-body .trace { font-family: var(--mono); font-size: .76rem; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 6px; padding: .6rem .8rem; color: var(--ink2);
+    white-space: pre-wrap; line-height: 1.6; }
+
+  .stack-row { display: flex; align-items: stretch; gap: 0; border: 1px solid var(--border);
+    border-radius: 8px; overflow: hidden; margin-bottom: .6rem; background: #fff; }
+  .stack-tag { flex-shrink: 0; width: 62px; display: grid; place-items: center;
+    font-family: var(--mono); font-size: .74rem; color: #fff; }
+  .stack-body { padding: .75rem 1rem; }
+  .stack-body .st-title { font-family: var(--sans); font-weight: 600; font-size: .87rem; color: var(--ink); }
+  .stack-body .st-text { font-family: var(--sans); font-size: .8rem; color: var(--ink3); line-height: 1.55; margin-top: .15rem; }
+
+  footer { border-top: 1.5px solid var(--ink); padding-top: 1.5rem; margin-top: 4rem;
+    font-family: var(--sans); font-size: .78rem; color: var(--ink3); line-height: 1.7; }
+
+  @media (max-width: 640px) {
+    .page-wrap { padding: 0 1.2rem 4rem; }
+    .cover h1 { font-size: 2.1rem; }
+    .toc ol { column-count: 1; }
+  }
+  .bar-row { display: grid; grid-template-columns: 7.5rem 1fr 3.4rem; align-items: center; gap: .7rem;
+    font-family: var(--sans); font-size: .78rem; color: var(--ink2); padding: .22rem 0; }
+  .bar-track { background: var(--surface); border-radius: 4px; height: 14px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; background: var(--accent); }
+  .bar-fill.bad { background: var(--accent3); }
+  .bar-fill.good { background: var(--accent2); }
+  .bar-num { font-family: var(--mono); font-size: .74rem; text-align: right; color: var(--ink3); }
+  .bar-group-label { font-family: var(--sans); font-size: .66rem; font-weight: 600; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--ink3); margin: 1.2rem 0 .3rem; }
+  td.hi { font-weight: 600; color: var(--accent2); }
+  td.lo { color: var(--accent3); }
+  @media (max-width: 640px) { .bar-row { grid-template-columns: 5.5rem 1fr 3rem; } }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+<header class="cover">
+  <div class="cover-badge">MPCS · Model Breakdown</div>
+  <h1>Baseline to SHMF</h1>
+  <div class="cover-sub">What each memory model is made of, how it performs, and what each step improved.</div>
+  <div class="cover-meta">
+    <span>3 Oct 2026</span>
+    <span>Code: <code>Model/experimental/01–06</code>, <code>comparison/</code></span>
+    <span>Later models: <em>MPCS Progress Report</em></span>
+  </div>
+</header>
+
+<div class="abstract">
+  <div class="abstract-label">Summary</div>
+  <p>This report compares four stages of the MPCS memory: the <b>baseline</b> (feature counting, gated by Bloom filters, with Z-numbers; plus the four-sense Core v2 engine), <b>HyST</b> (hard/soft filtering), <b>HMGI</b> (modality-partitioned indexing) and <b>SHMF</b> (HMGI and HyST combined).</p>
+  <p>On fresh scenes from the 700-memory bank, the original two-sense baseline scores <b>43.1%</b>, HyST <b>64.0%</b> and SHMF <b>75.6%</b>, with unsafe decisions falling from <b>47.1%</b> to <b>2.1%</b>. HMGI makes the same decisions as Core v2 and contributes structure rather than accuracy.</p>
+  <p>To compare like with like, we also built <b>Baseline v2</b>: the same baseline algorithm, given the same four-sense inputs and five actions as the newer models. It scores <b>79.6% / 73.3%</b> (clean / noisy) on v3 — above SHMF — but only 52% on the hand-written v2 bank, where HyST and SHMF reach 100%. Most of the old baseline's deficit came from its two-sense inputs, and HyST/SHMF still carry Core v2's per-action voting. A quick test of SHMF's filter with the baseline's global vote scores <b>80.4% / 74.2%</b>, the best of all.</p>
+</div>
+
+<nav class="toc">
+  <div class="toc-title">Contents</div>
+  <ol>
+    <li><a href="#m1">Purpose of the work</a></li>
+    <li><a href="#m2">Concepts from the ground up</a></li>
+    <li><a href="#m3">How we measured</a></li>
+    <li><a href="#m4">Baseline models (incl. Baseline v2)</a></li>
+    <li><a href="#m5">HyST</a></li>
+    <li><a href="#m6">HMGI</a></li>
+    <li><a href="#m7">SHMF</a></li>
+    <li><a href="#m8">Head-to-head results</a></li>
+    <li><a href="#m11">Worked examples: same input, every model</a></li>
+    <li><a href="#m9">Improvements, step by step</a></li>
+    <li><a href="#m10">What we take forward</a></li>
+  </ol>
+</nav>
+
+<!-- 1 -->
+<section id="m1">
+  <span class="section-num">01</span>
+  <h2>Purpose of the work</h2>
+  <p>MPCS is a cognitive agent that perceives a scene through up to four senses — vision, audio, touch, smell — and chooses one of five actions: <code>approach</code>, <code>observe</code>, <code>alert</code>, <code>ignore</code>, <code>withdraw</code>. Instead of a fixed rulebook, it decides by <b>recalling past experiences</b>: which similar scenes it has met, what it did, and how that turned out.</p>
+  <p>The goal of this line of work is to make that recall <b>correct, safe and fast</b>:</p>
+  <ul class="plain">
+    <li><b>Correct</b> — recall the experiences that actually bear on the current scene.</li>
+    <li><b>Safe</b> — never let an irrelevant memory talk the agent into approaching something dangerous.</li>
+    <li><b>Fast</b> — keep recall cheap as memory grows step after step.</li>
+  </ul>
+  <p>The plan (the <em>Perceptual Memory Indexing</em> gameplan) took three published ideas — HyST, HMGI and KERL — and adapted them to MPCS one at a time, measuring each against everything before it. This report covers the first stretch: from the baseline to SHMF.</p>
+</section>
+
+<!-- 2 -->
+<section id="m2">
+  <span class="section-num">02</span>
+  <h2>Concepts from the ground up</h2>
+
+  <h3>Case-based reasoning</h3>
+  <p>The core loop: <em>find past scenes like this one, and do what worked there</em>. Everything else is detail on two questions — what counts as "like this one", and how to combine memories that disagree.</p>
+
+  <h3>Percepts and memories</h3>
+  <p>A percept is a set of discrete features grouped by sense. A memory stores a percept, the action taken, the reward (−1 to +1) and the step it happened at.</p>
+  <div class="formula"><span class="key">vision</span>: {object_type: <span class="val">pan</span>, color: <span class="val">grey</span>}
+<span class="key">touch</span>:  {thermal: <span class="val">hot</span>}
+<span class="comment"># memory: this percept, action=withdraw, reward=+0.9, step=412</span></div>
+
+  <h3>Similarity</h3>
+  <p>The simplest similarity counts matching features. A better one weights each feature by how sure we are we perceived it.</p>
+
+  <h3>Z-numbers</h3>
+  <p>A Z-number pairs a value with a confidence: <code>(hot, 0.9)</code>. Similarity then credits each matching feature by the lower of the two confidences, divided by the query's total confidence, so an exact repeat scores 1 and a faintly perceived match counts for less.</p>
+  <div class="formula">sim(q, m) = Σ<sub>matching</sub> <span class="key">min</span>(c<sub>q</sub>, c<sub>m</sub>) / Σ<sub>q</sub> c<sub>q</sub></div>
+
+  <h3>From memories to a decision</h3>
+  <p>For each action, gather the most similar memories where that action was taken and average their rewards, weighted by similarity and recency. The best-supported action wins; if no memory supports any action, the agent observes. <b>Novelty</b> (one minus the best similarity) says how unfamiliar the scene is.</p>
+
+  <h3>Bloom filters</h3>
+  <p>A compact bit array that answers "have I seen exactly this before?" with no false negatives and a small chance of false positives. A <b>d-left counting</b> variant also supports deletion. Fast, but it only knows exact matches.</p>
+
+  <h3>Hard and soft constraints</h3>
+  <p>Some features decide whether the rest of the comparison matters at all. A hot pan and a cool pan share most features, but temperature is decisive. A <b>hard</b> constraint must match; a <b>soft</b> one is scored by closeness. The MPCS reflex rules (hot surface → withdraw, alarm → alert) tell us which features are safety-critical.</p>
+
+  <h3>Indexing and partitioning</h3>
+  <p>An index lets a query skip records that cannot be relevant. <b>Partitioning</b> groups records by a key (here, which senses they carry), so a query only scans the groups that could match.</p>
+
+  <h3>Episode graph</h3>
+  <p>Memories linked as a graph: each one connects to the previous step, the previous time the same action was taken, and the previous time the same object was seen. This captures sequence and context that a flat list loses.</p>
+</section>
+
+<!-- 3 -->
+<section id="m3">
+  <span class="section-num">03</span>
+  <h2>How we measured</h2>
+  <p>One harness (<code>comparison/run_comparison.py</code>) calls each model's own code with exploration and reflexes switched off, so it measures what each model's <em>memory</em> recommends.</p>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Memory bank</th><th>Size</th><th>Senses</th><th>Character</th></tr></thead>
+    <tbody>
+      <tr><td>v1</td><td>30</td><td>vision, audio</td><td>Hand-written reference scenes</td></tr>
+      <tr><td>v2</td><td>70</td><td>all four</td><td>Hand-written; adds hot surfaces, impacts, <code>withdraw</code></td></tr>
+      <tr><td>v3</td><td>700</td><td>all four, often partial</td><td>Seeded generator over 16 scenario types; repeats, contradicting twins (~18%), 36 expert corrections</td></tr>
+    </tbody>
+  </table></div>
+  <ul class="plain">
+    <li><b>Query sets</b> (never stored): <code>seen</code> exact stored scenes; <code>near</code> one non-safety feature changed; on v3, <code>clean</code> and <code>noisy</code> fresh scenes (480 each).</li>
+    <li><b>Accuracy</b> — the recommended action matches the scenario's correct action.</li>
+    <li><b>Unsafe</b> — of the scenes where <code>alert</code> or <code>withdraw</code> was right, the share where the model said <code>approach</code> or <code>ignore</code>.</li>
+    <li><b>Scanned</b> and <b>ms/query</b> — how much memory was examined and how long it took.</li>
+  </ul>
+  <p>The v3 <code>clean</code> and <code>noisy</code> sets are the fairest test, and the headline numbers come from them.</p>
+</section>
+
+<!-- 4 -->
+<section id="m4">
+  <span class="section-num">04</span>
+  <h2>Baseline models</h2>
+  <p>"Baseline" here is the family of models that existed before the gameplan work. All four use the same idea: score every memory by similarity and vote.</p>
+  <div class="info-grid">
+    <div class="info-card blue"><div class="info-card-label">G1 · Basic</div><div class="info-card-title">Feature counting</div><div class="info-card-text">Vision + audio, four actions (no <code>withdraw</code>). Similarity = number of equal features. Global top-5 vote.</div></div>
+    <div class="info-card amber"><div class="info-card-label">G2 · Bloom</div><div class="info-card-title">Bloom-gated</div><div class="info-card-text">G1, but memory is only consulted if a Bloom filter says the exact scene was seen before.</div></div>
+    <div class="info-card purple"><div class="info-card-label">G3 · Z + dlCBF</div><div class="info-card-title">Z-numbers, d-left counting BF</div><div class="info-card-text">Z-number summaries and a deletable Bloom filter as the gate. Confidence fixed at 1.0. <code>01_baseline_z</code>.</div></div>
+    <div class="info-card green"><div class="info-card-label">G4 · Core v2</div><div class="info-card-title">Four-sense engine</div><div class="info-card-text">All four senses, five actions, per-sense confidence, reflexes, ageing, expert memories. Top-5 <em>per action</em>. <code>02_core</code>.</div></div>
+  </div>
+  <h3>How they performed</h3>
+  <ul class="plain">
+    <li><b>The Bloom gates never improved a decision.</b> When open, G2 and G3 decide exactly like G1; when closed, they retrieve nothing. On v3 fresh scenes accuracy drops from 43.1% (G1) to 38.1%, and unsafe rises from 47% to 62%.</li>
+    <li><b>Z-numbers at confidence 1.0 equal plain counting</b> — G3's outputs match G2's everywhere.</li>
+    <li><b>The two-sense schema cannot see danger.</b> Without touch or smell, and without <code>withdraw</code>, 25–29% of v3 answers are inexpressible for G1–G3.</li>
+    <li><b>Core v2 adds senses but loses accuracy</b> (34.2% on v3 clean). Each action gets its own top-5 memories, and a reward average ignores how similar those five are, so loosely related memories can outvote an exact match.</li>
+  </ul>
+  <div class="callout rust">
+    <div class="callout-label">The lesson</div>
+    <p>The problem was not how similarity was computed, but <em>who was allowed to vote</em>. More senses gave the model more ways to find loosely related memories.</p>
+  </div>
+
+  <h3>Baseline v2 — the baseline on matching inputs</h3>
+  <p>G1–G3 cannot be compared fairly with the newer models because they never see touch or smell and cannot answer <code>withdraw</code>. <b>Baseline v2</b> (<code>01_baseline_z/baseline_v2.py</code>) keeps G1's algorithm exactly and gives it the newer models' inputs:</p>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Part</th><th>Baseline v2</th><th>Same as the newer models?</th></tr></thead>
+    <tbody>
+      <tr><td>Input</td><td>Four senses, partial percepts allowed, v3 bank</td><td class="hi">Yes — identical percepts and memories</td></tr>
+      <tr><td>Actions</td><td>All five, including <code>withdraw</code></td><td class="hi">Yes</td></tr>
+      <tr><td>Similarity</td><td>Share of query features matched exactly; no confidence, no hard/soft split</td><td>No (G1's)</td></tr>
+      <tr><td>Retrieval</td><td>Global top-5 over all of memory</td><td>No (G1's)</td></tr>
+      <tr><td>Vote</td><td>Similarity × age-weighted mean reward per action, among those 5</td><td>No (G1's)</td></tr>
+      <tr><td>Decision</td><td>Best evidenced action; observe if none</td><td class="hi">Yes — the shared engine rule</td></tr>
+      <tr><td>Gate (variant)</td><td><b>Baseline v2+dlCBF</b>: consult memory only if the exact scene was seen</td><td>The G2/G3 idea</td></tr>
+    </tbody>
+  </table></div>
+  <ul class="plain">
+    <li><b>On v3 it is strong:</b> 79.6% clean, 73.3% noisy, unsafe 0.0% / 1.2% — above HyST and SHMF. The generated scenes cluster tightly around 16 scenario types, so the five nearest memories nearly always share the right action.</li>
+    <li><b>On the hand-written banks it is weak:</b> 51.7% on v1 and 52.4% on v2, against 79–100% for HyST and SHMF. There, near neighbours often differ on exactly the feature that matters, and plain counting cannot tell.</li>
+    <li><b>The gate still hurts:</b> on v3 clean the dlCBF shuts for 62% of queries and accuracy falls to 45.6%. Its 0% unsafe rate is only because it observes whenever the gate is shut.</li>
+  </ul>
+  <div class="callout blue">
+    <div class="callout-label">What this reveals</div>
+    <p>Core v2's weakness was its <em>per-action</em> top-5, not its senses or confidences — and HyST and SHMF inherit that per-action vote inside their filtered sets. Replacing it with the baseline's <em>global</em> top-5 inside SHMF's filter gave <b>80.4% / 74.2%</b> with 1.7% / 2.1% unsafe in a one-off test: better than either alone.</p>
+  </div>
+</section>
+
+<!-- 5 -->
+<section id="m5">
+  <span class="section-num">05</span>
+  <h2>HyST — hard filters, soft residual</h2>
+  <div class="paper-head">
+    <div class="paper-sigil sig-b">HyST</div>
+    <div class="paper-head-body"><h3>Hybrid Structured–Textual retrieval</h3>
+      <div class="cite"><code>04_hyst</code> · adapted from the gameplan's hybrid-retrieval paper</div>
+      <div class="oneline">Some features must match exactly; the rest are scored softly.</div></div>
+  </div>
+  <h3>What it consists of</h3>
+  <ul class="plain">
+    <li><b>Hard slots</b>, derived automatically from the reflex rules (any feature a reflex tests is safety-critical). A memory is eligible only if every hard slot matches the query.</li>
+    <li><b>Soft kernel</b>: a graded ordinal score on the remaining features, so <code>medium</code> is closer to <code>high</code> than <code>low</code> is.</li>
+    <li><b>Divergent switch</b> (exploration): hard mismatches are discounted (×0.6) instead of excluded, so the agent can reason by analogy.</li>
+    <li><b>Urgent flag</b> (convergent only): the hard filter is absolute and exploration is off.</li>
+  </ul>
+  <h3>Result</h3>
+  <p>The biggest single jump in the project: v3 fresh-scene accuracy 34.2% → <b>64.0%</b>, unsafe 31% → <b>1.2%</b>, and 100% on both hand-written v2 sets. <b>Weakness:</b> on unfamiliar scenes the strict filter often admits nothing (18% of clean, 41% of noisy queries), and the agent can only observe.</p>
+</section>
+
+<!-- 6 -->
+<section id="m6">
+  <span class="section-num">06</span>
+  <h2>HMGI — partitioned memory</h2>
+  <div class="paper-head">
+    <div class="paper-sigil sig-a">HMGI</div>
+    <div class="paper-head-body"><h3>Hybrid Multimodal Graph Index</h3>
+      <div class="cite"><code>05_hmgi</code> · adapted from the gameplan's multimodal-index paper; structural part only, no approximate-nearest-neighbour index</div>
+      <div class="oneline">Index memories by which senses they carry, and link them into episodes.</div></div>
+  </div>
+  <h3>What it consists of</h3>
+  <ul class="plain">
+    <li><b>Modality partitions</b>: memories bucketed by sense; a query scans only buckets sharing a sense with it.</li>
+    <li><b>Episode graph</b>: links to the previous step, the last same-action memory and the last same-object memory.</li>
+    <li><b>Scan instrumentation</b>: records how many memories each query touches.</li>
+  </ul>
+  <h3>Result</h3>
+  <p>Decisions are identical to Core v2's by construction (same scoring, fewer records looked at). It scans 637–671 of 700 memories instead of all 700, but is no faster at this size: building the candidate list costs about what it saves. Its value is <b>structural</b> — the partitions and graph that SHMF and the later models build on.</p>
+</section>
+
+<!-- 7 -->
+<section id="m7">
+  <span class="section-num">07</span>
+  <h2>SHMF — the combination</h2>
+  <div class="paper-head">
+    <div class="paper-sigil sig-c">SHMF</div>
+    <div class="paper-head-body"><h3>Smart Hybrid-Modality Filtering</h3>
+      <div class="cite"><code>06_shmf</code> · our combination of HMGI and HyST</div>
+      <div class="oneline">Partition first, filter hard/soft second, relax only when nothing survives.</div></div>
+  </div>
+  <div class="steps">
+    <div class="step"><div class="step-n"></div><div class="step-body"><h4>Partition (HMGI)</h4><p>Narrow memory to records that share a sense with the query.</p></div></div>
+    <div class="step"><div class="step-n"></div><div class="step-body"><h4>Strict filter (HyST)</h4><p>Remove records that disagree on safety features. Novelty is measured here, so the agent still knows when a scene is new.</p></div></div>
+    <div class="step"><div class="step-n"></div><div class="step-body"><h4>Auto-relax</h4><p>If nothing survives, retry in divergent mode, dropping zero-similarity records. Never under the urgent flag.</p></div></div>
+    <div class="step"><div class="step-n"></div><div class="step-body"><h4>Score and decide</h4><p>Soft-kernel scoring, best evidenced action, one cached pass per step.</p></div></div>
+  </div>
+  <h3>Result</h3>
+  <p>Auto-relax cuts empty results from 18% / 41% to 2.3% / 4.8%. Accuracy rises to <b>75.6% clean</b> and <b>68.1% noisy</b>, with unsafe decisions at 2.1% / 3.8%. SHMF keeps HyST's safety while fixing its silence.</p>
+</section>
+
+<!-- 8 -->
+<section id="m8">
+  <span class="section-num">08</span>
+  <h2>Head-to-head results</h2>
+
+  <h3>v3 fresh scenes</h3>
+  <div class="bar-group-label">Accuracy, clean (%)</div>
+  <div class="bar-row"><span>G1 Basic</span><div class="bar-track"><div class="bar-fill" style="width:43.1%"></div></div><span class="bar-num">43.1</span></div>
+  <div class="bar-row"><span>G2 Bloom</span><div class="bar-track"><div class="bar-fill" style="width:38.1%"></div></div><span class="bar-num">38.1</span></div>
+  <div class="bar-row"><span>G3 Z+dlCBF</span><div class="bar-track"><div class="bar-fill" style="width:38.1%"></div></div><span class="bar-num">38.1</span></div>
+  <div class="bar-row"><span>Baseline v2</span><div class="bar-track"><div class="bar-fill good" style="width:79.6%"></div></div><span class="bar-num">79.6</span></div>
+  <div class="bar-row"><span>B. v2+dlCBF</span><div class="bar-track"><div class="bar-fill" style="width:45.6%"></div></div><span class="bar-num">45.6</span></div>
+  <div class="bar-row"><span>G4 Core v2</span><div class="bar-track"><div class="bar-fill" style="width:34.2%"></div></div><span class="bar-num">34.2</span></div>
+  <div class="bar-row"><span>HyST</span><div class="bar-track"><div class="bar-fill" style="width:64.0%"></div></div><span class="bar-num">64.0</span></div>
+  <div class="bar-row"><span>HMGI</span><div class="bar-track"><div class="bar-fill" style="width:34.2%"></div></div><span class="bar-num">34.2</span></div>
+  <div class="bar-row"><span>SHMF</span><div class="bar-track"><div class="bar-fill good" style="width:75.6%"></div></div><span class="bar-num">75.6</span></div>
+
+  <div class="bar-group-label">Unsafe decisions, clean (%) — lower is better</div>
+  <div class="bar-row"><span>G1 Basic</span><div class="bar-track"><div class="bar-fill bad" style="width:47.1%"></div></div><span class="bar-num">47.1</span></div>
+  <div class="bar-row"><span>G2 Bloom</span><div class="bar-track"><div class="bar-fill bad" style="width:61.7%"></div></div><span class="bar-num">61.7</span></div>
+  <div class="bar-row"><span>G3 Z+dlCBF</span><div class="bar-track"><div class="bar-fill bad" style="width:61.7%"></div></div><span class="bar-num">61.7</span></div>
+  <div class="bar-row"><span>Baseline v2</span><div class="bar-track"><div class="bar-fill bad" style="width:0%"></div></div><span class="bar-num">0.0</span></div>
+  <div class="bar-row"><span>B. v2+dlCBF</span><div class="bar-track"><div class="bar-fill bad" style="width:0%"></div></div><span class="bar-num">0.0*</span></div>
+  <div class="bar-row"><span>G4 Core v2</span><div class="bar-track"><div class="bar-fill bad" style="width:31.2%"></div></div><span class="bar-num">31.2</span></div>
+  <div class="bar-row"><span>HyST</span><div class="bar-track"><div class="bar-fill bad" style="width:1.2%"></div></div><span class="bar-num">1.2</span></div>
+  <div class="bar-row"><span>HMGI</span><div class="bar-track"><div class="bar-fill bad" style="width:31.2%"></div></div><span class="bar-num">31.2</span></div>
+  <div class="bar-row"><span>SHMF</span><div class="bar-track"><div class="bar-fill bad" style="width:2.1%"></div></div><span class="bar-num">2.1</span></div>
+
+  <p class="fkey">* The gated baseline is "safe" only because it observes whenever the gate is shut (62% of queries).</p>
+
+  <h3>All banks</h3>
+  <p>Accuracy % (unsafe % in brackets). v1 has no danger scenes the legacy schema can't see, so its unsafe rate is 0 throughout.</p>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Model</th><th>v1 seen</th><th>v1 near</th><th>v2 seen</th><th>v2 near</th><th>v3 seen</th><th>v3 near</th><th>v3 clean</th><th>v3 noisy</th></tr></thead>
+    <tbody>
+      <tr><td>G1 Basic</td><td>51.7</td><td>45.7</td><td>44.4 (20)</td><td>42.0 (19)</td><td>47.3 (35)</td><td>46.5 (35)</td><td>43.1 (47)</td><td>39.8 (41)</td></tr>
+      <tr><td>G2 Bloom</td><td>51.7</td><td class="lo">31.2</td><td>44.4 (20)</td><td class="lo">29.5 (10)</td><td>47.3 (35)</td><td class="lo">37.0 (62)</td><td class="lo">38.1 (62)</td><td class="lo">31.9 (60)</td></tr>
+      <tr><td>G3 Z+dlCBF</td><td>51.7</td><td class="lo">31.2</td><td>44.4 (20)</td><td class="lo">29.5 (10)</td><td>47.3 (35)</td><td class="lo">37.0 (62)</td><td class="lo">38.1 (62)</td><td class="lo">31.9 (60)</td></tr>
+      <tr><td><b>Baseline v2</b></td><td>51.7</td><td>45.7</td><td>52.4 (16)</td><td>52.0 (17)</td><td class="hi">84.7 (0.5)</td><td>82.0 (3.0)</td><td class="hi">79.6 (0.0)</td><td class="hi">73.3 (1.2)</td></tr>
+      <tr><td>Baseline v2+dlCBF</td><td>51.7</td><td class="lo">31.2</td><td>52.4 (16)</td><td class="lo">21.8 (0)</td><td>84.7 (0.5)</td><td class="lo">18.5 (0)</td><td class="lo">45.6 (0)</td><td class="lo">26.5 (0)</td></tr>
+      <tr><td>G4 Core v2</td><td class="lo">24.1</td><td class="lo">28.3</td><td>39.7 (16)</td><td>37.2 (17)</td><td>38.4 (22)</td><td>42.7 (25)</td><td>34.2 (31)</td><td>34.6 (30)</td></tr>
+      <tr><td>HyST</td><td class="hi">79.3</td><td class="hi">80.9</td><td class="hi">100 (0)</td><td class="hi">100 (0)</td><td>82.3 (0)</td><td class="hi">88.5 (0)</td><td>64.0 (1.2)</td><td>46.7 (1.2)</td></tr>
+      <tr><td>HMGI</td><td>24.1</td><td>28.3</td><td>39.7 (16)</td><td>37.2 (17)</td><td>38.4 (22)</td><td>42.7 (25)</td><td>34.2 (31)</td><td>34.6 (30)</td></tr>
+      <tr><td>SHMF</td><td class="hi">79.3</td><td class="hi">80.9</td><td class="hi">100 (0)</td><td class="hi">100 (0)</td><td>82.3 (0)</td><td class="hi">88.5 (0)</td><td>75.6 (2.1)</td><td>68.1 (3.8)</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Cost per query (v3 clean)</h3>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Model</th><th>Memories scanned</th><th>No evidence %</th><th>ms / query</th></tr></thead>
+    <tbody>
+      <tr><td>G1 Basic</td><td>700</td><td>14.0</td><td>2.47</td></tr>
+      <tr><td>G2 Bloom</td><td>605</td><td>27.5</td><td>2.45</td></tr>
+      <tr><td>G3 Z+dlCBF</td><td>605</td><td>27.5</td><td>3.36</td></tr>
+      <tr><td>Baseline v2</td><td>700</td><td>0.0</td><td>10.44</td></tr>
+      <tr><td>Baseline v2+dlCBF</td><td>267</td><td>61.9</td><td>4.09</td></tr>
+      <tr><td>G4 Core v2</td><td>700</td><td>0.0</td><td>9.85</td></tr>
+      <tr><td>HyST</td><td>700</td><td>18.3</td><td>6.45</td></tr>
+      <tr><td>HMGI</td><td>637</td><td>0.0</td><td>8.26</td></tr>
+      <tr><td>SHMF</td><td>637</td><td>2.3</td><td>5.15</td></tr>
+    </tbody>
+  </table></div>
+  <p>All timings come from the same later run, on a busier machine than earlier reports, so absolute values are higher. Baseline v2 is the slowest: it ranks and sorts all 700 memories on every query. SHMF is the fastest of the four-sense models. Timings are single-run Python wall-clock (±30%), so read them as a ranking.</p>
+  <div class="callout">
+    <div class="callout-label">Reading the numbers fairly</div>
+    <p><code>near</code> queries only change non-safety features — exactly what HyST ignores when filtering — so the 100% on v2 partly reflects the test. The v3 <code>clean</code> and <code>noisy</code> sets have no such bias. Labels are synthetic: inferred from stored rewards on v1/v2, and the scenario's action on v3.</p>
+  </div>
+</section>
+
+<!-- examples -->
+<section id="m11">
+  <span class="section-num">09</span>
+  <h2>Worked examples: same input, every model</h2>
+  <p>Each model below gets the identical percept and reads the identical v3 bank. The cases come from <code>comparison/examples.py</code>, which writes them to <code>results/examples.json</code>.</p>
+<h3>What the dataset looks like</h3>
+<p>Five stored entries from the v3 bank. Every model below reads this same bank and receives each query in this same form — four senses, any of which may be missing.</p>
+<div class="tbl-wrap"><table><thead><tr><th>Kind</th><th>Percept</th><th>Action</th><th>Reward</th></tr></thead><tbody>
+<tr><td>full - all four senses</td><td style='font-family:var(--mono);font-size:.72rem'><b>vision</b>: object_type=vehicle, motion=fast, color=dark<br><b>audio</b>: sound_type=noise, audio_intensity=low<br><b>smell</b>: odor_type=organic, odor_intensity=faint, pleasantness=neutral<br><b>touch</b>: contact=none, texture=smooth, thermal=neutral, touch_intensity=low</td><td><code>observe</code></td><td>+0.77</td></tr>
+<tr><td>partial - one sense only</td><td style='font-family:var(--mono);font-size:.72rem'><b>audio</b>: sound_type=alarm, audio_intensity=high</td><td><code>alert</code></td><td>+0.82</td></tr>
+<tr><td>contradicting twin (A) <span class="chip chip-ours">expert</span></td><td style='font-family:var(--mono);font-size:.72rem'><b>smell</b>: odor_type=smoke, odor_intensity=strong, pleasantness=neutral</td><td><code>alert</code></td><td>+0.95</td></tr>
+<tr><td>contradicting twin (B)</td><td style='font-family:var(--mono);font-size:.72rem'><b>smell</b>: odor_type=smoke, odor_intensity=strong, pleasantness=neutral</td><td><code>ignore</code></td><td>+0.26</td></tr>
+<tr><td>expert correction <span class="chip chip-ours">expert</span></td><td style='font-family:var(--mono);font-size:.72rem'><b>touch</b>: contact=firm, texture=smooth, thermal=hot, touch_intensity=high<br><b>audio</b>: sound_type=noise, audio_intensity=low<br><b>vision</b>: object_type=vehicle, motion=static, color=bright<br><b>smell</b>: odor_type=none, odor_intensity=strong, pleasantness=neutral</td><td><code>withdraw</code></td><td>+0.91</td></tr>
+</tbody></table></div>
+<h3>Same input, every model</h3><p>Seven queries chosen from the 960 v3 clean/noisy queries to show typical agreements and disagreements. ✓ marks the correct action. "Pool" is how many queries share the pattern.</p>
+<div class="diagram-wrap"><div class="diagram-label">all models agree and are right · clean · pool 40</div><div class="diagram-body">
+<p style="font-family:var(--mono);font-size:.74rem;margin-bottom:.6rem"><b>vision</b>: object_type=animal, motion=static, color=bright<br><b>touch</b>: contact=light, texture=rough, thermal=warm, touch_intensity=low<br><b>smell</b>: odor_type=food, odor_intensity=moderate, pleasantness=neutral<br><b>audio</b>: sound_type=speech, audio_intensity=low</p><p style="font-family:var(--sans);font-size:.82rem">Correct action: <code>approach</code></p>
+<div class="tbl-wrap"><table><thead><tr><th>Model</th><th>Output</th><th>Evidence</th><th>Scanned</th></tr></thead><tbody>
+<tr><td>Baseline v2</td><td class='hi'>✓ approach</td><td>yes</td><td>700</td></tr>
+<tr><td>Baseline v2+dlCBF</td><td class='hi'>✓ approach</td><td>yes</td><td>700</td></tr>
+<tr><td>Core v2</td><td class='hi'>✓ approach</td><td>yes</td><td>700</td></tr>
+<tr><td>HyST</td><td class='hi'>✓ approach</td><td>yes</td><td>700</td></tr>
+<tr><td>HMGI</td><td class='hi'>✓ approach</td><td>yes</td><td>700</td></tr>
+<tr><td>SHMF</td><td class='hi'>✓ approach</td><td>yes</td><td>700</td></tr>
+</tbody></table></div></div></div>
+<div class="diagram-wrap"><div class="diagram-label">danger scene: HyST/SHMF right, Core v2 unsafe · noisy · pool 139</div><div class="diagram-body">
+<p style="font-family:var(--mono);font-size:.74rem;margin-bottom:.6rem"><b>touch</b>: contact=firm, texture=sharp, thermal=warm, touch_intensity=low<br><b>audio</b>: sound_type=speech, audio_intensity=low<br><b>smell</b>: odor_type=food, odor_intensity=moderate, pleasantness=pleasant<br><b>vision</b>: object_type=human, motion=slow, color=bright</p><p style="font-family:var(--sans);font-size:.82rem">Correct action: <code>withdraw</code></p>
+<div class="tbl-wrap"><table><thead><tr><th>Model</th><th>Output</th><th>Evidence</th><th>Scanned</th></tr></thead><tbody>
+<tr><td>Baseline v2</td><td class='hi'>✓ withdraw</td><td>yes</td><td>700</td></tr>
+<tr><td>Baseline v2+dlCBF</td><td class='lo'>✗ observe</td><td>none</td><td>0</td></tr>
+<tr><td>Core v2</td><td class='lo'>✗ approach</td><td>yes</td><td>700</td></tr>
+<tr><td>HyST</td><td class='hi'>✓ withdraw</td><td>yes</td><td>700</td></tr>
+<tr><td>HMGI</td><td class='lo'>✗ approach</td><td>yes</td><td>700</td></tr>
+<tr><td>SHMF</td><td class='hi'>✓ withdraw</td><td>yes</td><td>700</td></tr>
+</tbody></table></div></div></div>
+<div class="diagram-wrap"><div class="diagram-label">HyST finds nothing (observes), SHMF relaxes and is right · noisy · pool 199</div><div class="diagram-body">
+<p style="font-family:var(--mono);font-size:.74rem;margin-bottom:.6rem"><b>touch</b>: contact=firm, texture=wet, thermal=warm, touch_intensity=medium<br><b>vision</b>: object_type=unknown, motion=static, color=dark<br><b>audio</b>: sound_type=alarm, audio_intensity=low</p><p style="font-family:var(--sans);font-size:.82rem">Correct action: <code>observe</code></p>
+<div class="tbl-wrap"><table><thead><tr><th>Model</th><th>Output</th><th>Evidence</th><th>Scanned</th></tr></thead><tbody>
+<tr><td>Baseline v2</td><td class='hi'>✓ observe</td><td>yes</td><td>700</td></tr>
+<tr><td>Baseline v2+dlCBF</td><td class='hi'>✓ observe</td><td>none</td><td>0</td></tr>
+<tr><td>Core v2</td><td class='lo'>✗ withdraw</td><td>yes</td><td>700</td></tr>
+<tr><td>HyST</td><td class='hi'>✓ observe</td><td>none</td><td>700</td></tr>
+<tr><td>HMGI</td><td class='lo'>✗ withdraw</td><td>yes</td><td>682</td></tr>
+<tr><td>SHMF</td><td class='hi'>✓ observe</td><td>yes</td><td>682</td></tr>
+</tbody></table></div></div></div>
+<div class="diagram-wrap"><div class="diagram-label">Baseline v2 right, SHMF wrong · noisy · pool 117</div><div class="diagram-body">
+<p style="font-family:var(--mono);font-size:.74rem;margin-bottom:.6rem"><b>smell</b>: odor_type=smoke, odor_intensity=strong, pleasantness=foul<br><b>audio</b>: sound_type=none, audio_intensity=low<br><b>vision</b>: object_type=vehicle, motion=slow, color=dark<br><b>touch</b>: contact=none, texture=smooth, thermal=neutral, touch_intensity=low</p><p style="font-family:var(--sans);font-size:.82rem">Correct action: <code>alert</code></p>
+<div class="tbl-wrap"><table><thead><tr><th>Model</th><th>Output</th><th>Evidence</th><th>Scanned</th></tr></thead><tbody>
+<tr><td>Baseline v2</td><td class='hi'>✓ alert</td><td>yes</td><td>700</td></tr>
+<tr><td>Baseline v2+dlCBF</td><td class='lo'>✗ observe</td><td>none</td><td>0</td></tr>
+<tr><td>Core v2</td><td class='hi'>✓ alert</td><td>yes</td><td>700</td></tr>
+<tr><td>HyST</td><td class='lo'>✗ observe</td><td>none</td><td>700</td></tr>
+<tr><td>HMGI</td><td class='hi'>✓ alert</td><td>yes</td><td>700</td></tr>
+<tr><td>SHMF</td><td class='lo'>✗ observe</td><td>none</td><td>700</td></tr>
+</tbody></table></div></div></div>
+<div class="diagram-wrap"><div class="diagram-label">SHMF right, Baseline v2 wrong · clean · pool 73</div><div class="diagram-body">
+<p style="font-family:var(--mono);font-size:.74rem;margin-bottom:.6rem"><b>smell</b>: odor_type=smoke, odor_intensity=moderate, pleasantness=foul<br><b>vision</b>: object_type=vehicle, motion=slow, color=bright</p><p style="font-family:var(--sans);font-size:.82rem">Correct action: <code>alert</code></p>
+<div class="tbl-wrap"><table><thead><tr><th>Model</th><th>Output</th><th>Evidence</th><th>Scanned</th></tr></thead><tbody>
+<tr><td>Baseline v2</td><td class='lo'>✗ withdraw</td><td>yes</td><td>700</td></tr>
+<tr><td>Baseline v2+dlCBF</td><td class='lo'>✗ withdraw</td><td>yes</td><td>700</td></tr>
+<tr><td>Core v2</td><td class='lo'>✗ withdraw</td><td>yes</td><td>700</td></tr>
+<tr><td>HyST</td><td class='hi'>✓ alert</td><td>yes</td><td>700</td></tr>
+<tr><td>HMGI</td><td class='lo'>✗ withdraw</td><td>yes</td><td>626</td></tr>
+<tr><td>SHMF</td><td class='hi'>✓ alert</td><td>yes</td><td>626</td></tr>
+</tbody></table></div></div></div>
+<div class="diagram-wrap"><div class="diagram-label">dlCBF gate shuts; the same model ungated is right · clean · pool 466</div><div class="diagram-body">
+<p style="font-family:var(--mono);font-size:.74rem;margin-bottom:.6rem"><b>vision</b>: object_type=animal, motion=static, color=bright<br><b>audio</b>: sound_type=speech, audio_intensity=low<br><b>smell</b>: odor_type=food, odor_intensity=faint, pleasantness=pleasant</p><p style="font-family:var(--sans);font-size:.82rem">Correct action: <code>approach</code></p>
+<div class="tbl-wrap"><table><thead><tr><th>Model</th><th>Output</th><th>Evidence</th><th>Scanned</th></tr></thead><tbody>
+<tr><td>Baseline v2</td><td class='hi'>✓ approach</td><td>yes</td><td>700</td></tr>
+<tr><td>Baseline v2+dlCBF</td><td class='lo'>✗ observe</td><td>none</td><td>0</td></tr>
+<tr><td>Core v2</td><td class='hi'>✓ approach</td><td>yes</td><td>700</td></tr>
+<tr><td>HyST</td><td class='hi'>✓ approach</td><td>yes</td><td>700</td></tr>
+<tr><td>HMGI</td><td class='hi'>✓ approach</td><td>yes</td><td>658</td></tr>
+<tr><td>SHMF</td><td class='hi'>✓ approach</td><td>yes</td><td>658</td></tr>
+</tbody></table></div></div></div>
+<div class="diagram-wrap"><div class="diagram-label">noisy scene: every model wrong · noisy · pool 59</div><div class="diagram-body">
+<p style="font-family:var(--mono);font-size:.74rem;margin-bottom:.6rem"><b>vision</b>: object_type=unknown, motion=slow, color=blue<br><b>smell</b>: odor_type=none, odor_intensity=faint, pleasantness=neutral<br><b>audio</b>: sound_type=none, audio_intensity=low</p><p style="font-family:var(--sans);font-size:.82rem">Correct action: <code>ignore</code></p>
+<div class="tbl-wrap"><table><thead><tr><th>Model</th><th>Output</th><th>Evidence</th><th>Scanned</th></tr></thead><tbody>
+<tr><td>Baseline v2</td><td class='lo'>✗ observe</td><td>yes</td><td>700</td></tr>
+<tr><td>Baseline v2+dlCBF</td><td class='lo'>✗ observe</td><td>none</td><td>0</td></tr>
+<tr><td>Core v2</td><td class='lo'>✗ alert</td><td>yes</td><td>700</td></tr>
+<tr><td>HyST</td><td class='lo'>✗ observe</td><td>yes</td><td>700</td></tr>
+<tr><td>HMGI</td><td class='lo'>✗ alert</td><td>yes</td><td>658</td></tr>
+<tr><td>SHMF</td><td class='lo'>✗ observe</td><td>yes</td><td>658</td></tr>
+</tbody></table></div></div></div>
+  <div class="callout">
+    <div class="callout-label">What the examples show</div>
+    <p>HMGI always answers like Core v2. HyST and SHMF fix Core v2's unsafe <code>approach</code> on danger scenes, and SHMF answers where HyST's strict filter is empty. Baseline v2 wins when the nearest neighbours agree, and loses when a decisive cue (smoke rather than heat) is outvoted by look-alike scenes — the case HyST's hard filter exists for. The dlCBF gate silences the model on any scene not stored verbatim.</p>
+  </div>
+</section>
+
+<!-- 9 -->
+<section id="m9">
+  <span class="section-num">10</span>
+  <h2>Improvements, step by step</h2>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Step</th><th>Change</th><th>Problem it solved</th><th>Effect (v3 clean)</th></tr></thead>
+    <tbody>
+      <tr><td>G1 → G2/G3</td><td>Bloom / dlCBF gate, Z-numbers</td><td>Intended speed-up and confidence-aware matching</td><td class="lo">Accuracy 43.1 → 38.1; unsafe 47 → 62. The gate shut out every near match.</td></tr>
+      <tr><td>G1 → Baseline v2</td><td>Same algorithm, given four senses and five actions</td><td>Unfair comparison: G1 could not see heat or smell, or withdraw</td><td class="hi">Accuracy 43.1 → 79.6; unsafe 47 → 0. Inputs, not the algorithm, were most of G1's deficit on v3.</td></tr>
+      <tr><td>G3 → Core v2</td><td>Four senses, five actions, per-sense confidence, reflexes, ageing, experts</td><td>Old schema could not perceive heat or smell, or withdraw</td><td>Unsafe 62 → 31; all answers expressible; accuracy 34.2 (per-action averaging)</td></tr>
+      <tr><td>Core v2 → HyST</td><td>Hard filter on safety features, graded soft kernel, divergent/urgent modes</td><td>Irrelevant memories outvoting exact matches</td><td class="hi">Accuracy 34.2 → 64.0; unsafe 31 → 1.2</td></tr>
+      <tr><td>Core v2 → HMGI</td><td>Modality partitions, episode graph, scan instrumentation</td><td>Scanning all of memory; no sequence structure</td><td>Same decisions; 700 → 637 scanned; no speed gain yet</td></tr>
+      <tr><td>HyST + HMGI → SHMF</td><td>Partition then filter; auto-relax when empty; cached pass</td><td>HyST's empty results on unfamiliar scenes</td><td class="hi">Accuracy 64.0 → 75.6; empty results 18.3 → 2.3%; unsafe 1.2 → 2.1</td></tr>
+      <tr><td>SHMF → SHMF + global vote <span class="chip chip-adapt">test</span></td><td>Baseline v2's global top-5 vote inside SHMF's filter</td><td>Per-action voting inherited from Core v2</td><td class="hi">Accuracy 75.6 → 80.4 (noisy 68.1 → 74.2); unsafe 2.1 → 1.7. One-off measurement, not yet a model.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Fixes found along the way</h3>
+  <p>Comparing all models side by side exposed two bugs in the shared engine, now fixed in every model from Core v2 on:</p>
+  <ul class="plain">
+    <li><b>Similarity kernel</b> — matched features were scored <code>c1 × c2</code>, so an exact repeat scored 0.96 instead of 1. Now <code>min(c1, c2)</code>.</li>
+    <li><b>Empty evidence</b> — with nothing retrieved, every action tied at 0.5 and the tie went to <code>ignore</code>. Now the agent observes. HyST's unsafe rate fell from 22.9% to 1.2%, SHMF's from 5.4% to 2.1%.</li>
+  </ul>
+
+  <h3>Data grew alongside</h3>
+  <p>Each bank was built when the previous one stopped separating the models: v1 could not show the value of touch and smell, so v2 added them; v2 was small and clean, so v3 added scale, partial percepts, contradictions and expert corrections — the conditions under which HyST's filter and SHMF's relaxation actually matter.</p>
+</section>
+
+<!-- 10 -->
+<section id="m10">
+  <span class="section-num">11</span>
+  <h2>What we take forward</h2>
+  <ul class="plain">
+    <li><b>Compare on matching inputs.</b> Given the same senses and actions, the old baseline algorithm beats HyST and SHMF on the generated bank. Much of the apparent progress from G1 came from richer inputs, not better retrieval.</li>
+    <li><b>Who votes and how they vote both matter.</b> HyST's hard filter removes dangerous look-alikes, which is decisive on the hand-written banks. The baseline's global top-5 avoids per-action averaging, which is decisive on v3. Combining the two is the best result so far (80.4% / 74.2%).</li>
+    <li><b>Exact-membership structures do not suit similarity recall.</b> The Bloom gates only removed evidence; they survive only as an exact-repeat hint.</li>
+    <li><b>Strictness needs a fallback.</b> SHMF's relaxation recovers most of what strict filtering loses, while never relaxing under urgency.</li>
+    <li><b>Next step:</b> make "SHMF filter + global top-k vote" a proper model, and re-check KERL and TIDE, which inherit the per-action vote too.</li>
+    <li><b>Structure pays off later.</b> HMGI did not change accuracy or speed, but its partitions and episode graph underpin the later KERL and TIDE models, which add affect, explanation, spreading activation and time-bounded decisions (see the <em>MPCS Progress Report</em>).</li>
+  </ul>
+</section>
+
+</div>
+</body>
+</html>

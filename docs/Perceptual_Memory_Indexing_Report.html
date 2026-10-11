@@ -1,0 +1,1771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Perceptual Memory Indexing &amp; Retrieval — Integrating HMGI, HyST and KERL</title>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1815;
+    --ink2: #3d3830;
+    --ink3: #6b6258;
+    --page: #f9f7f3;
+    --surface: #f2ede5;
+    --border: #e0d8cc;
+    --accent: #2b4c7e;
+    --accent2: #1e6e5b;
+    --accent3: #8b3a1a;
+    --accent-pale: #e8eef6;
+    --accent2-pale: #e4f0ec;
+    --accent3-pale: #f4ede8;
+    --amber: #b07a12;
+    --amber-pale: #fdf3e0;
+    --purple: #5a3d8a;
+    --purple-pale: #ede9f6;
+    --rule: #cfc7b8;
+    --mono: 'DM Mono', monospace;
+    --serif: 'EB Garamond', Georgia, serif;
+    --sans: 'Outfit', sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; }
+  body {
+    background: var(--page);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 1.0625rem;
+    line-height: 1.78;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page-wrap { max-width: 880px; margin: 0 auto; padding: 0 2.5rem 6rem; }
+
+  /* ── Cover ── */
+  .cover { padding: 5rem 0 4rem; border-bottom: 1.5px solid var(--ink); margin-bottom: 3.5rem; }
+  .cover-badge {
+    font-family: var(--sans); font-size: 0.7rem; font-weight: 600;
+    letter-spacing: 0.15em; text-transform: uppercase; color: var(--ink3);
+    margin-bottom: 1.5rem;
+  }
+  .cover h1 {
+    font-family: var(--serif); font-size: 3rem; font-weight: 500;
+    line-height: 1.12; letter-spacing: -0.01em; color: var(--ink);
+    margin-bottom: 0.4rem; max-width: 720px;
+  }
+  .cover-sub {
+    font-family: var(--serif); font-style: italic; font-size: 1.32rem;
+    color: var(--ink3); margin-bottom: 2.5rem; max-width: 660px;
+  }
+  .cover-meta {
+    font-family: var(--sans); font-size: 0.8rem; color: var(--ink3);
+    display: flex; gap: 2rem; flex-wrap: wrap;
+  }
+
+  /* ── Abstract ── */
+  .abstract {
+    background: var(--surface); border-left: 3px solid var(--accent);
+    padding: 1.5rem 2rem; border-radius: 0 8px 8px 0; margin-bottom: 3rem;
+  }
+  .abstract-label {
+    font-family: var(--sans); font-size: 0.65rem; font-weight: 600;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent);
+    margin-bottom: 0.6rem;
+  }
+  .abstract p { font-size: 0.96rem; line-height: 1.7; color: var(--ink2); }
+  .abstract p + p { margin-top: 0.8rem; }
+
+  /* ── Provenance key ── */
+  .key-strip {
+    display: flex; gap: 1.2rem; flex-wrap: wrap; align-items: center;
+    border: 1px solid var(--border); background: #fff;
+    border-radius: 8px; padding: 0.85rem 1.2rem; margin-bottom: 3.5rem;
+  }
+  .key-strip .key-title {
+    font-family: var(--sans); font-size: 0.72rem; font-weight: 600;
+    color: var(--ink3); letter-spacing: 0.04em;
+  }
+  .badge {
+    font-family: var(--sans); font-size: 0.66rem; font-weight: 600;
+    letter-spacing: 0.06em; padding: 0.15rem 0.55rem; border-radius: 20px;
+    display: inline-block; vertical-align: 0.12em; white-space: nowrap;
+  }
+  .badge.paper { background: var(--accent2-pale); color: var(--accent2); border: 1px solid #b9dccf; }
+  .badge.ours  { background: var(--purple-pale); color: var(--purple); border: 1px solid #cfc2e8; }
+  .badge.now   { background: var(--accent3-pale); color: var(--accent3); border: 1px solid #e3c8b8; }
+
+  /* ── TOC ── */
+  .toc { margin-bottom: 4rem; }
+  .toc-title {
+    font-family: var(--sans); font-size: 0.65rem; font-weight: 600;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink3);
+    margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);
+  }
+  .toc ol { list-style: none; counter-reset: toc; column-count: 2; column-gap: 2rem; }
+  .toc ol li {
+    counter-increment: toc; font-family: var(--sans); font-size: 0.83rem;
+    color: var(--ink3); padding: 0.22rem 0; display: flex; align-items: baseline;
+    gap: 0.5rem; break-inside: avoid;
+  }
+  .toc ol li::before {
+    content: counter(toc, decimal-leading-zero); font-family: var(--mono);
+    font-size: 0.68rem; color: var(--rule); min-width: 1.8rem;
+  }
+
+  /* ── Sections ── */
+  section { margin-bottom: 4rem; }
+  .section-num {
+    font-family: var(--mono); font-size: 0.7rem; color: var(--rule);
+    letter-spacing: 0.08em; display: block; margin-bottom: 0.25rem;
+  }
+  h2 {
+    font-family: var(--serif); font-size: 2rem; font-weight: 500; line-height: 1.15;
+    color: var(--ink); margin-bottom: 1.4rem; padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  h3 {
+    font-family: var(--sans); font-size: 0.95rem; font-weight: 600;
+    color: var(--ink2); margin: 2rem 0 0.75rem;
+  }
+  h4 {
+    font-family: var(--sans); font-size: 0.82rem; font-weight: 600;
+    letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink3);
+    margin: 1.5rem 0 0.5rem;
+  }
+  p { margin-bottom: 1rem; }
+  p:last-child { margin-bottom: 0; }
+  em.term { font-style: italic; }
+  code {
+    font-family: var(--mono); font-size: 0.85em; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 4px; padding: 0.05em 0.32em;
+  }
+
+  /* ── Diagrams ── */
+  .diagram-wrap {
+    margin: 2.2rem 0; background: #fff; border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden;
+  }
+  .diagram-label {
+    font-family: var(--sans); font-size: 0.7rem; font-weight: 600;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink3);
+    padding: 0.6rem 1.2rem; border-bottom: 1px solid var(--border);
+    background: var(--surface); display: flex; align-items: center; gap: 0.5rem;
+  }
+  .diagram-label::before {
+    content: ''; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent); display: inline-block;
+  }
+  .diagram-body { padding: 1.5rem; overflow-x: auto; }
+  svg.diag { width: 100%; height: auto; display: block; min-width: 560px; }
+
+  /* ── Info cards ── */
+  .info-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 1rem; margin: 1.5rem 0;
+  }
+  .info-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 1rem 1.1rem;
+  }
+  .info-card-label {
+    font-family: var(--sans); font-size: 0.68rem; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink3);
+    margin-bottom: 0.35rem;
+  }
+  .info-card-title {
+    font-family: var(--serif); font-size: 1.05rem; font-weight: 500;
+    color: var(--ink); margin-bottom: 0.3rem;
+  }
+  .info-card-text {
+    font-family: var(--sans); font-size: 0.8rem; line-height: 1.55; color: var(--ink3);
+  }
+  .info-card.blue { border-left: 3px solid var(--accent); }
+  .info-card.green { border-left: 3px solid var(--accent2); }
+  .info-card.orange { border-left: 3px solid var(--accent3); }
+  .info-card.purple { border-left: 3px solid var(--purple); }
+  .info-card.amber { border-left: 3px solid var(--amber); }
+
+  /* ── Formula ── */
+  .formula {
+    background: var(--ink); color: #e8e2d8; font-family: var(--mono);
+    font-size: 0.85rem; padding: 1.1rem 1.5rem; border-radius: 8px;
+    margin: 1.2rem 0; line-height: 1.65; overflow-x: auto; white-space: pre;
+  }
+  .formula .comment { color: #7a7060; }
+  .formula .key { color: #8ecfb0; }
+  .formula .val { color: #d4a96a; }
+  .formula .warn { color: #d98d7a; }
+
+  /* ── Table ── */
+  table {
+    width: 100%; border-collapse: collapse; font-family: var(--sans);
+    font-size: 0.83rem; margin: 1.2rem 0;
+  }
+  th {
+    background: var(--surface); color: var(--ink2); font-weight: 600;
+    font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase;
+    text-align: left; padding: 0.55rem 0.9rem; border-bottom: 1.5px solid var(--border);
+  }
+  td {
+    padding: 0.5rem 0.9rem; border-bottom: 1px solid var(--border);
+    color: var(--ink2); vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface); }
+  td.tick { color: var(--accent2); font-weight: 600; text-align: center; }
+  td.cross { color: var(--accent3); text-align: center; }
+  td.part { color: var(--amber); text-align: center; }
+
+  /* ── Callout ── */
+  .callout {
+    border-left: 3px solid var(--amber); background: var(--amber-pale);
+    padding: 1rem 1.25rem; border-radius: 0 8px 8px 0; margin: 1.5rem 0;
+  }
+  .callout.purple { border-color: var(--purple); background: var(--purple-pale); }
+  .callout.green { border-color: var(--accent2); background: var(--accent2-pale); }
+  .callout.blue { border-color: var(--accent); background: var(--accent-pale); }
+  .callout.orange { border-color: var(--accent3); background: var(--accent3-pale); }
+  .callout .callout-label {
+    font-family: var(--sans); font-size: 0.68rem; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--amber);
+    margin-bottom: 0.35rem;
+  }
+  .callout.purple .callout-label { color: var(--purple); }
+  .callout.green .callout-label { color: var(--accent2); }
+  .callout.blue .callout-label { color: var(--accent); }
+  .callout.orange .callout-label { color: var(--accent3); }
+  .callout p {
+    font-family: var(--sans); font-size: 0.86rem; color: var(--ink2);
+    line-height: 1.62; margin: 0;
+  }
+  .callout p + p { margin-top: 0.6rem; }
+
+  /* ── Lists ── */
+  ul.plain {
+    font-family: var(--sans); font-size: 0.87rem; color: var(--ink2);
+    padding-left: 1.3rem; line-height: 1.7; margin: 0.8rem 0;
+  }
+  ul.plain li { margin-bottom: 0.35rem; }
+  ul.plain li strong { font-weight: 600; color: var(--ink); }
+
+  .contrib-list { list-style: none; margin: 1rem 0; }
+  .contrib-list li {
+    display: flex; align-items: flex-start; gap: 0.9rem; padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border); font-family: var(--sans);
+    font-size: 0.86rem; color: var(--ink2); line-height: 1.55;
+  }
+  .contrib-list li::before {
+    content: '·'; font-family: var(--mono); color: var(--accent);
+    font-size: 1.4rem; line-height: 1; flex-shrink: 0; margin-top: 0.1rem;
+  }
+  .contrib-list li strong { font-weight: 600; color: var(--ink); }
+
+  .pipeline-steps { counter-reset: step; list-style: none; margin: 1rem 0; }
+  .pipeline-steps li {
+    counter-increment: step; display: flex; align-items: flex-start;
+    gap: 1rem; padding: 0.7rem 0; border-bottom: 1px solid var(--border);
+  }
+  .pipeline-steps li::before {
+    content: counter(step); font-family: var(--mono); font-size: 0.75rem;
+    font-weight: 500; background: var(--accent); color: #fff;
+    width: 22px; height: 22px; border-radius: 50%; display: flex;
+    align-items: center; justify-content: center; flex-shrink: 0; margin-top: 0.15rem;
+  }
+  .pipeline-steps li span {
+    font-family: var(--sans); font-size: 0.86rem; color: var(--ink2); line-height: 1.55;
+  }
+
+  /* ── Paper header block ── */
+  .paper-head {
+    border: 1px solid var(--border); border-radius: 10px;
+    background: #fff; padding: 1.2rem 1.4rem; margin-bottom: 1.6rem;
+  }
+  .paper-head .ph-title {
+    font-family: var(--serif); font-size: 1.25rem; color: var(--ink);
+    margin-bottom: 0.3rem; line-height: 1.3;
+  }
+  .paper-head .ph-meta {
+    font-family: var(--mono); font-size: 0.72rem; color: var(--ink3); margin-bottom: 0.7rem;
+  }
+  .paper-head .ph-claim {
+    font-family: var(--sans); font-size: 0.86rem; color: var(--ink2); line-height: 1.6;
+  }
+
+  /* ── Ledger (solves / cheaper / limits) ── */
+  .ledger { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px,1fr)); gap: 1rem; margin: 1.6rem 0; }
+  .ledger .col { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: #fff; }
+  .ledger .col-head {
+    font-family: var(--sans); font-size: 0.68rem; font-weight: 600;
+    letter-spacing: 0.09em; text-transform: uppercase; padding: 0.5rem 0.9rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .ledger .col.a .col-head { background: var(--accent2-pale); color: var(--accent2); }
+  .ledger .col.b .col-head { background: var(--accent-pale); color: var(--accent); }
+  .ledger .col.c .col-head { background: var(--accent3-pale); color: var(--accent3); }
+  .ledger .col-body {
+    font-family: var(--sans); font-size: 0.81rem; line-height: 1.58;
+    color: var(--ink2); padding: 0.8rem 0.9rem;
+  }
+  .ledger .col-body ul { padding-left: 1.05rem; margin: 0; }
+  .ledger .col-body li { margin-bottom: 0.4rem; }
+  .ledger .col-body li:last-child { margin-bottom: 0; }
+
+  /* ── Running example strip ── */
+  .runex {
+    border: 1px solid var(--purple); border-left-width: 3px;
+    background: var(--purple-pale); border-radius: 0 8px 8px 0;
+    padding: 1rem 1.25rem; margin: 1.5rem 0;
+  }
+  .runex .rx-label {
+    font-family: var(--sans); font-size: 0.68rem; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--purple);
+    margin-bottom: 0.4rem;
+  }
+  .runex p, .runex li {
+    font-family: var(--sans); font-size: 0.85rem; color: var(--ink2); line-height: 1.6;
+  }
+  .runex code { background: #fff; border-color: #cfc2e8; }
+
+  blockquote.pull {
+    font-family: var(--serif); font-style: italic; font-size: 1.28rem;
+    color: var(--ink2); border-left: 3px solid var(--accent);
+    padding: 0.8rem 1.5rem; margin: 1.5rem 0; background: var(--accent-pale);
+    border-radius: 0 8px 8px 0;
+  }
+
+  .doc-footer {
+    border-top: 1px solid var(--border); padding-top: 2rem; margin-top: 4rem;
+    display: flex; justify-content: space-between; font-family: var(--sans);
+    font-size: 0.72rem; color: var(--rule); letter-spacing: 0.04em; flex-wrap: wrap; gap: 1rem;
+  }
+
+  @media (max-width: 720px) {
+    .page-wrap { padding: 0 1.2rem 4rem; }
+    .cover h1 { font-size: 2.1rem; }
+    .toc ol { column-count: 1; }
+  }
+  @media print {
+    body { background: #fff; }
+    .diagram-wrap, section { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+<!-- ══════════════ COVER ══════════════ -->
+<div class="cover">
+  <div class="cover-badge">Technical Research Report · Memory Subsystem Design</div>
+  <h1>Perceptual Memory Indexing and Retrieval</h1>
+  <div class="cover-sub">Integrating HMGI, HyST and KERL into the memory layer of a malleable perceptual-cognitive system</div>
+  <div class="cover-meta">
+    <span>Design study</span>
+    <span>Memory · Indexing · Retrieval</span>
+    <span>2026</span>
+    <span>HMGI · HyST · KERL</span>
+  </div>
+</div>
+
+<!-- ══════════════ ABSTRACT ══════════════ -->
+<div class="abstract">
+  <div class="abstract-label">Abstract</div>
+  <p>
+    Our perceptual-cognitive system stores every experience as a multimodal percept with per-channel confidence, and decides what to do next by comparing an incoming percept against those stored experiences. That comparison is currently exhaustive: every stored record is scored for every candidate action, and novelty is defined as one minus the best score found anywhere in memory. It is correct, fully explainable, and linear in the size of memory. Hash-based membership screening was evaluated as a way out of that scan and did not deliver a useful speedup, because a bare membership test only recognises verbatim repeats — and a perceptual system almost never sees the same twelve-feature configuration twice.
+  </p>
+  <p>
+    This report examines three retrieval papers — <em>HMGI</em> (hybrid multimodal graph indexing), <em>HyST</em> (hybrid retrieval over semi-structured data), and <em>KERL</em> (knowledge-graph-augmented recommendation) — and shows what each contributes to the specific problem we have. HMGI supplies similarity-sensitive indexing partitioned by modality, a fusion score that combines vector proximity with relational structure, and a delta-store update discipline for write-heavy workloads. HyST supplies the separation of hard structured constraints from soft semantic preference, so that filtering happens in metadata rather than inside the similarity function. KERL supplies constrained selection over a retrieved subgraph, and a training regime that teaches a selector to reject plausible near-misses. We then synthesise them into a five-layer memory stack — representation, screening, novelty, ranked retrieval, and update — and trace one stimulus end to end through it.
+  </p>
+</div>
+
+<div class="key-strip">
+  <span class="key-title">Provenance markers used throughout</span>
+  <span><span class="badge paper">From the paper</span> mechanism as published</span>
+  <span><span class="badge ours">Our integration</span> our proposed adaptation</span>
+  <span><span class="badge now">Current system</span> how it works today</span>
+</div>
+
+<!-- ══════════════ TOC ══════════════ -->
+<div class="toc">
+  <div class="toc-title">Contents</div>
+  <ol>
+    <li>The retrieval problem we actually have</li>
+    <li>Why a membership filter was the wrong tool</li>
+    <li>HMGI — similarity-sensitive multimodal indexing</li>
+    <li>HyST — hard constraints before soft similarity</li>
+    <li>KERL — constrained selection over a retrieved subgraph</li>
+    <li>Synthesis: the five-layer memory stack</li>
+    <li>Layer A — Multisensory memory representation</li>
+    <li>Layer B — Fast membership and index screening</li>
+    <li>Layer C — Similarity-sensitive novelty detection</li>
+    <li>Layer D — Semantic, emotional and contextual retrieval</li>
+    <li>Layer E — Memory updating and learning</li>
+    <li>Running example: one stimulus, end to end</li>
+    <li>Why the three are complementary</li>
+    <li>Cost, limits, and what we decline to adopt</li>
+    <li>The proposed retrieval stack</li>
+  </ol>
+</div>
+
+<!-- ══════════════ §1 ══════════════ -->
+<section id="problem">
+  <span class="section-num">§ 01</span>
+  <h2>The retrieval problem we actually have</h2>
+
+  <p>
+    Every cognitive step in our system asks memory three questions in quick succession, and the quality of the whole step depends on all three being answered well.
+  </p>
+
+  <div class="info-grid">
+    <div class="info-card blue">
+      <div class="info-card-label">Question 1</div>
+      <div class="info-card-title">Is this new?</div>
+      <div class="info-card-text">Novelty drives exploration pressure and the size of the threshold update. It must be graded, not binary: "somewhat familiar" is the common case.</div>
+    </div>
+    <div class="info-card purple">
+      <div class="info-card-label">Question 2</div>
+      <div class="info-card-title">What does it resemble?</div>
+      <div class="info-card-text">Which past experiences are close enough in meaning, feeling and context that their outcomes should be borrowed for this one?</div>
+    </div>
+    <div class="info-card amber">
+      <div class="info-card-label">Question 3</div>
+      <div class="info-card-title">What did those cost?</div>
+      <div class="info-card-text">Each retrieved memory carries an action and a reward. Their weighted verdict becomes the score for each candidate action, and the basis of the penalty rule.</div>
+    </div>
+  </div>
+
+  <p>
+    Today all three are answered by the same operation: a full pass over stored experience, computing a confidence-weighted, key-aligned match between the incoming percept and every record. This is honest and interpretable — every number in the explanation payload traces back to a specific stored memory — but it has three structural weaknesses.
+  </p>
+
+  <div class="diagram-wrap">
+    <div class="diagram-label">Diagram 1 — Where a step's memory cost goes today</div>
+    <div class="diagram-body">
+      <svg class="diag" viewBox="0 0 780 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Current memory access pattern: one percept compared against every stored record for novelty and once per action for scoring.">
+        <defs>
+          <marker id="d1a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#6b6258" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+          <marker id="d1r" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#8b3a1a" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+        </defs>
+
+        <rect x="20" y="118" width="150" height="62" rx="8" fill="#e8eef6" stroke="#2b4c7e" stroke-width="1.2"/>
+        <text x="95" y="143" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="12.5" font-weight="600" fill="#2b4c7e">Incoming percept</text>
+        <text x="95" y="160" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#5a7aaa">12 features · 4 modalities</text>
+
+        <line x1="170" y1="149" x2="222" y2="149" stroke="#6b6258" stroke-width="1.2" marker-end="url(#d1a)"/>
+
+        <rect x="224" y="34" width="196" height="230" rx="9" fill="#faeeda" stroke="#b07a12" stroke-width="1.2"/>
+        <text x="322" y="56" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="12.5" font-weight="600" fill="#7a5410">Full linear scan</text>
+        <text x="322" y="73" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#9a7020">every stored record, every time</text>
+
+        <g font-family="'DM Mono',monospace" font-size="9.5" fill="#7a5410">
+          <rect x="242" y="86" width="160" height="19" rx="4" fill="#fff" stroke="#e2c894"/>
+          <text x="322" y="99" text-anchor="middle">record 1</text>
+          <rect x="242" y="110" width="160" height="19" rx="4" fill="#fff" stroke="#e2c894"/>
+          <text x="322" y="123" text-anchor="middle">record 2</text>
+          <rect x="242" y="134" width="160" height="19" rx="4" fill="#fff" stroke="#e2c894"/>
+          <text x="322" y="147" text-anchor="middle">record 3</text>
+          <text x="322" y="170" text-anchor="middle" font-size="13">⋮</text>
+          <rect x="242" y="180" width="160" height="19" rx="4" fill="#fff" stroke="#e2c894"/>
+          <text x="322" y="193" text-anchor="middle">record N</text>
+        </g>
+        <text x="322" y="222" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#9a7020">novelty: 1 − max similarity</text>
+        <text x="322" y="238" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#9a7020">scoring: one ranked pass per action</text>
+        <text x="322" y="254" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#8b3a1a">≈ (1 + |A|) · N comparisons</text>
+
+        <line x1="420" y1="100" x2="472" y2="72" stroke="#8b3a1a" stroke-width="1.2" marker-end="url(#d1r)"/>
+        <line x1="420" y1="149" x2="472" y2="149" stroke="#8b3a1a" stroke-width="1.2" marker-end="url(#d1r)"/>
+        <line x1="420" y1="198" x2="472" y2="226" stroke="#8b3a1a" stroke-width="1.2" marker-end="url(#d1r)"/>
+
+        <rect x="474" y="44" width="286" height="56" rx="8" fill="#f4ede8" stroke="#8b3a1a" stroke-width="1"/>
+        <text x="617" y="66" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="12" font-weight="600" fill="#8b3a1a">Cost grows with every step taken</text>
+        <text x="617" y="85" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#aa5a30">memory only ever grows; nothing is indexed</text>
+
+        <rect x="474" y="120" width="286" height="56" rx="8" fill="#f4ede8" stroke="#8b3a1a" stroke-width="1"/>
+        <text x="617" y="142" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="12" font-weight="600" fill="#8b3a1a">Constraints hide inside similarity</text>
+        <text x="617" y="161" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#aa5a30">"same action" is a filter, spent as a scan</text>
+
+        <rect x="474" y="196" width="286" height="56" rx="8" fill="#f4ede8" stroke="#8b3a1a" stroke-width="1"/>
+        <text x="617" y="218" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="12" font-weight="600" fill="#8b3a1a">One flat score for four kinds of match</text>
+        <text x="617" y="237" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#aa5a30">semantic, emotional, contextual, relational</text>
+      </svg>
+    </div>
+  </div>
+
+  <h3>The three weaknesses, stated precisely</h3>
+  <ul class="plain">
+    <li><strong>Linear novelty.</strong> Novelty is the complement of the best similarity found across all of memory, which means the answer to a cheap question costs a full traversal. As sessions lengthen, the cheapest question becomes the most expensive one.</li>
+    <li><strong>Filtering by scanning.</strong> Retrieval-for-scoring restricts candidates to those sharing a given action, but it discovers that restriction by walking the whole store and discarding non-matches. A structural property known before the scan is being paid for during it.</li>
+    <li><strong>One similarity for everything.</strong> Semantic overlap ("both involve smoke"), emotional alignment ("both were high-arousal and negative"), contextual match ("both in the kitchen, both at night") and relational proximity ("this followed the same event that preceded that one") all collapse into a single confidence-weighted feature count. Nothing lets the system weight them differently for different situations.</li>
+  </ul>
+
+  <p>
+    The three papers address these three weaknesses almost one to one, and they do it at different layers of the stack, which is why they compose instead of competing.
+  </p>
+</section>
+
+<!-- ══════════════ §2 ══════════════ -->
+<section id="bloom">
+  <span class="section-num">§ 02</span>
+  <h2>Why a membership filter was the wrong tool</h2>
+
+  <p>
+    Before the papers, it is worth being precise about what the earlier hash-based screening attempt could and could not do, because the shape of that failure determines what a replacement has to provide. <span class="badge now">Current system</span>
+  </p>
+
+  <p>
+    A counting membership filter answers exactly one question — <em class="term">has this exact key been inserted before?</em> — in constant time and tiny space. For a perceptual percept, the key is the full feature configuration. With four modalities and twelve categorical features, the space of distinct configurations is combinatorially large, so two experiences that a human would call "the same kind of moment" almost never produce the same key. The filter therefore reports "unseen" for nearly every percept, and the answer, while correct, carries no usable information. The screen never screens anything out, so no downstream work is avoided, and the measured speedup is roughly zero. Its remaining honest use is as an exact-repeat hint: a signal that this precise configuration has recurred verbatim.
+  </p>
+
+  <div class="diagram-wrap">
+    <div class="diagram-label">Diagram 2 — Binary membership versus graded similarity on the same percept stream</div>
+    <div class="diagram-body">
+      <svg class="diag" viewBox="0 0 780 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Comparison of a binary membership answer against a graded similarity answer across five percepts.">
+        <text x="16" y="26" font-family="'Outfit',sans-serif" font-size="11" font-weight="600" fill="#8b3a1a">Hash membership — one bit per percept</text>
+        <text x="430" y="26" font-family="'Outfit',sans-serif" font-size="11" font-weight="600" fill="#1e6e5b">Similarity index — a graded distance</text>
+
+        <line x1="16" y1="150" x2="380" y2="150" stroke="#cfc7b8" stroke-width="1"/>
+        <line x1="430" y1="150" x2="764" y2="150" stroke="#cfc7b8" stroke-width="1"/>
+        <line x1="16" y1="60" x2="16" y2="150" stroke="#cfc7b8" stroke-width="1"/>
+        <line x1="430" y1="60" x2="430" y2="150" stroke="#cfc7b8" stroke-width="1"/>
+
+        <text x="10" y="64" text-anchor="end" font-family="'DM Mono',monospace" font-size="9" fill="#6b6258">seen</text>
+        <text x="10" y="154" text-anchor="end" font-family="'DM Mono',monospace" font-size="9" fill="#6b6258">new</text>
+        <text x="424" y="64" text-anchor="end" font-family="'DM Mono',monospace" font-size="9" fill="#6b6258">1.0</text>
+        <text x="424" y="154" text-anchor="end" font-family="'DM Mono',monospace" font-size="9" fill="#6b6258">0.0</text>
+
+        <g fill="#8b3a1a">
+          <circle cx="60" cy="150" r="5"/><circle cx="130" cy="150" r="5"/>
+          <circle cx="200" cy="150" r="5"/><circle cx="270" cy="150" r="5"/>
+          <circle cx="340" cy="60" r="5"/>
+        </g>
+        <path d="M60 150 L130 150 L200 150 L270 150 L340 60" fill="none" stroke="#8b3a1a" stroke-width="1.4" stroke-dasharray="4,3"/>
+        <text x="198" y="182" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#aa5a30">Four near-identical kitchen percepts all read "new";</text>
+        <text x="198" y="197" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#aa5a30">only the fifth, a verbatim repeat, reads "seen".</text>
+        <text x="198" y="219" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#8b3a1a">nothing is pruned → no speedup</text>
+
+        <g fill="#1e6e5b">
+          <circle cx="470" cy="118" r="5"/><circle cx="540" cy="96" r="5"/>
+          <circle cx="610" cy="88" r="5"/><circle cx="680" cy="74" r="5"/>
+          <circle cx="750" cy="61" r="5"/>
+        </g>
+        <path d="M470 118 L540 96 L610 88 L680 74 L750 61" fill="none" stroke="#1e6e5b" stroke-width="1.4"/>
+        <text x="600" y="182" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#2a8060">The same stream returns rising familiarity, and names</text>
+        <text x="600" y="197" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#2a8060">which stored percepts are responsible for it.</text>
+        <text x="600" y="219" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#1e6e5b">candidates pruned → real speedup</text>
+      </svg>
+    </div>
+  </div>
+
+  <div class="callout orange">
+    <div class="callout-label">The requirement this leaves behind</div>
+    <p>A screening layer for a perceptual system must be either <em>similarity-sensitive</em> (near-misses count as hits, with a graded score) or <em>attribute-sensitive</em> (it prunes on declared structural properties, not on a hash of the whole configuration). HMGI supplies the first; HyST supplies the second. Neither is a replacement for a membership filter — both are replacements for the linear scan the membership filter failed to avoid.</p>
+  </div>
+</section>
+
+<!-- ══════════════ §3 HMGI ══════════════ -->
+<section id="hmgi">
+  <span class="section-num">§ 03</span>
+  <h2>HMGI — similarity-sensitive multimodal indexing</h2>
+
+  <div class="paper-head">
+    <div class="ph-title">The Hybrid Multimodal Graph Index</div>
+    <div class="ph-meta">Chandra, Navneet &amp; Zhang · a framework unifying relational traversal and vector similarity search</div>
+    <div class="ph-claim">
+      The paper's premise is that vector databases and graph databases each solve half of a single problem: one finds semantically close items but cannot reason over the relationships between them, the other traverses relationships but has no native notion of semantic proximity. HMGI proposes holding both in one index — embeddings stored as node properties, relationships as edges — so a query can move between them without leaving the system.
+    </div>
+  </div>
+
+  <h3>Core mechanism</h3>
+  <p>
+    Four ideas do the work. <span class="badge paper">From the paper</span>
+  </p>
+
+  <ul class="plain">
+    <li><strong>Modality-aware partitioning.</strong> Rather than pooling all embeddings into one monolithic index, embeddings are separated by their source modality and clustered within each partition. A query touching one modality only searches that partition, which shrinks the region scanned and lets each partition be tuned independently. The paper attributes a large reduction in searched space to this, and its ablation reports that removing partitioning both slows queries and degrades cross-modal recall as clusters dilute.</li>
+    <li><strong>Graph-based approximate nearest neighbour search.</strong> A hierarchical proximity graph is traversed greedily from sparse upper layers into dense lower ones, giving query cost that grows logarithmically rather than linearly with the number of stored vectors.</li>
+    <li><strong>Fusion scoring.</strong> A candidate's final score blends its vector proximity with the scores accumulated along a short graph traversal, under weights that can be set at query time — so the balance between "semantically close" and "structurally connected" is a runtime decision, not a build-time one.</li>
+    <li><strong>Adaptive updates.</strong> New and changed items land in a delta store under multi-version concurrency control; queries hit the stable index plus a brute-force pass over the small delta, and the delta is merged into the main index asynchronously. The paper's ablation reports that removing this forces full rebuilds, inflating update latency several-fold and causing query downtime.</li>
+  </ul>
+
+  <div class="formula"><span class="key">Fusion score (paper form)</span>
+
+  S = <span class="val">w_v</span> · (1 − d_v)  +  <span class="val">w_g</span> · (1/h) · Σᵢ₌₁..h  s_gᵢ
+
+<span class="comment">d_v  normalised vector distance to the query embedding</span>
+<span class="comment">s_gᵢ score contributed by the i-th hop of the graph traversal</span>
+<span class="comment">h    number of hops; w_v, w_g set per query, not fixed at build time</span></div>
+
+  <div class="diagram-wrap">
+    <div class="diagram-label">Diagram 3 — HMGI: partitioned similarity search, then relational expansion</div>
+    <div class="diagram-body">
+      <svg class="diag" viewBox="0 0 780 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A query embedding enters modality partitions, retrieves nearest neighbours, expands over graph edges, and is scored by fusion.">
+        <defs>
+          <marker id="h1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#2b4c7e" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+          <marker id="h2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#5a3d8a" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+          <marker id="h3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#b07a12" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+        </defs>
+
+        <rect x="14" y="132" width="128" height="56" rx="8" fill="#e8eef6" stroke="#2b4c7e" stroke-width="1.2"/>
+        <text x="78" y="155" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="12" font-weight="600" fill="#2b4c7e">Query vector</text>
+        <text x="78" y="172" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9.5" fill="#5a7aaa">+ modality mask</text>
+
+        <line x1="142" y1="150" x2="186" y2="86" stroke="#2b4c7e" stroke-width="1.1" marker-end="url(#h1)"/>
+        <line x1="142" y1="160" x2="186" y2="160" stroke="#2b4c7e" stroke-width="1.1" marker-end="url(#h1)"/>
+        <line x1="142" y1="172" x2="186" y2="236" stroke="#2b4c7e" stroke-width="1.1" marker-end="url(#h1)"/>
+
+        <rect x="188" y="58" width="164" height="56" rx="8" fill="#fff" stroke="#2b4c7e" stroke-width="1"/>
+        <text x="270" y="79" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10.5" fill="#2b4c7e">partition: vision</text>
+        <text x="270" y="97" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#5a7aaa">own graph, own parameters</text>
+
+        <rect x="188" y="132" width="164" height="56" rx="8" fill="#fff" stroke="#2b4c7e" stroke-width="1"/>
+        <text x="270" y="153" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10.5" fill="#2b4c7e">partition: audio</text>
+        <text x="270" y="171" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#5a7aaa">searched — mask says audio</text>
+
+        <rect x="188" y="206" width="164" height="56" rx="8" fill="#fff" stroke="#cfc7b8" stroke-width="1" stroke-dasharray="4,3"/>
+        <text x="270" y="227" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10.5" fill="#9a9287">partition: smell</text>
+        <text x="270" y="245" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#9a9287">skipped — not in this query</text>
+
+        <line x1="352" y1="160" x2="398" y2="160" stroke="#5a3d8a" stroke-width="1.2" marker-end="url(#h2)"/>
+
+        <rect x="400" y="60" width="200" height="204" rx="9" fill="#ede9f6" stroke="#5a3d8a" stroke-width="1.2"/>
+        <text x="500" y="82" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="12" font-weight="600" fill="#5a3d8a">Neighbours, then edges</text>
+
+        <circle cx="450" cy="122" r="13" fill="#fff" stroke="#5a3d8a" stroke-width="1.4"/>
+        <text x="450" y="126" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#5a3d8a">n1</text>
+        <circle cx="530" cy="112" r="13" fill="#fff" stroke="#5a3d8a" stroke-width="1.4"/>
+        <text x="530" y="116" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#5a3d8a">n2</text>
+        <circle cx="490" cy="176" r="13" fill="#fff" stroke="#5a3d8a" stroke-width="1.4"/>
+        <text x="490" y="180" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#5a3d8a">n3</text>
+        <circle cx="562" cy="176" r="11" fill="#f6f3fb" stroke="#a08bc8" stroke-width="1.1" stroke-dasharray="3,2"/>
+        <text x="562" y="180" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8.5" fill="#8b70c0">h2</text>
+        <circle cx="440" cy="216" r="11" fill="#f6f3fb" stroke="#a08bc8" stroke-width="1.1" stroke-dasharray="3,2"/>
+        <text x="440" y="220" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8.5" fill="#8b70c0">h2</text>
+
+        <line x1="463" y1="122" x2="517" y2="112" stroke="#8b70c0" stroke-width="1"/>
+        <line x1="455" y1="134" x2="482" y2="164" stroke="#8b70c0" stroke-width="1"/>
+        <line x1="503" y1="176" x2="551" y2="176" stroke="#8b70c0" stroke-width="1" stroke-dasharray="3,2"/>
+        <line x1="443" y1="132" x2="440" y2="205" stroke="#8b70c0" stroke-width="1" stroke-dasharray="3,2"/>
+        <text x="500" y="240" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#7b5fb0">solid: nearest neighbours · dashed: 1 extra hop</text>
+
+        <line x1="600" y1="160" x2="640" y2="160" stroke="#b07a12" stroke-width="1.2" marker-end="url(#h3)"/>
+
+        <rect x="642" y="118" width="124" height="84" rx="8" fill="#faeeda" stroke="#b07a12" stroke-width="1.2"/>
+        <text x="704" y="142" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="12" font-weight="600" fill="#7a5410">Fusion</text>
+        <text x="704" y="161" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9.5" fill="#9a7020">w_v·(1−d_v)</text>
+        <text x="704" y="176" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9.5" fill="#9a7020">+ w_g·ḡ</text>
+        <text x="704" y="193" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#9a7020">ranked candidates</text>
+
+        <rect x="14" y="286" width="752" height="34" rx="7" fill="#e4f0ec" stroke="#1e6e5b" stroke-width="1"/>
+        <text x="390" y="307" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="11" fill="#1e6e5b">Writes go to a delta store; queries read stable index + delta; merging happens asynchronously, so ingestion never blocks retrieval.</text>
+      </svg>
+    </div>
+  </div>
+
+  <h3>A concrete example, in the paper's own domain</h3>
+  <p>
+    Suppose the query is a photograph of an apple and the intent is "find the product, not the fruit". A pure vector search returns whatever is visually nearest, which may be either. In HMGI, the image embedding is searched inside the image partition, the returned nodes become entry points, and a short traversal over their relationships — manufacturer, product line, category — supplies the evidence that separates the two senses. The fusion weights decide how much of the verdict comes from "looks like" and how much from "is connected to". The paper reports that partitioned strategies are notably better at exactly this kind of disambiguation than unified embeddings, at the cost of extra storage for the separate indexes.
+  </p>
+
+  <h3>The problem it solves in our system</h3>
+  <p>
+    This is the answer to weakness one and weakness three. <span class="badge ours">Our integration</span>
+  </p>
+  <ul class="plain">
+    <li><strong>Novelty becomes a top-1 lookup.</strong> Instead of scoring all of memory to find the maximum similarity, we ask the index for the nearest stored percept and take one minus its similarity. Traversal replaces enumeration.</li>
+    <li><strong>Modality partitions match the malleability property directly.</strong> Our percepts already omit modalities freely; a partitioned index turns that absence into a search-space reduction rather than an awkward gap in a fixed-length key. A percept with only audio and smell active searches two partitions and pays nothing for vision or touch.</li>
+    <li><strong>The graph half gives us relational memory we do not currently have.</strong> Successive percepts within a session, percepts that share a reflex rule, and a corrected step and its expert teaching record are all naturally edges. A one-hop expansion lets a memory be retrieved because of what it was <em>next to</em>, not only because of what it looked like.</li>
+    <li><strong>Fusion weights give the balance a dial.</strong> Under high novelty we can raise the relational weight, since vector proximity is by definition weak; under high familiarity we can lean on proximity and skip the traversal.</li>
+  </ul>
+
+  <div class="ledger">
+    <div class="col a">
+      <div class="col-head">Makes cheaper</div>
+      <div class="col-body"><ul>
+        <li>Nearest-neighbour lookup: sub-linear traversal instead of a full pass</li>
+        <li>Per-modality search space, so absent channels cost nothing</li>
+        <li>Insertion: appended to a delta, merged in the background</li>
+        <li>Storage: quantised embeddings shrink the resident footprint</li>
+      </ul></div>
+    </div>
+    <div class="col b">
+      <div class="col-head">Costs added</div>
+      <div class="col-body"><ul>
+        <li>An embedding function per modality that we do not have today</li>
+        <li>Index structure to build and maintain alongside the record list</li>
+        <li>Approximate results: the true nearest neighbour can be missed</li>
+        <li>Two extra weights and a hop budget to tune</li>
+      </ul></div>
+    </div>
+    <div class="col c">
+      <div class="col-head">Limitations to respect</div>
+      <div class="col-body"><ul>
+        <li>The paper's own limitations section flags fusion latency overhead and update-time recomputation</li>
+        <li>Its benchmarks are billion-scale; our store is thousands, where a graph index can lose to a scan</li>
+        <li>Approximation weakens the guarantee that every contributing memory is found</li>
+        <li>Embedding quality for weak channels (smell, proprioception) is acknowledged as underdeveloped</li>
+      </ul></div>
+    </div>
+  </div>
+
+  <div class="callout blue">
+    <div class="callout-label">Scale caveat, stated plainly</div>
+    <p>HMGI's reported gains come from datasets many orders of magnitude larger than an interactive session's memory. Below roughly a few thousand records a linear scan over compact tuples is likely to beat a graph traversal on wall-clock time. We therefore propose the index as a structure that <em>activates</em> above a configured record count, with the existing exhaustive path retained as the exact reference and as the fallback below that threshold.</p>
+  </div>
+</section>
+
+<!-- ══════════════ §4 HyST ══════════════ -->
+<section id="hyst">
+  <span class="section-num">§ 04</span>
+  <h2>HyST — hard constraints before soft similarity</h2>
+
+  <div class="paper-head">
+    <div class="ph-title">HyST: hybrid retrieval over semi-structured tabular data</div>
+    <div class="ph-meta">Myung, Park &amp; Han · structured filtering and semantic search in one retrieval pass</div>
+    <div class="ph-claim">
+      HyST starts from a failure mode rather than an architecture. Real queries mix requirements that must hold — a brand, a category, a price ceiling — with preferences that are matters of degree, like a cosy atmosphere. Flatten both into one string and embed it, and the retriever will happily return a French restaurant for an Italian query, because "French" is semantically near "Italian" and nothing in the pipeline treats the category as binding.
+    </div>
+  </div>
+
+  <h3>Core mechanism</h3>
+  <p>
+    The pipeline has three stages. <span class="badge paper">From the paper</span>
+  </p>
+  <ol class="pipeline-steps">
+    <li><span><strong>Filter generation.</strong> A language model reads the query and emits attribute-level conditions in the operator vocabulary the vector store already understands — equality, list membership, less-than, ranges. These become metadata filters, not text.</span></li>
+    <li><span><strong>Query refinement.</strong> The parts already captured by the filter are removed, leaving a concise semantic query describing only the subjective remainder.</span></li>
+    <li><span><strong>Filtered hybrid retrieval.</strong> The store applies the metadata conditions first to narrow the candidate set, then ranks the survivors by embedding similarity to the refined query.</span></li>
+  </ol>
+
+  <p>
+    Two results from the paper matter for us more than the headline numbers. The first is the case analysis: where semantic-only retrieval returned an item of the wrong brand because it was textually similar, the filtered pipeline could not, because the wrong brand was excluded before ranking began. The second is the ablation on stage two — removing query refinement slightly <em>improved</em> precision at deeper ranks, because the unstructured text already carried structured cues, and stripping them discarded useful signal. The authors' own conclusion is that refinement should be treated as optional and dataset-dependent.
+  </p>
+
+  <div class="diagram-wrap">
+    <div class="diagram-label">Diagram 4 — HyST applied to a percept query in our system</div>
+    <div class="diagram-body">
+      <svg class="diag" viewBox="0 0 780 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A percept is decomposed into binding metadata constraints and a soft similarity query; constraints prune the store before ranking.">
+        <defs>
+          <marker id="y1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#6b6258" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+        </defs>
+
+        <rect x="18" y="20" width="240" height="60" rx="8" fill="#f2ede5" stroke="#6b6258" stroke-width="1.2"/>
+        <text x="138" y="44" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="12" font-weight="600" fill="#3d3830">Incoming percept, step 412</text>
+        <text x="138" y="62" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9.5" fill="#6b6258">alarm · smoke · warm · slow motion</text>
+
+        <line x1="138" y1="80" x2="138" y2="112" stroke="#6b6258" stroke-width="1.1" marker-end="url(#y1)"/>
+
+        <rect x="18" y="114" width="240" height="88" rx="8" fill="#e8eef6" stroke="#2b4c7e" stroke-width="1.2"/>
+        <text x="138" y="136" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="11.5" font-weight="600" fill="#2b4c7e">Binding constraints (metadata)</text>
+        <text x="138" y="155" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9.5" fill="#5a7aaa">modalities ⊇ {audio, smell}</text>
+        <text x="138" y="170" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9.5" fill="#5a7aaa">action = "alert"</text>
+        <text x="138" y="185" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9.5" fill="#5a7aaa">step ≥ 0 · expert ∈ {true, false}</text>
+
+        <rect x="18" y="216" width="240" height="72" rx="8" fill="#e4f0ec" stroke="#1e6e5b" stroke-width="1.2"/>
+        <text x="138" y="238" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="11.5" font-weight="600" fill="#1e6e5b">Soft query (similarity)</text>
+        <text x="138" y="257" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9.5" fill="#2a8060">"high-arousal negative,</text>
+        <text x="138" y="272" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9.5" fill="#2a8060">smoke-like, indoor, evening"</text>
+
+        <line x1="258" y1="158" x2="304" y2="158" stroke="#6b6258" stroke-width="1.1" marker-end="url(#y1)"/>
+        <line x1="258" y1="252" x2="304" y2="200" stroke="#6b6258" stroke-width="1.1" marker-end="url(#y1)"/>
+
+        <rect x="306" y="60" width="170" height="200" rx="9" fill="#fff" stroke="#cfc7b8" stroke-width="1"/>
+        <text x="391" y="82" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="11.5" font-weight="600" fill="#6b6258">Memory store</text>
+
+        <rect x="322" y="96" width="138" height="18" rx="4" fill="#e8eef6" stroke="#9cb6dc"/>
+        <text x="391" y="109" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#2b4c7e">kept · alert · audio+smell</text>
+        <rect x="322" y="120" width="138" height="18" rx="4" fill="#f5f2ec" stroke="#dcd4c6"/>
+        <text x="391" y="133" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#9a9287">cut · action = withdraw</text>
+        <rect x="322" y="144" width="138" height="18" rx="4" fill="#e8eef6" stroke="#9cb6dc"/>
+        <text x="391" y="157" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#2b4c7e">kept · alert · audio+smell</text>
+        <rect x="322" y="168" width="138" height="18" rx="4" fill="#f5f2ec" stroke="#dcd4c6"/>
+        <text x="391" y="181" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#9a9287">cut · vision only</text>
+        <rect x="322" y="192" width="138" height="18" rx="4" fill="#f5f2ec" stroke="#dcd4c6"/>
+        <text x="391" y="205" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#9a9287">cut · action = observe</text>
+        <rect x="322" y="216" width="138" height="18" rx="4" fill="#e8eef6" stroke="#9cb6dc"/>
+        <text x="391" y="229" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#2b4c7e">kept · alert · audio+smell</text>
+        <text x="391" y="250" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="9.5" fill="#8b3a1a">pruned before any similarity is computed</text>
+
+        <line x1="476" y1="158" x2="520" y2="158" stroke="#6b6258" stroke-width="1.1" marker-end="url(#y1)"/>
+
+        <rect x="522" y="112" width="240" height="92" rx="9" fill="#faeeda" stroke="#b07a12" stroke-width="1.2"/>
+        <text x="642" y="136" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="12" font-weight="600" fill="#7a5410">Rank the survivors only</text>
+        <text x="642" y="158" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#9a7020">similarity is spent on candidates that</text>
+        <text x="642" y="174" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#9a7020">already satisfy every binding condition</text>
+        <text x="642" y="193" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9.5" fill="#8b3a1a">no near-miss can outrank a valid match</text>
+
+        <rect x="522" y="220" width="240" height="68" rx="9" fill="#ede9f6" stroke="#5a3d8a" stroke-width="1"/>
+        <text x="642" y="242" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="11" font-weight="600" fill="#5a3d8a">Refinement stays optional</text>
+        <text x="642" y="261" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#7b5fb0">the paper's ablation found stripping the</text>
+        <text x="642" y="275" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#7b5fb0">structured cues can cost precision</text>
+      </svg>
+    </div>
+  </div>
+
+  <h3>The problem it solves in our system</h3>
+  <p>
+    This is the answer to weakness two, and it is the honest replacement for the membership screen. <span class="badge ours">Our integration</span>
+  </p>
+  <p>
+    Our per-action retrieval is already, conceptually, a metadata filter: it wants records whose action equals the candidate action. It just implements that want as a scan. Promoting it to a declared filter over stored attributes turns it into a cheap pre-selection. And once the mechanism exists, more of our structure fits into it than just the action:
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Percept property</th><th>Treat as</th><th>Why</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Action identity</td><td>Binding filter</td><td>Scoring an action from memories of a different action is meaningless, not merely less relevant.</td></tr>
+      <tr><td>Active modality set</td><td>Binding filter</td><td>A memory recorded without touch cannot testify about a thermal reading. Absence is structural, not a low similarity.</td></tr>
+      <tr><td>Reflex rule that fired</td><td>Binding filter</td><td>When a reflex path is being valued, reflex-mode memories are the relevant population; today this is expressed as a weight multiplier applied after a full scan.</td></tr>
+      <tr><td>Expert-taught flag</td><td>Binding filter (opt-in)</td><td>Lets a correction pass consult only supervised records instead of boosting them inside a mixed pool.</td></tr>
+      <tr><td>Recency band</td><td>Binding filter (opt-in)</td><td>Time decay already discounts old records to near-irrelevance; a band excludes them before they are scored at all.</td></tr>
+      <tr><td>Valence and arousal</td><td>Soft similarity</td><td>Emotional alignment is a matter of degree. Making it binding would be exactly the error HyST warns against.</td></tr>
+      <tr><td>Semantic feature overlap</td><td>Soft similarity</td><td>"Warm" and "hot" should be near neighbours, not mutually exclusive categories.</td></tr>
+      <tr><td>Context descriptor</td><td>Soft similarity</td><td>Kitchen and dining room should partially match; a strict equality would fragment memory needlessly.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout green">
+    <div class="callout-label">What HyST costs us — almost nothing</div>
+    <p>Unlike HMGI, this layer needs no new mathematics and no embedding model. It needs the record store to keep an attribute index over fields it already writes, and the retrieval calls to declare which of their conditions are binding. It is the cheapest of the three integrations and, at our current store size, likely the largest immediate saving: it removes candidates before any similarity arithmetic occurs.</p>
+  </div>
+
+  <div class="callout orange">
+    <div class="callout-label">Limitation carried over</div>
+    <p>HyST's filters are only as good as the extraction that produces them, and the paper reports a hallucinated attribute name in its own evaluation. Our advantage is that our schema is fixed and small — modalities, actions, modes, flags are enumerated in code — so filter construction is deterministic rather than generated. Where it is not (a free-text context descriptor), the paper's warning applies directly: over-strict filtering on a fine-grained vocabulary silently empties the candidate set. Any binding filter we add needs a defined behaviour for "zero survivors", which should be relaxation to the soft path, not a cold-start fallback.</p>
+  </div>
+</section>
+
+<!-- ══════════════ §5 KERL ══════════════ -->
+<section id="kerl">
+  <span class="section-num">§ 05</span>
+  <h2>KERL — constrained selection over a retrieved subgraph</h2>
+
+  <div class="paper-head">
+    <div class="ph-title">KERL: knowledge-enhanced personalised recommendation</div>
+    <div class="ph-meta">Mohbat &amp; Zaki · knowledge-graph retrieval feeding a constrained generative selector</div>
+    <div class="ph-claim">
+      KERL handles requests carrying many simultaneous conditions — include these ingredients, exclude those, keep a nutrient inside a range — over a knowledge graph of a million recipes. Its structure is retrieval followed by judgement: parse the query into entities, pull a relevant subgraph, serialise it as context, and let a fine-tuned model select from that context the items that actually satisfy every condition. Separate lightweight adapters over one shared base then produce the downstream outputs.
+    </div>
+  </div>
+
+  <h3>Core mechanism</h3>
+  <ul class="plain">
+    <li><strong>Entity parsing to structured query.</strong> Tags and entities are extracted from the natural-language question and used to build a query over the knowledge graph from templates, returning a subgraph rather than a single answer. <span class="badge paper">From the paper</span></li>
+    <li><strong>Subgraph as context.</strong> The retrieved subgraph — names, ingredients, nutrition — is serialised and handed to the model as the ground it must reason over. The model selects; it does not invent. The paper is explicit that nothing outside the retrieved set can be recommended.</li>
+    <li><strong>Positive and negative sampling.</strong> During training each context deliberately mixes items that satisfy the constraints with items that do not, in balanced proportion, even though satisfying items are rare in the underlying data. The selector is trained on the discrimination, not on the prior.</li>
+    <li><strong>Multiple adapters, one base.</strong> Selection, step generation, and nutrient estimation each get their own small adapter over a shared backbone, so the specialised behaviours are separable and cheap while inference remains single-model.</li>
+  </ul>
+
+  <p>
+    The paper's qualitative table is the instructive part: it shows the selector returning a false positive in one case, and in another returning an item that was not in the provided context at all. Retrieval bounds what can be selected, but does not by itself guarantee that the selection is correct — a distinction that matters for us, because our equivalent of "selection" directly becomes an action.
+  </p>
+
+  <div class="diagram-wrap">
+    <div class="diagram-label">Diagram 5 — KERL's retrieve-then-select shape, mapped onto our decision step</div>
+    <div class="diagram-body">
+      <svg class="diag" viewBox="0 0 780 268" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Parsed constraints retrieve a subgraph which becomes context for a constrained selector, producing a decision plus explanation.">
+        <defs>
+          <marker id="k1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#1e6e5b" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+        </defs>
+
+        <text x="20" y="24" font-family="'Outfit',sans-serif" font-size="10.5" font-weight="600" fill="#1e6e5b">KERL, as published</text>
+        <rect x="20" y="34" width="132" height="44" rx="7" fill="#e4f0ec" stroke="#1e6e5b" stroke-width="1"/>
+        <text x="86" y="52" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#1e6e5b">Question with</text>
+        <text x="86" y="67" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#1e6e5b">constraints</text>
+        <line x1="152" y1="56" x2="176" y2="56" stroke="#1e6e5b" stroke-width="1.1" marker-end="url(#k1)"/>
+        <rect x="178" y="34" width="132" height="44" rx="7" fill="#e4f0ec" stroke="#1e6e5b" stroke-width="1"/>
+        <text x="244" y="52" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#1e6e5b">Templated query</text>
+        <text x="244" y="67" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#1e6e5b">→ subgraph</text>
+        <line x1="310" y1="56" x2="334" y2="56" stroke="#1e6e5b" stroke-width="1.1" marker-end="url(#k1)"/>
+        <rect x="336" y="34" width="146" height="44" rx="7" fill="#e4f0ec" stroke="#1e6e5b" stroke-width="1"/>
+        <text x="409" y="52" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#1e6e5b">Subgraph as context</text>
+        <text x="409" y="67" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#1e6e5b">for the selector</text>
+        <line x1="482" y1="56" x2="506" y2="56" stroke="#1e6e5b" stroke-width="1.1" marker-end="url(#k1)"/>
+        <rect x="508" y="34" width="132" height="44" rx="7" fill="#1e6e5b" stroke="#0f4438" stroke-width="1"/>
+        <text x="574" y="52" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#fff">Items that satisfy</text>
+        <text x="574" y="67" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#a8d8c8">every constraint</text>
+        <rect x="654" y="34" width="106" height="44" rx="7" fill="#fff" stroke="#1e6e5b" stroke-width="1" stroke-dasharray="4,3"/>
+        <text x="707" y="52" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#1e6e5b">task adapters</text>
+        <text x="707" y="67" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#2a8060">over one base</text>
+
+        <line x1="20" y1="106" x2="760" y2="106" stroke="#cfc7b8" stroke-width="1" stroke-dasharray="5,4"/>
+
+        <text x="20" y="132" font-family="'Outfit',sans-serif" font-size="10.5" font-weight="600" fill="#5a3d8a">The same shape in our memory layer</text>
+        <rect x="20" y="142" width="132" height="56" rx="7" fill="#ede9f6" stroke="#5a3d8a" stroke-width="1"/>
+        <text x="86" y="163" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#5a3d8a">Percept with</text>
+        <text x="86" y="178" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#5a3d8a">binding filters</text>
+        <text x="86" y="192" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8.5" fill="#8b70c0">from §04</text>
+        <line x1="152" y1="170" x2="176" y2="170" stroke="#1e6e5b" stroke-width="1.1" marker-end="url(#k1)"/>
+        <rect x="178" y="142" width="132" height="56" rx="7" fill="#ede9f6" stroke="#5a3d8a" stroke-width="1"/>
+        <text x="244" y="163" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#5a3d8a">Index + 1-hop</text>
+        <text x="244" y="178" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#5a3d8a">→ memory subgraph</text>
+        <text x="244" y="192" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8.5" fill="#8b70c0">from §03</text>
+        <line x1="310" y1="170" x2="334" y2="170" stroke="#1e6e5b" stroke-width="1.1" marker-end="url(#k1)"/>
+        <rect x="336" y="142" width="146" height="56" rx="7" fill="#ede9f6" stroke="#5a3d8a" stroke-width="1"/>
+        <text x="409" y="163" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#5a3d8a">Candidate set as the</text>
+        <text x="409" y="178" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#5a3d8a">only admissible evidence</text>
+        <text x="409" y="192" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8.5" fill="#8b70c0">nothing outside it votes</text>
+        <line x1="482" y1="170" x2="506" y2="170" stroke="#1e6e5b" stroke-width="1.1" marker-end="url(#k1)"/>
+        <rect x="508" y="142" width="132" height="56" rx="7" fill="#5a3d8a" stroke="#3f2a66" stroke-width="1"/>
+        <text x="574" y="163" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#fff">Action score per</text>
+        <text x="574" y="178" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#d6c9ee">candidate action</text>
+        <text x="574" y="192" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8.5" fill="#d6c9ee">+ support weight</text>
+        <rect x="654" y="142" width="106" height="56" rx="7" fill="#fff" stroke="#5a3d8a" stroke-width="1" stroke-dasharray="4,3"/>
+        <text x="707" y="163" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#5a3d8a">explanation</text>
+        <text x="707" y="177" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#7b5fb0">names every</text>
+        <text x="707" y="190" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#7b5fb0">contributor</text>
+
+        <rect x="20" y="222" width="740" height="34" rx="7" fill="#fdf3e0" stroke="#b07a12" stroke-width="1"/>
+        <text x="390" y="243" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#7a5410">The discipline carried over: a decision may only be justified by evidence that was actually retrieved, and the justification must name it.</text>
+      </svg>
+    </div>
+  </div>
+
+  <h3>The problem it solves in our system</h3>
+  <p>
+    HMGI and HyST both make retrieval cheaper. KERL is the only one of the three that speaks to what happens <em>after</em> retrieval — and it maps onto the part of our system that turns retrieved memories into a decision. <span class="badge ours">Our integration</span>
+  </p>
+  <ul class="plain">
+    <li><strong>Grounded scoring as a contract.</strong> KERL's insistence that recommendations come only from the retrieved subgraph is already our practice: an action's score comes from memories that were recalled for it, and a score with no support is reported as unsupported rather than dressed up as a recommendation. Adopting it explicitly means the retrieval set becomes the sole admissible evidence for the step, and the candidate-set boundary becomes a checkable property rather than an implicit one.</li>
+    <li><strong>Negative sampling for the near-miss problem.</strong> This is the genuinely new idea for us. Our scoring is a weighted average of rewards over the top-K by similarity, which cannot distinguish "similar and it went well" from "similar but the one differing feature is precisely the one that mattered". Under HMGI's approximate retrieval that risk increases. Constructing training or calibration batches that deliberately pair a satisfying memory with a near-miss that violates one binding condition is the paper's answer, and it transfers directly: we can calibrate the contribution weighting on those pairs rather than assuming similarity is monotone in relevance.</li>
+    <li><strong>Separable heads over shared retrieval.</strong> KERL's multi-adapter arrangement suggests factoring our post-retrieval stage into three small consumers of one candidate set — an action scorer, a reward estimator, and an explanation builder — rather than one function computing all three inline. Retrieval is paid once; the specialised readers are cheap.</li>
+    <li><strong>Constraint satisfaction, made explicit.</strong> KERL checks retrieved items against numeric and set conditions. Our analogue is checking that a retrieved memory's active modalities cover the features the current decision depends on. A memory recorded without touch should not carry weight in a thermal-driven withdrawal.</li>
+  </ul>
+
+  <div class="ledger">
+    <div class="col a">
+      <div class="col-head">Makes cheaper</div>
+      <div class="col-body"><ul>
+        <li>Reasoning is confined to a bounded candidate set instead of the whole store</li>
+        <li>Small task-specific heads over shared retrieval, rather than duplicated passes</li>
+        <li>Discrimination is learned from balanced pairs, not from the raw skew of the data</li>
+      </ul></div>
+    </div>
+    <div class="col b">
+      <div class="col-head">Costs added</div>
+      <div class="col-body"><ul>
+        <li>A calibration set of near-miss pairs must be constructed and maintained</li>
+        <li>A learned scorer is less transparent than a weighted average</li>
+        <li>Adds a training loop to a system that currently only updates online</li>
+      </ul></div>
+    </div>
+    <div class="col c">
+      <div class="col-head">Limitations to respect</div>
+      <div class="col-body"><ul>
+        <li>The paper reports both false positives and selections outside the provided context</li>
+        <li>Nothing can be recommended if retrieval returns nothing relevant — the empty-candidate path must be designed, not defaulted</li>
+        <li>Retrieval quality caps everything downstream; a good selector cannot repair a bad candidate set</li>
+      </ul></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ §6 SYNTHESIS ══════════════ -->
+<section id="synthesis">
+  <span class="section-num">§ 06</span>
+  <h2>Synthesis: the five-layer memory stack</h2>
+
+  <p>
+    The three papers sit at three different depths, which is what makes the combination coherent rather than redundant. HyST decides <em>which records are even eligible</em>. HMGI decides <em>which eligible records are close</em>, and how cheaply that can be discovered. KERL decides <em>what a close record is allowed to justify</em>. Around those, our existing representation and update machinery form the first and last layers.
+  </p>
+
+  <blockquote class="pull">
+    Prune on what is binding, index on what is graded, and let only what was retrieved speak.
+  </blockquote>
+
+  <div class="diagram-wrap">
+    <div class="diagram-label">Diagram 6 — The unified perceptual memory architecture</div>
+    <div class="diagram-body">
+      <svg class="diag" viewBox="0 0 780 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Full proposed architecture: percept construction, metadata screening, approximate nearest neighbour novelty, fused ranking, grounded scoring, and delta-store update with feedback.">
+        <defs>
+          <marker id="u1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#6b6258" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+          <marker id="u2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#b07a12" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+        </defs>
+
+        <!-- Layer A -->
+        <rect x="150" y="16" width="480" height="72" rx="9" fill="#e8eef6" stroke="#2b4c7e" stroke-width="1.3"/>
+        <text x="390" y="40" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="13" font-weight="600" fill="#2b4c7e">Layer A · Multisensory percept construction</text>
+        <text x="390" y="58" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#5a7aaa">per-modality feature/confidence pairs · per-modality embedding · metadata envelope</text>
+        <text x="390" y="76" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9.5" fill="#5a7aaa">absent modality = empty slot, never a shifted key</text>
+        <text x="642" y="46" font-family="'Outfit',sans-serif" font-size="9" fill="#2b4c7e">ours + HMGI</text>
+        <text x="642" y="58" font-family="'Outfit',sans-serif" font-size="9" fill="#5a7aaa">partitioning</text>
+
+        <line x1="390" y1="88" x2="390" y2="114" stroke="#6b6258" stroke-width="1.2" marker-end="url(#u1)"/>
+
+        <!-- Layer B -->
+        <rect x="150" y="116" width="480" height="70" rx="9" fill="#e4f0ec" stroke="#1e6e5b" stroke-width="1.3"/>
+        <text x="390" y="140" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="13" font-weight="600" fill="#1e6e5b">Layer B · Binding-constraint screening</text>
+        <text x="390" y="158" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#2a8060">modality mask · action · mode · expert flag · recency band</text>
+        <text x="390" y="176" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9.5" fill="#2a8060">store → eligible subset, before any similarity is computed</text>
+        <text x="642" y="150" font-family="'Outfit',sans-serif" font-size="9" fill="#1e6e5b">HyST</text>
+
+        <line x1="390" y1="186" x2="390" y2="212" stroke="#6b6258" stroke-width="1.2" marker-end="url(#u1)"/>
+
+        <!-- Layer C -->
+        <rect x="150" y="214" width="480" height="70" rx="9" fill="#ede9f6" stroke="#5a3d8a" stroke-width="1.3"/>
+        <text x="390" y="238" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="13" font-weight="600" fill="#5a3d8a">Layer C · Similarity-sensitive novelty</text>
+        <text x="390" y="256" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#7b5fb0">nearest neighbour in the active partitions</text>
+        <text x="390" y="274" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9.5" fill="#7b5fb0">novelty = 1 − sim(percept, nearest)   ·   graded, not binary</text>
+        <text x="642" y="248" font-family="'Outfit',sans-serif" font-size="9" fill="#5a3d8a">HMGI</text>
+
+        <line x1="390" y1="284" x2="390" y2="310" stroke="#6b6258" stroke-width="1.2" marker-end="url(#u1)"/>
+
+        <!-- Layer D -->
+        <rect x="150" y="312" width="480" height="122" rx="9" fill="#faeeda" stroke="#b07a12" stroke-width="1.3"/>
+        <text x="390" y="336" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="13" font-weight="600" fill="#7a5410">Layer D · Detailed retrieval and ranking</text>
+        <rect x="166" y="346" width="140" height="42" rx="6" fill="#fff" stroke="#e2c894"/>
+        <text x="236" y="363" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#7a5410">top-K neighbours</text>
+        <text x="236" y="378" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#9a7020">semantic proximity</text>
+        <rect x="318" y="346" width="140" height="42" rx="6" fill="#fff" stroke="#e2c894"/>
+        <text x="388" y="363" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#7a5410">1-hop expansion</text>
+        <text x="388" y="378" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#9a7020">context &amp; co-occurrence</text>
+        <rect x="470" y="346" width="146" height="42" rx="6" fill="#fff" stroke="#e2c894"/>
+        <text x="543" y="363" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#7a5410">emotional alignment</text>
+        <text x="543" y="378" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#9a7020">valence / arousal distance</text>
+        <text x="390" y="408" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9.5" fill="#7a5410">fuse → decay → boost → contribution weight per memory</text>
+        <text x="390" y="424" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#9a7020">only retrieved memories may justify the decision</text>
+        <text x="642" y="330" font-family="'Outfit',sans-serif" font-size="9" fill="#b07a12">HMGI + KERL</text>
+
+        <line x1="390" y1="434" x2="390" y2="460" stroke="#6b6258" stroke-width="1.2" marker-end="url(#u1)"/>
+
+        <rect x="222" y="462" width="336" height="52" rx="8" fill="#f2ede5" stroke="#6b6258" stroke-width="1.2"/>
+        <text x="390" y="484" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="12.5" font-weight="600" fill="#3d3830">Decision · reward estimate · explanation</text>
+        <text x="390" y="502" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#6b6258">reflex override, exploit, explore, or hesitate</text>
+
+        <line x1="390" y1="514" x2="390" y2="540" stroke="#b07a12" stroke-width="1.2" stroke-dasharray="5,3" marker-end="url(#u2)"/>
+
+        <!-- Layer E -->
+        <rect x="150" y="542" width="480" height="62" rx="9" fill="#f4ede8" stroke="#8b3a1a" stroke-width="1.3"/>
+        <text x="390" y="566" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="13" font-weight="600" fill="#8b3a1a">Layer E · Update and learning</text>
+        <text x="390" y="584" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#aa5a30">append to delta · async merge · threshold, weights and fusion balance adapt</text>
+        <text x="390" y="598" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#aa5a30">writes never block reads</text>
+        <text x="642" y="562" font-family="'Outfit',sans-serif" font-size="9" fill="#8b3a1a">HMGI + ours</text>
+
+        <!-- feedback -->
+        <path d="M150 572 L40 572 L40 250 L150 250" fill="none" stroke="#b07a12" stroke-width="1" stroke-dasharray="5,3" marker-end="url(#u2)"/>
+        <text x="30" y="410" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="9.5" fill="#b07a12" transform="rotate(-90,30,410)">new record joins the index</text>
+        <path d="M630 572 L742 572 L742 152 L630 152" fill="none" stroke="#b07a12" stroke-width="1" stroke-dasharray="5,3" marker-end="url(#u2)"/>
+        <text x="756" y="360" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="9.5" fill="#b07a12" transform="rotate(90,756,360)">filters and weights recalibrated</text>
+      </svg>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>Layer</th><th>Question it answers</th><th>Source</th><th>Replaces</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>A · Representation</strong></td><td>What is this experience, and how much do I trust each channel of it?</td><td>Existing design + modality partitioning</td><td>Nothing — extends the summary tuple with embeddings</td></tr>
+      <tr><td><strong>B · Screening</strong></td><td>Which stored records are even eligible to answer?</td><td>HyST</td><td>The hash membership screen, and the scan-to-filter pattern</td></tr>
+      <tr><td><strong>C · Novelty</strong></td><td>How unlike anything I have seen is this?</td><td>HMGI</td><td>The exhaustive maximum-similarity pass</td></tr>
+      <tr><td><strong>D · Retrieval</strong></td><td>Which specific experiences should inform this decision, and how strongly?</td><td>HMGI fusion + KERL grounding</td><td>The flat single-similarity ranking</td></tr>
+      <tr><td><strong>E · Update</strong></td><td>How does this experience change what I know and how I search?</td><td>HMGI delta store + existing learning rules</td><td>Immediate synchronous append with no index maintenance</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ══════════════ §7 LAYER A ══════════════ -->
+<section id="layerA">
+  <span class="section-num">§ 07</span>
+  <h2>Layer A — Multisensory memory representation</h2>
+
+  <p>
+    The representation layer must hold three things that are frequently conflated: what was sensed, how reliable each channel was, and the structural facts about the episode. The current design already separates the first two — each feature is a value with a confidence, and confidence is a property of the channel, so a low-reliability channel contributes proportionally less to any match. The proposal keeps this and adds two things.
+  </p>
+
+  <div class="info-grid">
+    <div class="info-card blue">
+      <div class="info-card-label">Kept</div>
+      <div class="info-card-title">Slot-stable summary</div>
+      <div class="info-card-text">One slot per modality in fixed order; an absent modality yields an empty slot rather than shifting the others. Slot position always identifies the channel.</div>
+    </div>
+    <div class="info-card purple">
+      <div class="info-card-label">Added</div>
+      <div class="info-card-title">Per-modality embedding</div>
+      <div class="info-card-text">Each non-empty slot also produces a vector, so similarity can be approximate and indexable rather than exact and enumerated.</div>
+    </div>
+    <div class="info-card green">
+      <div class="info-card-label">Added</div>
+      <div class="info-card-title">Metadata envelope</div>
+      <div class="info-card-text">The structural facts — active modalities, action, mode, reflex rule, expert flag, step — declared as filterable attributes rather than discovered by scanning.</div>
+    </div>
+    <div class="info-card amber">
+      <div class="info-card-label">Added</div>
+      <div class="info-card-title">Episode edges</div>
+      <div class="info-card-text">Links to the preceding step, to records sharing a reflex rule, and from a corrected step to its expert record. The relational half of HMGI's index.</div>
+    </div>
+  </div>
+
+  <div class="diagram-wrap">
+    <div class="diagram-label">Diagram 7 — The extended memory record</div>
+    <div class="diagram-body">
+      <svg class="diag" viewBox="0 0 780 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="An experience record with three parts: modality slots with confidences, per-modality embeddings, and a filterable metadata envelope, plus outgoing edges.">
+        <rect x="18" y="16" width="744" height="230" rx="12" fill="none" stroke="#cfc7b8" stroke-width="1" stroke-dasharray="6,3"/>
+        <text x="390" y="40" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="11.5" font-weight="600" fill="#6b6258">EXPERIENCE RECORD</text>
+
+        <rect x="36" y="54" width="228" height="176" rx="8" fill="#e8eef6" stroke="#2b4c7e" stroke-width="1"/>
+        <text x="150" y="74" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" font-weight="600" fill="#2b4c7e">MODALITY SLOTS</text>
+        <rect x="52" y="84" width="196" height="30" rx="5" fill="#fff" stroke="#b5c8e8"/>
+        <text x="150" y="97" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9.5" fill="#2b4c7e">vision · object=unknown, motion=slow</text>
+        <text x="150" y="109" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8.5" fill="#5a7aaa">confidence 1.00</text>
+        <rect x="52" y="120" width="196" height="30" rx="5" fill="#fff" stroke="#b5c8e8"/>
+        <text x="150" y="133" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9.5" fill="#2b4c7e">audio · alarm, intensity=high</text>
+        <text x="150" y="145" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8.5" fill="#5a7aaa">confidence 0.90</text>
+        <rect x="52" y="156" width="196" height="30" rx="5" fill="#fff" stroke="#b5c8e8"/>
+        <text x="150" y="169" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9.5" fill="#2b4c7e">touch · thermal=warm, contact=light</text>
+        <text x="150" y="181" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8.5" fill="#5a7aaa">confidence 0.95</text>
+        <rect x="52" y="192" width="196" height="30" rx="5" fill="#fff" stroke="#b5c8e8"/>
+        <text x="150" y="205" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9.5" fill="#2b4c7e">smell · smoke, intensity=moderate</text>
+        <text x="150" y="217" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8.5" fill="#5a7aaa">confidence 0.70 — least reliable channel</text>
+
+        <rect x="278" y="54" width="212" height="176" rx="8" fill="#ede9f6" stroke="#5a3d8a" stroke-width="1"/>
+        <text x="384" y="74" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" font-weight="600" fill="#5a3d8a">EMBEDDINGS, ONE PER SLOT</text>
+        <rect x="294" y="84" width="180" height="26" rx="5" fill="#fff" stroke="#c8b8e8"/>
+        <text x="384" y="101" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9.5" fill="#5a3d8a">e_vision → vision partition</text>
+        <rect x="294" y="116" width="180" height="26" rx="5" fill="#fff" stroke="#c8b8e8"/>
+        <text x="384" y="133" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9.5" fill="#5a3d8a">e_audio → audio partition</text>
+        <rect x="294" y="148" width="180" height="26" rx="5" fill="#fff" stroke="#c8b8e8"/>
+        <text x="384" y="165" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9.5" fill="#5a3d8a">e_touch → touch partition</text>
+        <rect x="294" y="180" width="180" height="26" rx="5" fill="#fff" stroke="#c8b8e8"/>
+        <text x="384" y="197" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9.5" fill="#5a3d8a">e_smell → smell partition</text>
+        <text x="384" y="222" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="9.5" fill="#7b5fb0">absent slot writes no vector at all</text>
+
+        <rect x="504" y="54" width="240" height="176" rx="8" fill="#e4f0ec" stroke="#1e6e5b" stroke-width="1"/>
+        <text x="624" y="74" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" font-weight="600" fill="#1e6e5b">FILTERABLE METADATA</text>
+        <g font-family="'DM Mono',monospace" font-size="9.5" fill="#1e6e5b">
+          <rect x="520" y="84" width="208" height="22" rx="5" fill="#fff" stroke="#a8d8c8"/>
+          <text x="624" y="99" text-anchor="middle">modalities = {v, a, t, s}</text>
+          <rect x="520" y="110" width="208" height="22" rx="5" fill="#fff" stroke="#a8d8c8"/>
+          <text x="624" y="125" text-anchor="middle">action = "alert"</text>
+          <rect x="520" y="136" width="208" height="22" rx="5" fill="#fff" stroke="#a8d8c8"/>
+          <text x="624" y="151" text-anchor="middle">mode = REFLEXIVE · rule = smoke</text>
+          <rect x="520" y="162" width="208" height="22" rx="5" fill="#fff" stroke="#a8d8c8"/>
+          <text x="624" y="177" text-anchor="middle">expert = false · step = 338</text>
+          <rect x="520" y="188" width="208" height="22" rx="5" fill="#fff" stroke="#a8d8c8"/>
+          <text x="624" y="203" text-anchor="middle">valence −0.62 · arousal 0.81</text>
+        </g>
+        <text x="624" y="222" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="9.5" fill="#2a8060">binding fields prune; affect fields rank</text>
+
+        <text x="18" y="272" font-family="'Outfit',sans-serif" font-size="10.5" font-weight="600" fill="#b07a12">Outgoing edges</text>
+        <rect x="120" y="256" width="180" height="24" rx="5" fill="#faeeda" stroke="#b07a12"/>
+        <text x="210" y="272" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#7a5410">preceded_by → step 337</text>
+        <rect x="312" y="256" width="180" height="24" rx="5" fill="#faeeda" stroke="#b07a12"/>
+        <text x="402" y="272" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#7a5410">shares_reflex → steps 91, 204</text>
+        <rect x="504" y="256" width="180" height="24" rx="5" fill="#faeeda" stroke="#b07a12"/>
+        <text x="594" y="272" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#7a5410">corrected_by → expert step 339</text>
+      </svg>
+    </div>
+  </div>
+
+  <div class="callout purple">
+    <div class="callout-label">Design decision: embed per modality, not per percept</div>
+    <p>A single joint embedding of the whole percept would be simpler, but it destroys the malleability property. Two percepts that agree completely on audio and differ only in whether vision was available would sit far apart in a joint space, because the absent channel has to be encoded as something. Per-modality vectors let absence be expressed as absence: the audio partition compares audio to audio, and nothing invents a vision reading that was never taken. This mirrors HMGI's own argument that unified embeddings suffer a bias toward dominant modalities.</p>
+  </div>
+</section>
+
+<!-- ══════════════ §8 LAYER B ══════════════ -->
+<section id="layerB">
+  <span class="section-num">§ 08</span>
+  <h2>Layer B — Fast membership and index screening</h2>
+
+  <p>
+    This layer answers "which records could possibly be relevant?" and it answers it without arithmetic. Its inputs are the metadata envelope of the query and the attribute indexes over the store; its output is an eligible subset. The critical property is that it is <em>lossless with respect to the binding conditions</em>: nothing it discards could have been a valid contributor.
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Screening approach</th><th>Answers</th><th>Sensitive to near-misses</th><th>Prunes usefully here</th><th>Verdict</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Hash membership</strong></td>
+        <td>Has this exact configuration been inserted?</td>
+        <td class="cross">No — one bit</td>
+        <td class="cross">No</td>
+        <td>Retained only as an exact-repeat hint; never gates retrieval</td>
+      </tr>
+      <tr>
+        <td><strong>Attribute filter (HyST)</strong></td>
+        <td>Which records satisfy the declared binding conditions?</td>
+        <td class="part">N/A — exact by design</td>
+        <td class="tick">Yes, strongly</td>
+        <td>Adopt as the primary screen</td>
+      </tr>
+      <tr>
+        <td><strong>Proximity index (HMGI)</strong></td>
+        <td>Which records are semantically nearest?</td>
+        <td class="tick">Yes — graded</td>
+        <td class="tick">Yes, above a size threshold</td>
+        <td>Adopt as the second stage, over the eligible subset</td>
+      </tr>
+      <tr>
+        <td><strong>Full scan (current)</strong></td>
+        <td>Everything, exactly</td>
+        <td class="tick">Yes</td>
+        <td class="cross">Nothing is pruned</td>
+        <td>Retain as exact reference and small-store fallback</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="formula"><span class="key">Screening, as a two-stage funnel</span>
+
+  E  = { m ∈ Memory : <span class="val">m.modalities ⊇ Q.required</span>
+                    ∧ <span class="val">m.action = a</span>
+                    ∧ <span class="val">m.mode ∈ Q.modes</span>
+                    ∧ <span class="val">m.step ≥ Q.recency_floor</span> }        <span class="comment">exact, index-backed</span>
+
+  C  = ANN<sub>topK</sub>( <span class="val">Q.embeddings</span> , restricted to E )                     <span class="comment">approximate, graded</span>
+
+<span class="comment">|E| ≪ |Memory| and |C| = K, so every later stage is bounded by K,</span>
+<span class="comment">not by the number of experiences the agent has ever had.</span>
+<span class="warn">If E is empty, relax in a fixed order — recency, then mode, then modality —</span>
+<span class="warn">and record which condition was dropped, rather than falling back to a cold start.</span></div>
+
+  <div class="callout green">
+    <div class="callout-label">Why this specifically replaces the failed screen</div>
+    <p>The membership filter failed because its key was the whole configuration, which is almost never repeated. The attribute filter succeeds because its keys are the few coarse properties that genuinely partition memory — five actions, sixteen modality subsets, a handful of modes. Those <em>are</em> repeated, constantly, and each one cuts the candidate pool by a large fraction. The lesson is that the screen must be built on the low-cardinality structure of memory, not on its high-cardinality content.</p>
+  </div>
+</section>
+
+<!-- ══════════════ §9 LAYER C ══════════════ -->
+<section id="layerC">
+  <span class="section-num">§ 09</span>
+  <h2>Layer C — Similarity-sensitive novelty detection</h2>
+
+  <p>
+    Novelty in our system is not a diagnostic readout: it sets exploration pressure and scales the size of every threshold update, so it is consumed on every step and must be both cheap and well-behaved. The proposal keeps the definition and changes only how the maximum is found.
+  </p>
+
+  <div class="formula"><span class="key">Novelty, before and after</span>
+
+  <span class="warn">now</span>    novelty = 1 − max<sub>m ∈ Memory</sub> sim(Q, m)                  <span class="comment">O(N) — every record scored</span>
+
+  <span class="val">proposed</span>  novelty = 1 − Σ<sub>k</sub> α<sub>k</sub> · sim<sub>k</sub>( Q<sub>k</sub> , nearest<sub>k</sub>(Q<sub>k</sub>) )      <span class="comment">O(log N) per active partition</span>
+
+<span class="comment">k ranges over active modalities only; α<sub>k</sub> is the channel confidence,</span>
+<span class="comment">renormalised over the active set, so an unreliable channel cannot</span>
+<span class="comment">by itself declare a percept familiar.</span></div>
+
+  <p>
+    Two properties are worth stating because they change behaviour, not just cost. <span class="badge ours">Our integration</span>
+  </p>
+  <ul class="plain">
+    <li><strong>Novelty becomes per-channel.</strong> A percept can now be familiar in audio and novel in smell, and the aggregate reflects both weighted by reliability. A single scalar over a flat feature match cannot express that, and it is precisely the situation a partially-observed environment produces most often.</li>
+    <li><strong>Approximation biases toward higher novelty.</strong> Missing the true nearest neighbour means the best similarity found is too low, so novelty is over-reported. This is the safe direction: over-reported novelty raises exploration and enlarges the threshold update, which is a mild inefficiency. Under-reported novelty would suppress exploration on a genuinely unfamiliar percept, which is a failure. The error mode should nonetheless be bounded by periodically checking the index answer against an exact scan and tracking the gap.</li>
+  </ul>
+
+  <div class="diagram-wrap">
+    <div class="diagram-label">Diagram 8 — Novelty from a partitioned index</div>
+    <div class="diagram-body">
+      <svg class="diag" viewBox="0 0 780 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Per-modality nearest-neighbour similarities are combined by channel confidence into a single novelty value.">
+        <defs>
+          <marker id="n1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#5a3d8a" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+        </defs>
+
+        <g font-family="'DM Mono',monospace" font-size="10">
+          <rect x="20" y="24" width="188" height="32" rx="6" fill="#e8eef6" stroke="#2b4c7e"/>
+          <text x="36" y="45" fill="#2b4c7e">vision  nearest 0.74  α 1.00</text>
+          <rect x="20" y="64" width="188" height="32" rx="6" fill="#e8eef6" stroke="#2b4c7e"/>
+          <text x="36" y="85" fill="#2b4c7e">audio   nearest 0.91  α 0.90</text>
+          <rect x="20" y="104" width="188" height="32" rx="6" fill="#e8eef6" stroke="#2b4c7e"/>
+          <text x="36" y="125" fill="#2b4c7e">touch   nearest 0.66  α 0.95</text>
+          <rect x="20" y="144" width="188" height="32" rx="6" fill="#e8eef6" stroke="#2b4c7e"/>
+          <text x="36" y="165" fill="#2b4c7e">smell   nearest 0.88  α 0.70</text>
+        </g>
+
+        <line x1="208" y1="40" x2="268" y2="86" stroke="#5a3d8a" stroke-width="1" marker-end="url(#n1)"/>
+        <line x1="208" y1="80" x2="268" y2="95" stroke="#5a3d8a" stroke-width="1" marker-end="url(#n1)"/>
+        <line x1="208" y1="120" x2="268" y2="105" stroke="#5a3d8a" stroke-width="1" marker-end="url(#n1)"/>
+        <line x1="208" y1="160" x2="268" y2="114" stroke="#5a3d8a" stroke-width="1" marker-end="url(#n1)"/>
+
+        <rect x="270" y="66" width="176" height="68" rx="8" fill="#ede9f6" stroke="#5a3d8a" stroke-width="1.2"/>
+        <text x="358" y="90" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="11.5" font-weight="600" fill="#5a3d8a">Confidence-weighted mean</text>
+        <text x="358" y="110" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#7b5fb0">Σ αₖ·simₖ / Σ αₖ = 0.802</text>
+        <text x="358" y="126" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="9.5" fill="#7b5fb0">weak channels cannot dominate</text>
+
+        <line x1="446" y1="100" x2="496" y2="100" stroke="#5a3d8a" stroke-width="1.2" marker-end="url(#n1)"/>
+
+        <rect x="498" y="60" width="132" height="80" rx="8" fill="#5a3d8a" stroke="#3f2a66" stroke-width="1.2"/>
+        <text x="564" y="88" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="12" font-weight="600" fill="#fff">novelty</text>
+        <text x="564" y="112" text-anchor="middle" font-family="'DM Mono',monospace" font-size="15" fill="#d6c9ee">0.198</text>
+
+        <rect x="648" y="52" width="112" height="96" rx="8" fill="#faeeda" stroke="#b07a12" stroke-width="1"/>
+        <text x="704" y="74" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" font-weight="600" fill="#7a5410">feeds</text>
+        <text x="704" y="94" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#9a7020">exploration rate</text>
+        <text x="704" y="112" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#9a7020">threshold gain</text>
+        <text x="704" y="130" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#9a7020">fusion balance</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ §10 LAYER D ══════════════ -->
+<section id="layerD">
+  <span class="section-num">§ 10</span>
+  <h2>Layer D — Semantic, emotional and contextual retrieval</h2>
+
+  <p>
+    This is where the third weakness — one flat score for four different kinds of match — is finally addressed. The candidate set arriving from Layers B and C is small and already eligible. What remains is to score each candidate along separable axes and combine them under weights that the system can adjust.
+  </p>
+
+  <div class="formula"><span class="key">Fused relevance, per candidate memory m</span>
+
+  R(m) = <span class="val">w_s</span>·sim_semantic(Q, m)        <span class="comment">confidence-weighted feature/embedding proximity</span>
+       + <span class="val">w_e</span>·sim_emotional(Q, m)       <span class="comment">closeness in valence–arousal space</span>
+       + <span class="val">w_c</span>·sim_context(Q, m)         <span class="comment">situational descriptor overlap</span>
+       + <span class="val">w_g</span>·(1/h)·Σᵢ  s_gᵢ(m)         <span class="comment">HMGI graph term over h hops of episode edges</span>
+
+<span class="key">Contribution weight</span>  (feeds scoring, reward and explanation)
+
+  ω(m) = R(m) · <span class="val">decay</span>^age(m) · <span class="val">boost</span>(m)
+
+<span class="comment">boost still lifts expert records and, on a reflex valuation, reflex-mode records;</span>
+<span class="comment">Σω over the retrieved set remains the support measure — a high score with</span>
+<span class="comment">low support is reported as a guess, not a recommendation.</span></div>
+
+  <p>
+    The four terms are separable for a reason: they should not carry equal weight in every situation. <span class="badge ours">Our integration</span>
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Situation</th><th>Emphasise</th><th>Rationale</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>High novelty — nothing is very close</td><td>Graph term, context term</td><td>Vector proximity is weak by definition; what the percept is <em>adjacent to</em> carries more information than what it resembles.</td></tr>
+      <tr><td>Low novelty — a near-duplicate exists</td><td>Semantic term; skip the traversal</td><td>The nearest neighbours already answer the question, and the hop budget can be spent elsewhere.</td></tr>
+      <tr><td>Valuing a reflex outcome</td><td>Semantic and emotional terms; reflex-mode boost</td><td>A reflex is a fixed stimulus-to-action mapping; its value should be judged against occasions of the same reflex, and the binding filter has already isolated them.</td></tr>
+      <tr><td>After an expert correction</td><td>Expert-only filter, then semantic</td><td>Supervised records are a different population, and mixing them into a general pool dilutes the correction they were meant to deliver.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout purple">
+    <div class="callout-label">The near-miss guard, from KERL</div>
+    <p>Fusion and approximation both make it easier for a memory to score highly while differing on the one feature that determined the outcome. The guard is a check, not a weight: before a candidate contributes, verify that its active modalities cover the features the current decision actually depends on. A thermal withdrawal cannot be justified by a memory recorded with no touch channel, however similar it looks in audio. Candidates failing the check are excluded and, following KERL's negative-sampling idea, retained as calibration pairs — a satisfying memory beside a near-miss — for periodically re-tuning the fusion weights.</p>
+  </div>
+</section>
+
+<!-- ══════════════ §11 LAYER E ══════════════ -->
+<section id="layerE">
+  <span class="section-num">§ 11</span>
+  <h2>Layer E — Memory updating and learning</h2>
+
+  <p>
+    Our workload is unusual for a retrieval system: every single step writes exactly one new record, and that record must be visible to the very next step. A conventional index rebuild cadence is unusable here, which is exactly the situation HMGI's update mechanism was designed for.
+  </p>
+
+  <div class="diagram-wrap">
+    <div class="diagram-label">Diagram 9 — Delta store: writes never block reads</div>
+    <div class="diagram-body">
+      <svg class="diag" viewBox="0 0 780 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="New records append to a small delta scanned exhaustively, while the stable index serves approximate search; a background merge moves delta into the index.">
+        <defs>
+          <marker id="e1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#8b3a1a" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+          <marker id="e2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#b07a12" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+        </defs>
+
+        <rect x="18" y="96" width="130" height="52" rx="8" fill="#f4ede8" stroke="#8b3a1a" stroke-width="1.2"/>
+        <text x="83" y="118" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="11.5" font-weight="600" fill="#8b3a1a">New record</text>
+        <text x="83" y="135" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9.5" fill="#aa5a30">step 412</text>
+
+        <line x1="148" y1="122" x2="192" y2="122" stroke="#8b3a1a" stroke-width="1.2" marker-end="url(#e1)"/>
+
+        <rect x="194" y="88" width="160" height="68" rx="8" fill="#fdf3e0" stroke="#b07a12" stroke-width="1.2"/>
+        <text x="274" y="112" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="11.5" font-weight="600" fill="#7a5410">Delta store</text>
+        <text x="274" y="130" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#9a7020">small, scanned exhaustively</text>
+        <text x="274" y="146" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9.5" fill="#9a7020">immediately visible</text>
+
+        <line x1="274" y1="88" x2="274" y2="58" stroke="#b07a12" stroke-width="1.1" marker-end="url(#e2)"/>
+        <text x="286" y="52" font-family="'Outfit',sans-serif" font-size="10" fill="#b07a12">queried on every step, alongside the index</text>
+
+        <line x1="354" y1="122" x2="398" y2="122" stroke="#b07a12" stroke-width="1.2" stroke-dasharray="5,3" marker-end="url(#e2)"/>
+        <text x="376" y="112" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="9" fill="#b07a12">merge</text>
+
+        <rect x="400" y="80" width="180" height="84" rx="8" fill="#ede9f6" stroke="#5a3d8a" stroke-width="1.2"/>
+        <text x="490" y="104" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="11.5" font-weight="600" fill="#5a3d8a">Stable partitioned index</text>
+        <text x="490" y="122" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#7b5fb0">approximate search</text>
+        <text x="490" y="140" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#7b5fb0">rebuilt in the background, never inline</text>
+        <text x="490" y="156" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#7b5fb0">+ attribute indexes for Layer B</text>
+
+        <line x1="580" y1="122" x2="624" y2="122" stroke="#b07a12" stroke-width="1.2" marker-end="url(#e2)"/>
+
+        <rect x="626" y="80" width="136" height="84" rx="8" fill="#e4f0ec" stroke="#1e6e5b" stroke-width="1.2"/>
+        <text x="694" y="104" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="11.5" font-weight="600" fill="#1e6e5b">Adapts over time</text>
+        <text x="694" y="122" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#2a8060">action threshold</text>
+        <text x="694" y="138" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#2a8060">fusion weights</text>
+        <text x="694" y="154" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#2a8060">hop budget, top-K</text>
+
+        <rect x="18" y="188" width="744" height="36" rx="7" fill="#f2ede5" stroke="#cfc7b8" stroke-width="1"/>
+        <text x="390" y="211" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#3d3830">Retroactive edits — a manual reward, an expert correction, a demotion — are version updates on the record, not index rebuilds. The vector never changed; only the reward attached to it did.</text>
+      </svg>
+    </div>
+  </div>
+
+  <p>
+    This division has a pleasant consequence for correctness. The delta is scanned exhaustively, so the most recent experiences — the ones time decay weights most heavily — are always found exactly. Approximation only ever applies to older records, whose influence is already discounted. Approximation error and temporal discounting act in the same direction rather than compounding.
+  </p>
+
+  <h3>What learning updates, extended</h3>
+  <ul class="plain">
+    <li><strong>The store.</strong> Unchanged: a record per step, with reward, mode, action and penalty; rewards editable after the fact by manual labelling or expert teaching.</li>
+    <li><strong>The action threshold.</strong> Unchanged: moved by learning rate times novelty gain times reward error, so novel situations move it further.</li>
+    <li><strong>The fusion weights.</strong> New. Adjusted on the same signal that already drives the off-recommendation penalty: when a well-supported recommendation was overridden and the outcome vindicated the override, the term that most strongly supported the wrong recommendation loses weight.</li>
+    <li><strong>The retrieval budget.</strong> New. Top-K and hop count adapt to observed support. When the retrieved set consistently yields near-zero total weight, K is too small or the filters too strict; when extra candidates change nothing, K is too large.</li>
+  </ul>
+</section>
+
+<!-- ══════════════ §12 RUNNING EXAMPLE ══════════════ -->
+<section id="example">
+  <span class="section-num">§ 12</span>
+  <h2>Running example: one stimulus, end to end</h2>
+
+  <div class="runex">
+    <div class="rx-label">The stimulus</div>
+    <p>
+      Step 412. The agent is in a kitchen in the evening. A smoke alarm sounds while its hand rests lightly on a surface that has become warm; something is moving slowly at the edge of vision. Memory holds <code>4,000</code> records from earlier steps, of which <code>96</code> are in the unmerged delta.
+    </p>
+  </div>
+
+  <div class="diagram-wrap">
+    <div class="diagram-label">Diagram 10 — The full flow, with the numbers at each stage</div>
+    <div class="diagram-body">
+      <svg class="diag" viewBox="0 0 780 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Seven-stage trace of one percept through construction, screening, novelty, retrieval, ranking, decision and update, with candidate counts at each stage.">
+        <defs>
+          <marker id="r1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#6b6258" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+          <marker id="r2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#b07a12" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+        </defs>
+
+        <!-- 1 -->
+        <circle cx="38" cy="38" r="17" fill="#2b4c7e"/>
+        <text x="38" y="43" text-anchor="middle" font-family="'DM Mono',monospace" font-size="13" font-weight="600" fill="#fff">1</text>
+        <rect x="70" y="20" width="470" height="36" rx="6" fill="#e8eef6" stroke="#2b4c7e" stroke-width="0.9"/>
+        <text x="86" y="43" font-family="'Outfit',sans-serif" font-size="11.5" fill="#2b4c7e">Percept built · 4 slots active · 9 features · confidences 1.00 / 0.90 / 0.95 / 0.70</text>
+        <rect x="552" y="20" width="212" height="36" rx="6" fill="#fff" stroke="#cfc7b8" stroke-width="0.9"/>
+        <text x="658" y="43" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#6b6258">4 embeddings written</text>
+        <line x1="38" y1="55" x2="38" y2="80" stroke="#cfc7b8" stroke-width="1" marker-end="url(#r1)"/>
+
+        <!-- 2 -->
+        <circle cx="38" cy="100" r="17" fill="#1e6e5b"/>
+        <text x="38" y="105" text-anchor="middle" font-family="'DM Mono',monospace" font-size="13" font-weight="600" fill="#fff">2</text>
+        <rect x="70" y="82" width="470" height="36" rx="6" fill="#e4f0ec" stroke="#1e6e5b" stroke-width="0.9"/>
+        <text x="86" y="105" font-family="'Outfit',sans-serif" font-size="11.5" fill="#1e6e5b">Binding filters applied · modalities ⊇ {audio, smell} · mode ∈ {REFLEXIVE, DELIBERATIVE}</text>
+        <rect x="552" y="82" width="212" height="36" rx="6" fill="#fff" stroke="#cfc7b8" stroke-width="0.9"/>
+        <text x="658" y="105" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#1e6e5b">4,000 → 610 eligible</text>
+        <line x1="38" y1="117" x2="38" y2="142" stroke="#cfc7b8" stroke-width="1" marker-end="url(#r1)"/>
+
+        <!-- 3 -->
+        <circle cx="38" cy="162" r="17" fill="#5a3d8a"/>
+        <text x="38" y="167" text-anchor="middle" font-family="'DM Mono',monospace" font-size="13" font-weight="600" fill="#fff">3</text>
+        <rect x="70" y="144" width="470" height="36" rx="6" fill="#ede9f6" stroke="#5a3d8a" stroke-width="0.9"/>
+        <text x="86" y="167" font-family="'Outfit',sans-serif" font-size="11.5" fill="#5a3d8a">Nearest neighbour per active partition + exhaustive pass over the 96-record delta</text>
+        <rect x="552" y="144" width="212" height="36" rx="6" fill="#fff" stroke="#cfc7b8" stroke-width="0.9"/>
+        <text x="658" y="167" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#5a3d8a">novelty = 0.198</text>
+        <line x1="38" y1="179" x2="38" y2="204" stroke="#cfc7b8" stroke-width="1" marker-end="url(#r1)"/>
+
+        <!-- 4 -->
+        <circle cx="38" cy="224" r="17" fill="#b07a12"/>
+        <text x="38" y="229" text-anchor="middle" font-family="'DM Mono',monospace" font-size="13" font-weight="600" fill="#fff">4</text>
+        <rect x="70" y="206" width="470" height="36" rx="6" fill="#faeeda" stroke="#b07a12" stroke-width="0.9"/>
+        <text x="86" y="229" font-family="'Outfit',sans-serif" font-size="11.5" fill="#7a5410">Top-K retrieval, then one hop over episode edges (preceded_by, shares_reflex)</text>
+        <rect x="552" y="206" width="212" height="36" rx="6" fill="#fff" stroke="#cfc7b8" stroke-width="0.9"/>
+        <text x="658" y="229" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#7a5410">32 + 19 = 51 candidates</text>
+        <line x1="38" y1="241" x2="38" y2="266" stroke="#cfc7b8" stroke-width="1" marker-end="url(#r1)"/>
+
+        <!-- 5 -->
+        <circle cx="38" cy="286" r="17" fill="#8b3a1a"/>
+        <text x="38" y="291" text-anchor="middle" font-family="'DM Mono',monospace" font-size="13" font-weight="600" fill="#fff">5</text>
+        <rect x="70" y="268" width="470" height="36" rx="6" fill="#f4ede8" stroke="#8b3a1a" stroke-width="0.9"/>
+        <text x="86" y="291" font-family="'Outfit',sans-serif" font-size="11.5" fill="#8b3a1a">Fusion, decay and boost · near-miss guard drops 6 candidates lacking a touch channel</text>
+        <rect x="552" y="268" width="212" height="36" rx="6" fill="#fff" stroke="#cfc7b8" stroke-width="0.9"/>
+        <text x="658" y="291" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#8b3a1a">45 ranked · top 5 explain</text>
+        <line x1="38" y1="303" x2="38" y2="328" stroke="#cfc7b8" stroke-width="1" marker-end="url(#r1)"/>
+
+        <!-- 6 -->
+        <circle cx="38" cy="348" r="17" fill="#6b6258"/>
+        <text x="38" y="353" text-anchor="middle" font-family="'DM Mono',monospace" font-size="13" font-weight="600" fill="#fff">6</text>
+        <rect x="70" y="330" width="470" height="36" rx="6" fill="#f2ede5" stroke="#6b6258" stroke-width="0.9"/>
+        <text x="86" y="353" font-family="'Outfit',sans-serif" font-size="11.5" fill="#3d3830">Reflex rule for smoke fires first; deliberative scores computed anyway as the road not taken</text>
+        <rect x="552" y="330" width="212" height="36" rx="6" fill="#fff" stroke="#cfc7b8" stroke-width="0.9"/>
+        <text x="658" y="353" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#3d3830">action = alert</text>
+        <line x1="38" y1="365" x2="38" y2="390" stroke="#b07a12" stroke-width="1" stroke-dasharray="5,3" marker-end="url(#r2)"/>
+
+        <!-- 7 -->
+        <circle cx="38" cy="410" r="17" fill="#b07a12"/>
+        <text x="38" y="415" text-anchor="middle" font-family="'DM Mono',monospace" font-size="13" font-weight="600" fill="#fff">7</text>
+        <rect x="70" y="392" width="470" height="36" rx="6" fill="#faeeda" stroke="#b07a12" stroke-width="0.9"/>
+        <text x="86" y="415" font-family="'Outfit',sans-serif" font-size="11.5" fill="#7a5410">Record appended to the delta with its edges; threshold and fusion weights updated</text>
+        <rect x="552" y="392" width="212" height="36" rx="6" fill="#fff" stroke="#cfc7b8" stroke-width="0.9"/>
+        <text x="658" y="415" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#7a5410">delta 96 → 97</text>
+
+        <path d="M540 410 L718 410 L718 448 L70 448 L70 466" fill="none" stroke="#b07a12" stroke-width="1" stroke-dasharray="5,3" marker-end="url(#r2)"/>
+        <rect x="70" y="468" width="694" height="76" rx="8" fill="#fdf3e0" stroke="#b07a12" stroke-width="1"/>
+        <text x="417" y="492" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="11.5" font-weight="600" fill="#7a5410">Work done this step</text>
+        <text x="417" y="512" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#9a7020">before:  ≈ 4,000 × 6 scored records   ·   after:  610 eligible → 51 scored → 45 ranked</text>
+        <text x="417" y="532" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#9a7020">the explanation payload is unchanged in kind: every contributing memory is still named, with its weight decomposed</text>
+      </svg>
+    </div>
+  </div>
+
+  <h3>Reading the numbers</h3>
+
+  <div class="runex">
+    <div class="rx-label">Stage 2 — why 610</div>
+    <p>
+      The percept requires audio and smell, which excludes every record captured in the dark or with the olfactory channel offline. Combined with the mode condition, this removes roughly six records in seven. Nothing here required a similarity computation: the filter is answered by attribute indexes over fields the record already carries. This is the stage the hash membership screen was supposed to occupy and could not.
+    </p>
+  </div>
+
+  <div class="runex">
+    <div class="rx-label">Stage 3 — why 0.198</div>
+    <p>
+      The four channel similarities are <code>0.74 / 0.91 / 0.66 / 0.88</code> with confidences <code>1.00 / 0.90 / 0.95 / 0.70</code>. The confidence-weighted mean is <code>0.802</code>, so novelty is <code>0.198</code>. The percept is largely familiar in audio and smell — the agent has heard this alarm before, near this smell — and less so in touch, which is the channel that actually differs. A flat maximum over the whole feature tuple would have reported one number and lost that structure entirely.
+    </p>
+  </div>
+
+  <div class="runex">
+    <div class="rx-label">Stage 5 — one candidate, fully decomposed</div>
+    <p>
+      Memory <code>m-338</code>, recorded 74 steps ago, was an alarm-and-smoke episode that ended in <code>alert</code> with reward <code>0.88</code>.
+    </p>
+    <p>
+      Semantic proximity <code>0.81</code>, emotional alignment <code>0.77</code>, context match <code>0.90</code> (both kitchen, both evening), graph term <code>0.62</code> (it is two edges from the current episode via a shared reflex rule). Under weights <code>0.40 / 0.20 / 0.15 / 0.25</code> the fused relevance is <code>0.7705</code>. Time decay at <code>0.99⁷⁴</code> gives <code>0.475</code>; no boost applies, so its contribution weight is <code>0.366</code> — the largest in the set, and the first line of the explanation the dashboard will draw.
+    </p>
+  </div>
+
+  <div class="runex">
+    <div class="rx-label">Stage 5 — a candidate the guard removed</div>
+    <p>
+      Memory <code>m-207</code> scored <code>0.79</code> on semantic proximity: alarm present, smoke present, similar arousal. But it was recorded with no touch channel, and the current decision's distinguishing feature is thermal. Under a flat similarity it would have been the second-strongest voice in the room. The guard excludes it, and it is filed as a near-miss pair alongside <code>m-338</code> for the next weight calibration.
+    </p>
+  </div>
+
+  <div class="runex">
+    <div class="rx-label">Stage 6 — retrieval still runs on the reflex path</div>
+    <p>
+      The smoke rule fires and the action is decided without deliberation, exactly as before. Retrieval is not wasted: the deliberative scores become the recorded alternative, the reflex-mode boost values this outcome against comparable reflex episodes, and the comparison feeds the penalty rule and the threshold update. Speed on the reflex path comes from not <em>waiting</em> on deliberation, not from refusing to learn from it.
+    </p>
+  </div>
+</section>
+
+<!-- ══════════════ §13 COMPLEMENTARITY ══════════════ -->
+<section id="complementarity">
+  <span class="section-num">§ 13</span>
+  <h2>Why the three are complementary</h2>
+
+  <p>
+    None of the three papers, on its own, would fix our memory layer, and the reason is instructive: each solves a problem the other two assume away.
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Capability needed</th><th>HMGI</th><th>HyST</th><th>KERL</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Graded similarity over multimodal input</td><td class="tick">core</td><td class="part">assumed available</td><td class="cross">not addressed</td></tr>
+      <tr><td>Sub-linear nearest-neighbour lookup</td><td class="tick">core</td><td class="cross">delegated to the store</td><td class="cross">not addressed</td></tr>
+      <tr><td>Handling absent modalities as structure</td><td class="tick">partitioning</td><td class="tick">as a filter field</td><td class="part">as a query constraint</td></tr>
+      <tr><td>Hard constraints kept separate from soft preference</td><td class="part">implicit in the graph term</td><td class="tick">core</td><td class="tick">core</td></tr>
+      <tr><td>Cheap pruning before any scoring</td><td class="cross">index still searched</td><td class="tick">core</td><td class="part">via templated query</td></tr>
+      <tr><td>Relational context between experiences</td><td class="tick">core</td><td class="cross">flat records only</td><td class="tick">subgraph retrieval</td></tr>
+      <tr><td>Grounded, evidence-bounded decisions</td><td class="cross">returns a ranking</td><td class="cross">returns a ranking</td><td class="tick">core</td></tr>
+      <tr><td>Discriminating a near-miss from a match</td><td class="cross">approximation worsens it</td><td class="tick">constraints exclude some</td><td class="tick">negative sampling</td></tr>
+      <tr><td>Write-heavy update without rebuilds</td><td class="tick">delta store</td><td class="cross">not addressed</td><td class="cross">static knowledge base</td></tr>
+    </tbody>
+  </table>
+
+  <div class="diagram-wrap">
+    <div class="diagram-label">Diagram 11 — Each paper occupies a different depth of the same query</div>
+    <div class="diagram-body">
+      <svg class="diag" viewBox="0 0 780 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A funnel from the whole memory store down to a decision, with HyST at the widest stage, HMGI in the middle, and KERL at the narrow end.">
+        <polygon points="60,30 720,30 560,120 220,120" fill="#e4f0ec" stroke="#1e6e5b" stroke-width="1.1"/>
+        <text x="390" y="62" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="12.5" font-weight="600" fill="#1e6e5b">HyST · eligibility</text>
+        <text x="390" y="80" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#2a8060">all of memory → records that satisfy every binding condition</text>
+        <text x="390" y="98" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9.5" fill="#2a8060">exact · index-backed · no arithmetic</text>
+
+        <polygon points="220,126 560,126 470,196 310,196" fill="#ede9f6" stroke="#5a3d8a" stroke-width="1.1"/>
+        <text x="390" y="152" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="12.5" font-weight="600" fill="#5a3d8a">HMGI · proximity and structure</text>
+        <text x="390" y="170" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10.5" fill="#7b5fb0">eligible → nearest, then one hop outward</text>
+        <text x="390" y="187" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9.5" fill="#7b5fb0">approximate · graded · fused</text>
+
+        <polygon points="310,202 470,202 430,240 350,240" fill="#faeeda" stroke="#b07a12" stroke-width="1.1"/>
+        <text x="390" y="222" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="11.5" font-weight="600" fill="#7a5410">KERL · what may justify</text>
+        <text x="390" y="236" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#9a7020">grounded · guarded · named</text>
+
+        <text x="740" y="80" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#1e6e5b" transform="rotate(90,740,80)">widest</text>
+        <text x="740" y="220" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="10" fill="#b07a12" transform="rotate(90,740,220)">narrowest</text>
+      </svg>
+    </div>
+  </div>
+
+  <p>
+    The dependency runs one way and cleanly. HyST without HMGI leaves a linear scan over a smaller pool — better, but still linear. HMGI without HyST indexes records that a declared constraint would have excluded for free, spending approximate search on candidates that were never eligible. KERL without either has nothing sound to select from, since it explicitly cannot recommend outside what retrieval returned. Applied in order — prune, index, ground — each stage makes the next one's job smaller.
+  </p>
+</section>
+
+<!-- ══════════════ §14 LIMITS ══════════════ -->
+<section id="limits">
+  <span class="section-num">§ 14</span>
+  <h2>Cost, limits, and what we decline to adopt</h2>
+
+  <h3>Where the savings actually come from</h3>
+  <table>
+    <thead>
+      <tr><th>Operation</th><th>Today</th><th>Proposed</th><th>Which paper</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Novelty for one percept</td><td>Score every record</td><td>Nearest neighbour per active partition, plus an exhaustive delta pass</td><td>HMGI</td></tr>
+      <tr><td>Candidate pool per action</td><td>Rank the whole store, keep top-K</td><td>Filter to eligible, then top-K within it</td><td>HyST</td></tr>
+      <tr><td>Reflex-mode emphasis</td><td>Full scan, then multiply matching records by a boost</td><td>Filter to reflex-mode records, then rank</td><td>HyST</td></tr>
+      <tr><td>Insertion</td><td>Append; no structure to maintain</td><td>Append to delta; merge off the critical path</td><td>HMGI</td></tr>
+      <tr><td>Near-miss rejection</td><td>None — similarity is assumed monotone in relevance</td><td>Coverage guard plus calibration on paired examples</td><td>KERL</td></tr>
+      <tr><td>Relational recall</td><td>Not possible</td><td>One hop over episode edges</td><td>HMGI</td></tr>
+    </tbody>
+  </table>
+
+  <h3>What we are not adopting, and why</h3>
+  <div class="info-grid">
+    <div class="info-card orange">
+      <div class="info-card-label">Declined</div>
+      <div class="info-card-title">Distributed sharding and GPU offload</div>
+      <div class="info-card-text">HMGI's scaling apparatus targets billion-vector deployments. Our store is interactive and small; this is complexity without a matching problem.</div>
+    </div>
+    <div class="info-card orange">
+      <div class="info-card-label">Declined</div>
+      <div class="info-card-title">Aggressive embedding quantisation</div>
+      <div class="info-card-text">Memory footprint is not our constraint, and quantisation trades a small recall loss for savings we do not need. Revisit only if percept vectors grow large.</div>
+    </div>
+    <div class="info-card orange">
+      <div class="info-card-label">Declined</div>
+      <div class="info-card-title">LLM-generated filter extraction</div>
+      <div class="info-card-text">HyST needs a model because its queries are natural language. Our schema is enumerated in code, so filters are constructed deterministically — and the paper's hallucinated-attribute failure never arises.</div>
+    </div>
+    <div class="info-card orange">
+      <div class="info-card-label">Declined</div>
+      <div class="info-card-title">A generative selector for actions</div>
+      <div class="info-card-text">KERL's selection is a language-model output. Ours must be auditable and fast, and the explanation payload must stay decomposable. We take the grounding discipline and the negative-sampling idea, not the generation.</div>
+    </div>
+    <div class="info-card amber">
+      <div class="info-card-label">Deferred</div>
+      <div class="info-card-title">Query refinement</div>
+      <div class="info-card-text">HyST's own ablation found removing it sometimes helped. We would be stripping structured cues out of a percept that has few to spare, so it stays off until measurement says otherwise.</div>
+    </div>
+    <div class="info-card amber">
+      <div class="info-card-label">Deferred</div>
+      <div class="info-card-title">Learned index parameter tuning</div>
+      <div class="info-card-text">Predicting index parameters from workload features is worthwhile at scale. Below a few thousand records the parameters barely matter; adopt after the index earns its place.</div>
+    </div>
+  </div>
+
+  <h3>Open risks</h3>
+  <ul class="plain">
+    <li><strong>The crossover point is unmeasured.</strong> Every claim about the index being cheaper depends on a record count we have not established. The rollout must measure exact-scan latency against index latency on real session traces and set the activation threshold from data, not from the papers' scale.</li>
+    <li><strong>Approximation weakens explainability.</strong> Today the explanation is provably complete: nothing that could have contributed was missed. Under approximate search it becomes "these are the contributors the index found". The mitigation is a periodic exact audit that reports how often the index and the scan disagree on the top contributor.</li>
+    <li><strong>Embeddings for weak channels.</strong> Smell is our least reliable modality and, per HMGI's own limitations, among the least well served by standard embedding methods. Confidence weighting already discounts it; if its embedding proves uninformative, that partition can fall back to exact feature matching without disturbing the others.</li>
+    <li><strong>Over-strict filters can empty the pool.</strong> A binding filter that returns nothing is worse than a slow scan, because it silently pushes the step onto the cold-start path. The relaxation order must be fixed, recorded in the explanation, and monitored.</li>
+  </ul>
+</section>
+
+<!-- ══════════════ §15 STACK ══════════════ -->
+<section id="stack">
+  <span class="section-num">§ 15</span>
+  <h2>The proposed retrieval stack</h2>
+
+  <p>
+    Read top to bottom, each layer consumes the previous layer's output and hands on a strictly smaller, strictly better-qualified set.
+  </p>
+
+  <div class="diagram-wrap">
+    <div class="diagram-label">Diagram 12 — Perceptual memory indexing and retrieval stack</div>
+    <div class="diagram-body">
+      <svg class="diag" viewBox="0 0 780 470" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Five stacked layers from percept construction down to update, each labelled with its mechanism, source and output.">
+        <g font-family="'Outfit',sans-serif">
+          <rect x="20" y="16" width="740" height="76" rx="9" fill="#e8eef6" stroke="#2b4c7e" stroke-width="1.3"/>
+          <text x="40" y="42" font-size="13" font-weight="600" fill="#2b4c7e">A · Percept construction</text>
+          <text x="40" y="62" font-size="10.5" fill="#5a7aaa">Modality slots with confidence · one embedding per active slot · metadata envelope · episode edges</text>
+          <text x="40" y="80" font-family="'DM Mono',monospace" font-size="9.5" fill="#5a7aaa">out: query vectors + binding conditions</text>
+          <rect x="586" y="30" width="156" height="24" rx="12" fill="#fff" stroke="#2b4c7e" stroke-width="0.9"/>
+          <text x="664" y="46" text-anchor="middle" font-size="9.5" fill="#2b4c7e">ours + HMGI partitioning</text>
+
+          <rect x="20" y="100" width="740" height="76" rx="9" fill="#e4f0ec" stroke="#1e6e5b" stroke-width="1.3"/>
+          <text x="40" y="126" font-size="13" font-weight="600" fill="#1e6e5b">B · Binding-constraint screen</text>
+          <text x="40" y="146" font-size="10.5" fill="#2a8060">Attribute indexes over modality mask, action, mode, reflex rule, expert flag, recency band</text>
+          <text x="40" y="164" font-family="'DM Mono',monospace" font-size="9.5" fill="#2a8060">out: eligible subset · relaxation order defined for the empty case</text>
+          <rect x="640" y="114" width="102" height="24" rx="12" fill="#fff" stroke="#1e6e5b" stroke-width="0.9"/>
+          <text x="691" y="130" text-anchor="middle" font-size="9.5" fill="#1e6e5b">HyST</text>
+
+          <rect x="20" y="184" width="740" height="76" rx="9" fill="#ede9f6" stroke="#5a3d8a" stroke-width="1.3"/>
+          <text x="40" y="210" font-size="13" font-weight="600" fill="#5a3d8a">C · Novelty by nearest neighbour</text>
+          <text x="40" y="230" font-size="10.5" fill="#7b5fb0">Per-partition top-1 plus exhaustive delta pass · combined by channel confidence</text>
+          <text x="40" y="248" font-family="'DM Mono',monospace" font-size="9.5" fill="#7b5fb0">out: graded novelty, per channel and aggregate</text>
+          <rect x="640" y="198" width="102" height="24" rx="12" fill="#fff" stroke="#5a3d8a" stroke-width="0.9"/>
+          <text x="691" y="214" text-anchor="middle" font-size="9.5" fill="#5a3d8a">HMGI</text>
+
+          <rect x="20" y="268" width="740" height="86" rx="9" fill="#faeeda" stroke="#b07a12" stroke-width="1.3"/>
+          <text x="40" y="294" font-size="13" font-weight="600" fill="#7a5410">D · Fused retrieval and grounded ranking</text>
+          <text x="40" y="314" font-size="10.5" fill="#9a7020">Top-K + one hop · semantic, emotional, contextual and relational terms fused under adjustable weights</text>
+          <text x="40" y="332" font-size="10.5" fill="#9a7020">Coverage guard rejects near-misses; only retrieved memories may justify the decision</text>
+          <text x="40" y="348" font-family="'DM Mono',monospace" font-size="9.5" fill="#9a7020">out: contribution weight per memory · support total · explanation payload</text>
+          <rect x="602" y="282" width="140" height="24" rx="12" fill="#fff" stroke="#b07a12" stroke-width="0.9"/>
+          <text x="672" y="298" text-anchor="middle" font-size="9.5" fill="#b07a12">HMGI + KERL</text>
+
+          <rect x="20" y="362" width="740" height="86" rx="9" fill="#f4ede8" stroke="#8b3a1a" stroke-width="1.3"/>
+          <text x="40" y="388" font-size="13" font-weight="600" fill="#8b3a1a">E · Update and adaptation</text>
+          <text x="40" y="408" font-size="10.5" fill="#aa5a30">Append to delta with edges · asynchronous merge · retroactive reward edits as version updates</text>
+          <text x="40" y="426" font-size="10.5" fill="#aa5a30">Adapts: action threshold, fusion weights, top-K and hop budget, filter relaxation policy</text>
+          <text x="40" y="442" font-family="'DM Mono',monospace" font-size="9.5" fill="#aa5a30">out: a larger memory and a better-calibrated search over it</text>
+          <rect x="602" y="376" width="140" height="24" rx="12" fill="#fff" stroke="#8b3a1a" stroke-width="0.9"/>
+          <text x="672" y="392" text-anchor="middle" font-size="9.5" fill="#8b3a1a">HMGI + ours</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <ul class="contrib-list">
+    <li><div><strong>Represent richly, index separably.</strong> Percepts keep their per-channel confidence and their tolerance for missing modalities; each active channel contributes its own vector to its own partition, so absence costs nothing and no channel is invented to fill a slot.</div></li>
+    <li><div><strong>Screen on structure, not on content hashes.</strong> The properties that genuinely partition memory are few and low-cardinality. Filtering on those, before any similarity is computed, is what the earlier membership experiment was reaching for and could not deliver.</div></li>
+    <li><div><strong>Make novelty graded and sub-linear.</strong> Novelty stops being the complement of an exhaustive maximum and becomes a confidence-weighted blend of per-channel nearest neighbours, with approximation error biased toward the safe direction.</div></li>
+    <li><div><strong>Separate the four kinds of relevance.</strong> Semantic, emotional, contextual and relational similarity get their own terms and their own weights, so the balance between resemblance and adjacency can shift with novelty rather than being fixed at build time.</div></li>
+    <li><div><strong>Let only retrieved evidence speak, and guard against near-misses.</strong> A memory contributes only if it was retrieved and only if it actually covers the features the decision turns on. Rejected near-misses become the calibration set for the weights.</div></li>
+    <li><div><strong>Absorb writes without blocking reads.</strong> Every step writes; the delta keeps recent memory exact and immediately visible while merging happens off the critical path, so approximation only ever touches records that time decay has already discounted.</div></li>
+  </ul>
+
+  <blockquote class="pull">
+    The memory layer's job is not to remember everything equally well. It is to make the right handful of experiences cheap to find, and to be honest about which ones it found.
+  </blockquote>
+</section>
+
+<div class="doc-footer">
+  <span>Perceptual memory indexing and retrieval · design study</span>
+  <span>Sources: HMGI · HyST · KERL</span>
+</div>
+
+</div>
+</body>
+</html>
