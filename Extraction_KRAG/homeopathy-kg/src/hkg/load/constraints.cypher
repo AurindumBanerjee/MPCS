@@ -1,0 +1,12 @@
+CREATE CONSTRAINT remedy_id IF NOT EXISTS FOR (n:Remedy) REQUIRE n.id IS UNIQUE;
+CREATE CONSTRAINT symptom_id IF NOT EXISTS FOR (n:Symptom) REQUIRE n.id IS UNIQUE;
+CREATE CONSTRAINT region_id IF NOT EXISTS FOR (n:BodyRegion) REQUIRE n.id IS UNIQUE;
+CREATE CONSTRAINT sensation_id IF NOT EXISTS FOR (n:Sensation) REQUIRE n.id IS UNIQUE;
+CREATE CONSTRAINT modality_id IF NOT EXISTS FOR (n:Modality) REQUIRE n.id IS UNIQUE;
+CREATE CONSTRAINT occurrence_id IF NOT EXISTS FOR (n:Occurrence) REQUIRE n.id IS UNIQUE;
+CREATE CONSTRAINT chunk_id IF NOT EXISTS FOR (n:Chunk) REQUIRE n.id IS UNIQUE;
+CREATE CONSTRAINT source_id IF NOT EXISTS FOR (n:Source) REQUIRE n.id IS UNIQUE;
+CREATE INDEX alias_text IF NOT EXISTS FOR (n:Alias) ON (n.text);
+CREATE INDEX symptom_label IF NOT EXISTS FOR (n:Symptom) ON (n.label);
+CREATE INDEX symptom_kind IF NOT EXISTS FOR (n:Symptom) ON (n.kind);
+CREATE INDEX occurrence_run IF NOT EXISTS FOR (n:Occurrence) ON (n.run_id);

@@ -1,0 +1,16 @@
+# homeopathy-kg data and secrets
+.env
+data/raw/
+data/parsed/
+data/chunks/
+data/llm_cache/
+data/extracted/
+data/chroma/
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+build/
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
