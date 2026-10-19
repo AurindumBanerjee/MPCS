@@ -4,7 +4,8 @@ data/raw/
 data/parsed/
 data/chunks/
 data/llm_cache/
-data/extracted/
+data/extracted/*
+!data/extracted/run_pilot_01.jsonl
 data/chroma/
 __pycache__/
 *.pyc
