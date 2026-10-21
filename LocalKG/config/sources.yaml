@@ -1,0 +1,39 @@
+# Source texts for the pipeline.
+# Each entry describes one source file and how to interpret its typographic emphasis.
+#
+# emphasis_grade_map: mapping from emphasis markup to numeric grade (1-3).
+#   plain  = ordinary text (grade 1)
+#   italic = _italic_ (grade 2)
+#   bold   = **bold** (grade 3)
+#   caps   = ALL CAPS  (grade 3)
+
+sources:
+  boericke_pocket_manual:
+    title: "Boericke's Pocket Manual of Homoeopathic Materia Medica"
+    author: "William Boericke"
+    edition: "9th edition (1927)"
+    license: "public_domain"
+    language: "en"
+    format: "html"                 # or "pdf"
+    path: "data/raw/boericke.html" # relative to project root
+    emphasis_grade_map:
+      plain: 1
+      italic: 2
+      bold: 3
+      caps: 3
+    notes: >
+      Public domain. Original 1927 edition is out of copyright.
+      Verify that your specific file is from a public-domain host.
+
+  hahnemann_materia_medica:
+    title: "Materia Medica Pura"
+    author: "Samuel Hahnemann"
+    license: "public_domain"
+    language: "en"
+    format: "pdf"
+    path: "../docs/Materia Medica Samuel Hahnemann.pdf"
+    emphasis_grade_map:
+      plain: 1
+      italic: 2
+      bold: 3
+      caps: 3

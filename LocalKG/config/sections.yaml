@@ -1,0 +1,100 @@
+# Section vocabulary for classical Boericke-style materia medica texts.
+# Maps standard headings found in texts to canonical body regions and symptom kinds.
+
+sections:
+  Mind:
+    canonical: "Mind"
+    kind: "mental"
+    aliases: ["MIND", "Mental", "Sensorium"]
+  Head:
+    canonical: "Head"
+    kind: "physical"
+    aliases: ["HEAD", "Vertigo", "Forehead", "Temples", "Occiput"]
+  Eyes:
+    canonical: "Eyes"
+    kind: "physical"
+    aliases: ["EYES", "Eye", "Vision", "Sight"]
+  Ears:
+    canonical: "Ears"
+    kind: "physical"
+    aliases: ["EARS", "Ear", "Hearing"]
+  Nose:
+    canonical: "Nose"
+    kind: "physical"
+    aliases: ["NOSE", "Coryza", "Smell"]
+  Face:
+    canonical: "Face"
+    kind: "physical"
+    aliases: ["FACE", "Countenance", "Lips", "Jaw"]
+  Mouth:
+    canonical: "Mouth"
+    kind: "physical"
+    aliases: ["MOUTH", "Teeth", "Gums", "Tongue", "Taste", "Saliva"]
+  Throat:
+    canonical: "Throat"
+    kind: "physical"
+    aliases: ["THROAT", "Pharynx", "Larynx", "Swallowing", "Uvula", "Tonsils"]
+  Stomach:
+    canonical: "Stomach"
+    kind: "physical"
+    aliases: ["STOMACH", "Appetite", "Thirst", "Eructations", "Nausea", "Vomiting", "Epigastrium"]
+  Abdomen:
+    canonical: "Abdomen"
+    kind: "physical"
+    aliases: ["ABDOMEN", "Hypochondria", "Liver", "Spleen", "Groin", "Umbilicus"]
+  Stool:
+    canonical: "Stool"
+    kind: "physical"
+    aliases: ["STOOL", "Rectum", "Anus", "Diarrhoea", "Constipation"]
+  Urine:
+    canonical: "Urine"
+    kind: "physical"
+    aliases: ["URINE", "Urinary Organs", "Bladder", "Kidneys", "Micturition"]
+  Male:
+    canonical: "Male"
+    kind: "physical"
+    aliases: ["MALE", "Male Sexual Organs", "Genitalia Male", "Sexual"]
+  Female:
+    canonical: "Female"
+    kind: "physical"
+    aliases: ["FEMALE", "Female Sexual Organs", "Menses", "Genitalia Female", "Uterus", "Ovaries", "Leucorrhoea"]
+  Respiratory:
+    canonical: "Respiratory"
+    kind: "physical"
+    aliases: ["RESPIRATORY", "Respiratory Organs", "Cough", "Chest", "Lungs", "Breathing", "Dyspnoea"]
+  Heart:
+    canonical: "Heart"
+    kind: "physical"
+    aliases: ["HEART", "Circulation", "Pulse"]
+  Neck_Back:
+    canonical: "Neck and Back"
+    kind: "physical"
+    aliases: ["BACK", "Neck", "Spine", "Lumbar", "Sacrum"]
+  Extremities:
+    canonical: "Extremities"
+    kind: "physical"
+    aliases: ["EXTREMITIES", "Limbs", "Arms", "Legs", "Hands", "Feet", "Joints"]
+  Sleep:
+    canonical: "Sleep"
+    kind: "general"
+    aliases: ["SLEEP", "Dreams", "Insomnia", "Drowsiness"]
+  Fever:
+    canonical: "Fever"
+    kind: "general"
+    aliases: ["FEVER", "Chill", "Heat", "Sweat", "Perspiration", "Temperature"]
+  Skin:
+    canonical: "Skin"
+    kind: "physical"
+    aliases: ["SKIN", "Eruptions", "Ulcers", "Itching"]
+  Modalities:
+    canonical: "Modalities"
+    kind: "general"
+    aliases: ["MODALITIES", "Modality", "Aggravation and Amelioration"]
+  Relationship:
+    canonical: "Relationship"
+    kind: "general"
+    aliases: ["RELATIONSHIP", "Relations", "Compare", "Antidotes", "Complementary"]
+  Generalities:
+    canonical: "Generalities"
+    kind: "general"
+    aliases: ["GENERALITIES", "General Symptoms", "Tissues", "Constitution"]
