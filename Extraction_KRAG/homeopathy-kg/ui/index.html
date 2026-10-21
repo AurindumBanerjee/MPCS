@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Homeopathy Knowledge Graph Studio</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <header class="top-navbar">
+    <div class="brand-section">
+      <div class="brand-icon">❖</div>
+      <div class="brand-title">Homeopathy Knowledge Graph</div>
+      <span class="badge-tag">v1.0 Provenance-Linked</span>
+    </div>
+
+    <div class="controls-section">
+      <div class="select-wrapper">
+        <label for="remedy-select" class="select-label">Select Schema:</label>
+        <select id="remedy-select">
+          <!-- Populated dynamically by app.js -->
+        </select>
+      </div>
+      <button class="guide-toggle-btn" id="guide-toggle-btn" title="View Pipeline & Graph Guide">
+        <span class="guide-btn-icon">📖</span> Guide & How to Run
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Viewport -->
+  <main class="main-viewport">
+    <div class="graph-card-wrapper">
+      
+      <!-- Schema Header Block strictly matching screenshot -->
+      <div class="schema-header-block">
+        <div>
+          <h1 class="schema-title" id="schema-title">Arsenicum Album Schema</h1>
+          <p class="schema-subtitle" id="schema-subtitle">Interactive homeopathic symptom & modality network graph</p>
+        </div>
+        <div class="stats-pill" id="stats-pill">10 Nodes · 10 Links</div>
+      </div>
+
+      <!-- Legend Row -->
+      <div class="legend-bar">
+        <div class="legend-item" data-type="Medicine">
+          <div class="legend-dot dot-medicine"></div>
+          <span>Medicine</span>
+        </div>
+        <div class="legend-item" data-type="Physical Symptom">
+          <div class="legend-dot dot-physical"></div>
+          <span>Physical Symptom</span>
+        </div>
+        <div class="legend-item" data-type="Affective Symptom">
+          <div class="legend-dot dot-affective"></div>
+          <span>Affective Symptom</span>
+        </div>
+        <div class="legend-item" data-type="Modality">
+          <div class="legend-dot dot-modality"></div>
+          <span>Modality</span>
+        </div>
+        <div class="legend-item" data-type="Cognitive Domain">
+          <div class="legend-dot dot-domain"></div>
+          <span>Cognitive Domain</span>
+        </div>
+      </div>
+
+      <!-- Graph Canvas -->
+      <div class="canvas-container" id="canvas-container">
+        <button class="canvas-reset-btn" id="reset-btn" title="Reset View & Simulation">↺</button>
+        
+        <div class="zoom-controls">
+          <button class="zoom-btn" id="zoom-in" title="Zoom In">+</button>
+          <button class="zoom-btn" id="zoom-out" title="Zoom Out">−</button>
+          <button class="zoom-btn" id="zoom-fit" title="Fit to Screen">⛶</button>
+        </div>
+
+        <svg id="graph-svg"></svg>
+      </div>
+
+    </div>
+
+    <!-- Inspector Drawer on Node Click -->
+    <aside class="inspector-drawer" id="inspector-drawer">
+      <div class="drawer-header">
+        <div class="drawer-title">Entity Provenance</div>
+        <button class="drawer-close-btn" id="drawer-close-btn">×</button>
+      </div>
+      <div class="drawer-content" id="drawer-content">
+        <!-- Injected on click -->
+      </div>
+    </aside>
+  </main>
+
+  <!-- Status Footer -->
+  <footer class="status-footer">
+    <div id="status-source">Source: Boericke Materia Medica (Digitized Provenance-Linked)</div>
+    <div class="footer-hint">Tip: Drag nodes to position • Scroll to zoom • Click any node for exact textual evidence</div>
+  </footer>
+
+  <!-- Guide & How to Run Modal -->
+  <div class="guide-modal-backdrop" id="guide-modal-backdrop">
+    <div class="guide-modal" role="dialog" aria-labelledby="modal-title">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-badge">Architecture & Execution Guide</div>
+          <h2 class="modal-title" id="modal-title">How to Run & Graph Pipeline Guide</h2>
+        </div>
+        <button class="modal-close-btn" id="modal-close-btn" title="Close guide">×</button>
+      </div>
+
+      <div class="modal-body">
+        
+        <!-- Section: How to Run Quickstart -->
+        <div class="guide-section">
+          <h3 class="section-title">🚀 How to Run & Get This Graph</h3>
+          <p class="section-desc">Follow these steps from the project root (<code>homeopathy-kg/</code>) to export data and launch this interactive visualization:</p>
+          
+          <div class="code-step">
+            <div class="step-num">1</div>
+            <div class="step-content">
+              <div class="step-label">Export knowledge graph schemas from extracted JSONL</div>
+              <pre class="code-block"><code>python ui/export_graph_data.py</code></pre>
+              <div class="step-hint">Reads <code>data/extracted/run_pilot_01.jsonl</code> and writes both <code>ui/graph_data.json</code> and <code>ui/data.js</code> across all 20 remedies.</div>
+            </div>
+          </div>
+
+          <div class="code-step">
+            <div class="step-num">2</div>
+            <div class="step-content">
+              <div class="step-label">Launch the local web server</div>
+              <pre class="code-block"><code>python serve_ui.py</code></pre>
+              <div class="step-hint">Starts a local HTTP server on port <code>8080</code> serving the interactive studio.</div>
+            </div>
+          </div>
+
+          <div class="code-step">
+            <div class="step-num">3</div>
+            <div class="step-content">
+              <div class="step-label">Open the interactive studio in your browser</div>
+              <pre class="code-block"><code>http://localhost:8080/</code></pre>
+              <div class="step-hint">Use the top-right dropdown to switch between any of the 20 remedies and click any node to inspect textual provenance.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Visual Grammar & Node Types -->
+        <div class="guide-section">
+          <h3 class="section-title">🎨 Knowledge Graph Schema & Visual Grammar</h3>
+          <p class="section-desc">The graph models remedies through a 5-layer multi-relational network:</p>
+          
+          <div class="schema-cards-grid">
+            <div class="schema-card">
+              <div class="schema-card-dot dot-medicine"></div>
+              <div class="schema-card-info">
+                <strong>Medicine (Blue)</strong>
+                <span>Central hub remedy entity (e.g., <em>Belladonna</em>, <em>Arsenicum Album</em>).</span>
+              </div>
+            </div>
+
+            <div class="schema-card">
+              <div class="schema-card-dot dot-physical"></div>
+              <div class="schema-card-info">
+                <strong>Physical Symptom (Pink)</strong>
+                <span>Somatic symptoms linked via <code>TREATS</code>, classified by anatomical section.</span>
+              </div>
+            </div>
+
+            <div class="schema-card">
+              <div class="schema-card-dot dot-affective"></div>
+              <div class="schema-card-info">
+                <strong>Affective Symptom (Purple)</strong>
+                <span>Emotional/mental symptoms linked via <code>HAS AFFECTIVE SYMPTOM</code>.</span>
+              </div>
+            </div>
+
+            <div class="schema-card">
+              <div class="schema-card-dot dot-modality"></div>
+              <div class="schema-card-info">
+                <strong>Modality (Yellow)</strong>
+                <span>Environmental factors linked via <code>AGGRAVATED BY</code> or <code>AMELIORATED BY</code>.</span>
+              </div>
+            </div>
+
+            <div class="schema-card">
+              <div class="schema-card-dot dot-domain"></div>
+              <div class="schema-card-info">
+                <strong>Cognitive Domain (Green)</strong>
+                <span>RDoC-aligned cognitive domains linked from affective symptoms via <code>MAPS TO</code>.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Domain Mapping & Extraction -->
+        <div class="guide-section">
+          <h3 class="section-title">🧠 Cognitive Domain & Modality Logic</h3>
+          <ul class="guide-bullets">
+            <li><strong>Cognitive Domains</strong>: Affective symptoms are mapped to 6 domains: <em>Anxiety / Threat Processing</em>, <em>Hyperarousal</em>, <em>Mood / Affect Regulation</em>, <em>Impulse Control / Aggression</em>, <em>Cognitive Processing</em>, and <em>Social Cognition</em>.</li>
+            <li><strong>Modalities</strong>: Extracted from <code>general_modality</code> text (polarities: Worse vs Better) and per-symptom aggravating factors.</li>
+            <li><strong>Provenance-Linked</strong>: Clicking any node opens the Inspector Drawer showing verbatim quotes from Boericke's text, extraction confidence, and section tags.</li>
+          </ul>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <span class="modal-footer-note">Detailed guide available at <code>ui/README.md</code></span>
+        <button class="modal-dismiss-btn" id="modal-dismiss-btn">Got it</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- D3.js and Scripts -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
