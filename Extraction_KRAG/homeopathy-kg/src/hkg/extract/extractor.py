@@ -63,8 +63,13 @@ class ExtractionPipeline:
             self.stats["errors"] += 1
             return {
                 "chunk_id": chunk_id,
+                "remedy_name": remedy_name,
+                "section": section,
                 "error": str(e),
                 "occurrences": [],
+                "relationships": [],
+                "intro": None,
+                "flags": [],
             }
 
         # Stage 3: Validation

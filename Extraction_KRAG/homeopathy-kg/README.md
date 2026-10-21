@@ -97,17 +97,17 @@ hkg chunk data/parsed/boericke_pocket_manual.jsonl
 
 ### 3. Extract & Validate
 ```bash
-hkg extract data/chunks/chunks.jsonl --run-id run_pilot_01
+hkg extract data/chunks/chunks.jsonl --run-id run_manual_baseline
 ```
 
 ### 4. Load Graph (Neo4j)
 ```bash
-hkg load-neo4j data/extracted/run_pilot_01.jsonl
+hkg load-neo4j data/extracted/run_manual_baseline.jsonl
 ```
 
 ### 5. Index Vectors (ChromaDB)
 ```bash
-hkg load-chroma data/extracted/run_pilot_01.jsonl
+hkg load-chroma data/extracted/run_manual_baseline.jsonl
 ```
 
 ### 6. Query the Agent
@@ -117,7 +117,7 @@ hkg ask "burning stomach pain, restlessness, fear of death, worse at midnight"
 
 ### 7. Run Gold Set Evaluation
 ```bash
-hkg eval-extraction data/extracted/run_pilot_01.jsonl
+hkg eval-extraction data/extracted/run_manual_baseline.jsonl
 ```
 
 ---

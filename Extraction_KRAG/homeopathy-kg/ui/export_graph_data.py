@@ -303,6 +303,6 @@ def generate_graph_data(extracted_file: Path, output_file: Path):
 
 
 if __name__ == "__main__":
-    src = Path("data/extracted/run_pilot_01.jsonl")
+    src = Path("data/extracted/run_manual_baseline.jsonl")
     dst = Path("ui/graph_data.json")
     generate_graph_data(src, dst)
