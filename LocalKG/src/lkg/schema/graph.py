@@ -46,6 +46,21 @@ def make_sensation_id(name: str) -> str:
     return f"sensation:{make_slug(name)}"
 
 
+def make_domain_id(name: str) -> str:
+    """CognitiveDomain ID: domain:<slug>."""
+    return f"domain:{make_slug(name)}"
+
+
+def make_condition_id(name: str) -> str:
+    """ClinicalCondition ID: condition:<slug>."""
+    return f"condition:{make_slug(name)}"
+
+
+def make_etiology_id(name: str) -> str:
+    """Etiology ID: etiology:<slug>."""
+    return f"etiology:{make_slug(name)}"
+
+
 def make_source_id(key: str) -> str:
     """Source ID: source:<slug>."""
     return f"source:{make_slug(key)}"

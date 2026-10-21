@@ -1,0 +1,111 @@
+[
+  {
+    "pmid": "27912633",
+    "remedy": "Arnica montana",
+    "remedy_id": "remedy:arnica_montana",
+    "title": "Perioperative Arnica montana for Reduction of Ecchymosis, Edema, and Pain in Facial Surgery: Systematic Review and Meta-Analysis",
+    "year": 2016,
+    "journal": "American Journal of Therapeutics",
+    "evidence_type": "clinical",
+    "mesh_terms": ["D001158", "D000894", "D004438", "D004487", "D010149", "D010936", "D016896"],
+    "extracted_symptoms": [
+      {
+        "symptom_raw": "Post-operative ecchymosis and bruising",
+        "canonical_label": "Ecchymosis / Bruising",
+        "kind": "physical",
+        "composite_weight": 2.7,
+        "grade": 3,
+        "cognitive_domain": "None",
+        "clinical_conditions": ["Ecchymosis", "Soft Tissue Injury"],
+        "evidence_quote": "Results indicate significant reductions in postoperative ecchymosis (bruising) and swelling compared to placebo."
+      },
+      {
+        "symptom_raw": "Post-traumatic and postoperative edema and swelling",
+        "canonical_label": "Edema / Swelling",
+        "kind": "physical",
+        "composite_weight": 2.6,
+        "grade": 3,
+        "cognitive_domain": "None",
+        "clinical_conditions": ["Edema", "Post-surgical Edema"],
+        "evidence_quote": "Results indicate significant reductions in postoperative ecchymosis (bruising) and swelling compared to placebo."
+      }
+    ]
+  },
+  {
+    "pmid": "17405692",
+    "remedy": "Arnica montana",
+    "remedy_id": "remedy:arnica_montana",
+    "title": "Choosing between NSAID and arnica for topical treatment of hand osteoarthritis in a randomised, double-blind study",
+    "year": 2007,
+    "journal": "Rheumatology International",
+    "evidence_type": "clinical",
+    "mesh_terms": ["D001158", "D010003", "D000893", "D000700"],
+    "extracted_symptoms": [
+      {
+        "symptom_raw": "Morning joint stiffness and pain",
+        "canonical_label": "Joint Stiffness and Soreness",
+        "kind": "physical",
+        "composite_weight": 2.4,
+        "grade": 2,
+        "cognitive_domain": "None",
+        "clinical_conditions": ["Osteoarthritis", "Arthritis"],
+        "modalities": [{"direction": "worse", "factor_raw": "morning", "factor_type": "time"}],
+        "evidence_quote": "Topical Arnica gel was found non-inferior to topical ibuprofen in reducing pain score and morning joint stiffness."
+      }
+    ]
+  },
+  {
+    "pmid": "28723690",
+    "remedy": "Belladonna",
+    "remedy_id": "remedy:belladonna",
+    "title": "Acute Anticholinergic Syndrome and Neurotoxic Toxidrome Caused by Atropa belladonna Ingestion: Clinical Spectrum and Management",
+    "year": 2017,
+    "journal": "Pan African Medical Journal",
+    "evidence_type": "toxicology",
+    "mesh_terms": ["D001433", "D001275", "D012601", "D010946", "D018680", "D009181", "D003693", "D006212", "D013610"],
+    "extracted_symptoms": [
+      {
+        "symptom_raw": "Severe psychomotor agitation, confusion, visual and auditory hallucinations, delirium, and fear/anxiety",
+        "canonical_label": "Acute Delirium with Hallucinations",
+        "kind": "mental",
+        "composite_weight": 2.95,
+        "grade": 3,
+        "cognitive_domain": "Cognitive / Delirium",
+        "clinical_conditions": ["Anticholinergic Syndrome", "Acute Delirium"],
+        "evidence_quote": "Centrally, the intoxication precipitates severe psychomotor agitation, confusion, visual and auditory hallucinations, delirium, and fear/anxiety."
+      },
+      {
+        "symptom_raw": "Marked mydriasis with photophobia, flushed dry skin, and hyperthermia",
+        "canonical_label": "Mydriasis, Flushed Red Face, and High Fever",
+        "kind": "physical",
+        "composite_weight": 2.85,
+        "grade": 3,
+        "cognitive_domain": "None",
+        "modalities": [{"direction": "worse", "factor_raw": "light", "factor_type": "other"}],
+        "evidence_quote": "Peripherally, patients exhibit marked mydriasis, photophobia, dry mucous membranes, cutaneous erythema (flushed dry skin), hyperthermia."
+      }
+    ]
+  },
+  {
+    "pmid": "31899146",
+    "remedy": "Belladonna",
+    "remedy_id": "remedy:belladonna",
+    "title": "Tropane Alkaloids from Atropa belladonna: Biosynthesis, Pharmacokinetics, and Muscarinic Receptor Antagonism",
+    "year": 2019,
+    "journal": "Molecules",
+    "evidence_type": "toxicology",
+    "mesh_terms": ["D001433", "D014334", "D011950", "D010275", "D009474"],
+    "extracted_symptoms": [
+      {
+        "symptom_raw": "Abrupt, violent vascular congestion with rapid bounding pulse and intense sensorial sensitivity",
+        "canonical_label": "Violent Vascular Congestion with Throbbing",
+        "kind": "physical",
+        "composite_weight": 2.8,
+        "grade": 3,
+        "cognitive_domain": "None",
+        "sensation_raw": ["throbbing", "congestion"],
+        "evidence_quote": "Acute Belladonna intoxication produces abrupt, violent vascular congestion with rapid bounding pulse and intense sensorial sensitivity (photophobia, hyperacusis)."
+      }
+    ]
+  }
+]

@@ -5,8 +5,33 @@ import re
 from pathlib import Path
 from typing import Any
 
-from lkg.config import DATA_DIR, get_sections_config
+from lkg.config import DATA_DIR, get_remedy_abbreviations, get_sections_config
 from lkg.schema.graph import make_source_id
+
+
+KNOWN_HAHNEMANN_REMEDIES: dict[str, str] = {
+    "aconitum": "Aconitum napellus",
+    "aconitum napellus": "Aconitum napellus",
+    "ambra grisea": "Ambra grisea",
+    "argentum": "Argentum metallicum",
+    "arnica": "Arnica montana",
+    "arnica montana": "Arnica montana",
+    "arsenicum": "Arsenicum album",
+    "arsenicum album": "Arsenicum album",
+    "asarum": "Asarum europaeum",
+    "belladonna": "Belladonna",
+    "bryonia": "Bryonia alba",
+    "camphora": "Camphora",
+    "carbo vegetabilis": "Carbo vegetabilis",
+    "carbo animalis": "Carbo animalis",
+    "chamomilla": "Chamomilla",
+    "conium": "Conium maculatum",
+    "drosera": "Drosera rotundifolia",
+    "ferrum": "Ferrum metallicum",
+    "hyoscyamus": "Hyoscyamus niger",
+    "ignatia": "Ignatia amara",
+    "ipecacuanha": "Ipecacuanha",
+}
 
 
 def extract_page_spans_with_markup(page: Any) -> list[dict[str, Any]]:
@@ -82,6 +107,17 @@ def parse_pdf_source(
         for alias in data.get("aliases", []):
             section_map[alias.lower()] = data.get("canonical", canon)
 
+    known_remedy_lookup: dict[str, str] = dict(KNOWN_HAHNEMANN_REMEDIES)
+    for canon_rem in get_remedy_abbreviations().values():
+        known_remedy_lookup[canon_rem.lower()] = canon_rem
+        first_word = canon_rem.split()[0].lower()
+        if len(first_word) >= 5 and first_word not in known_remedy_lookup:
+            known_remedy_lookup[first_word] = canon_rem
+
+    inline_sec_pattern = re.compile(
+        r"^(?:\*\*)?([A-Za-z][A-Za-z\s]{2,18}?)(?:\.\s*--|—|\.--|:)(?:\*\*)?\s+(.*)$"
+    )
+
     doc = fitz.open(pdf_path)
     records: list[dict[str, Any]] = []
 
@@ -112,16 +148,33 @@ def parse_pdf_source(
             line = line_item["text"]
             plain_line = re.sub(r"[\*_]", "", line).strip()
 
-            # Heading candidate (all caps or bold short line)
-            token = plain_line.rstrip(".:-").strip().lower()
+            # 1. Standalone section heading candidate
+            token = plain_line.rstrip(".:-—").strip().lower()
             if token in section_map:
                 flush()
                 current_section = section_map[token]
                 continue
 
-            # Remedy detection (e.g. bold heading or page header)
+            # 2. Inline Boericke section header (e.g. "**Mind.--** Great anguish...")
+            m_inline = inline_sec_pattern.match(line)
+            if m_inline:
+                sec_cand = re.sub(r"[\*_]", "", m_inline.group(1)).strip().lower()
+                if sec_cand in section_map:
+                    flush()
+                    current_section = section_map[sec_cand]
+                    remainder = m_inline.group(2).strip()
+                    if remainder:
+                        buffer.append(remainder)
+                    continue
+
+            # 3. Remedy heading detection (known canonical/Hahnemann title or short bold/CAPS heading)
+            if token in known_remedy_lookup and len(plain_line.split()) <= 4:
+                flush()
+                current_remedy = known_remedy_lookup[token]
+                current_section = "General" if "hahnemann" in source_key.lower() else "Intro"
+                continue
+
             if line.startswith("**") and line.endswith("**") and len(plain_line.split()) <= 4:
-                # Remedy heading candidate
                 flush()
                 current_remedy = plain_line
                 current_section = "Intro"

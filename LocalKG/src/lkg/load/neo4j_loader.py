@@ -6,6 +6,9 @@ from neo4j import GraphDatabase, Driver
 
 from lkg.config import settings, PROJECT_ROOT
 from lkg.schema.graph import (
+    make_condition_id,
+    make_domain_id,
+    make_etiology_id,
     make_modality_id,
     make_region_id,
     make_remedy_id,
@@ -157,23 +160,56 @@ class Neo4jLoader:
         with driver.session() as session:
             session.run(occ_query, batch=prepared)
 
-            # Step 2: Link Symptom nodes (for kind == 'symptom')
+            # Step 2: Link Symptom nodes + CognitiveDomain + Direct Semantic Remedy Edges
             sym_query = """
             UNWIND $batch AS row
             WITH row WHERE row.symptom_id IS NOT NULL
             MERGE (s:Symptom {id: row.symptom_id})
-            ON CREATE SET s.label = row.symptom_raw,
+            ON CREATE SET s.label = coalesce(row.canonical_label, row.symptom_raw),
                           s.kind = row.symptom_kind,
                           s.raw_phrases = [row.symptom_raw],
-                          s.affect_category = null
+                          s.affect_category = row.cognitive_domain,
+                          s.valence = row.valence,
+                          s.arousal = row.arousal,
+                          s.dominance = row.dominance
             ON MATCH SET s.raw_phrases = CASE
                          WHEN row.symptom_raw IN s.raw_phrases THEN s.raw_phrases
-                         ELSE s.raw_phrases + row.symptom_raw END
+                         ELSE s.raw_phrases + row.symptom_raw END,
+                         s.affect_category = coalesce(s.affect_category, row.cognitive_domain)
             WITH s, row
             MATCH (occ:Occurrence {id: row.id})
             MERGE (occ)-[:EXPRESSES]->(s)
+            WITH s, row
+            MATCH (r:Remedy {id: row.remedy_id})
+            FOREACH (_ IN CASE WHEN row.symptom_kind IN ['mental', 'dream'] THEN [1] ELSE [] END |
+                MERGE (r)-[rel_a:HAS_AFFECTIVE_SYMPTOM]->(s)
+                SET rel_a.weight = row.composite_weight, rel_a.grade = row.grade
+            )
+            FOREACH (_ IN CASE WHEN NOT (row.symptom_kind IN ['mental', 'dream']) THEN [1] ELSE [] END |
+                MERGE (r)-[rel_p:HAS_PHYSICAL_SYMPTOM]->(s)
+                SET rel_p.weight = row.composite_weight, rel_p.grade = row.grade
+            )
+            FOREACH (_ IN CASE WHEN row.domain_id IS NOT NULL THEN [1] ELSE [] END |
+                MERGE (dom:CognitiveDomain {id: row.domain_id})
+                ON CREATE SET dom.label = row.cognitive_domain
+                MERGE (s)-[:MAPS_TO]->(dom)
+            )
             """
-            session.run(sym_query, batch=prepared)
+            sym_prepared = []
+            for p in prepared:
+                vad = p.get("vad") or {}
+                dom = p.get("cognitive_domain", "None")
+                sym_prepared.append({
+                    **p,
+                    "canonical_label": p.get("canonical_label") or p.get("symptom_raw"),
+                    "cognitive_domain": dom if dom != "None" else None,
+                    "domain_id": make_domain_id(dom) if dom and dom != "None" else None,
+                    "valence": vad.get("valence", 0.5),
+                    "arousal": vad.get("arousal", 0.5),
+                    "dominance": vad.get("dominance", 0.5),
+                    "composite_weight": p.get("composite_weight", float(p.get("grade", 1))),
+                })
+            session.run(sym_query, batch=sym_prepared)
 
             # Step 3: Link BodyRegion nodes
             region_query = """
@@ -220,8 +256,84 @@ class Neo4jLoader:
                 FOREACH (_ IN CASE WHEN row.direction = 'better' THEN [1] ELSE [] END |
                     MERGE (occ)-[:AMELIORATED_BY {raw: row.raw}]->(m)
                 )
+                WITH m, row, occ
+                OPTIONAL MATCH (occ)-[:EXPRESSES]->(s:Symptom)
+                FOREACH (_ IN CASE WHEN s IS NOT NULL AND row.direction = 'worse' THEN [1] ELSE [] END |
+                    MERGE (s)-[:AGGRAVATED_BY {raw: row.raw}]->(m)
+                )
+                FOREACH (_ IN CASE WHEN s IS NOT NULL AND row.direction = 'better' THEN [1] ELSE [] END |
+                    MERGE (s)-[:AMELIORATED_BY {raw: row.raw}]->(m)
+                )
                 """
                 session.run(mod_query, batch=mod_rows)
+
+            # Step 5: Link Sensations, Etiologies (Causes), and Clinical Conditions
+            sens_rows = []
+            cond_rows = []
+            cause_rows = []
+            for p in prepared:
+                for sens in p.get("sensation_raw", []):
+                    if sens.strip():
+                        sens_rows.append({
+                            "occ_id": p["id"],
+                            "symptom_id": p.get("symptom_id"),
+                            "sensation_id": make_sensation_id(sens),
+                            "label": sens.strip(),
+                        })
+                for cond in p.get("clinical_conditions", []):
+                    if cond.strip():
+                        cond_rows.append({
+                            "remedy_id": p["remedy_id"],
+                            "condition_id": make_condition_id(cond),
+                            "label": cond.strip(),
+                            "weight": p.get("composite_weight", float(p.get("grade", 1))),
+                        })
+                for cause in p.get("causes_raw", []):
+                    if cause.strip():
+                        cause_rows.append({
+                            "symptom_id": p.get("symptom_id"),
+                            "etiology_id": make_etiology_id(cause),
+                            "label": cause.strip(),
+                        })
+
+            if sens_rows:
+                session.run(
+                    """
+                    UNWIND $batch AS row
+                    MERGE (sn:Sensation {id: row.sensation_id})
+                    ON CREATE SET sn.label = row.label
+                    WITH sn, row
+                    MATCH (occ:Occurrence {id: row.occ_id})
+                    MERGE (occ)-[:HAS_SENSATION]->(sn)
+                    """,
+                    batch=sens_rows,
+                )
+            if cond_rows:
+                session.run(
+                    """
+                    UNWIND $batch AS row
+                    MERGE (c:ClinicalCondition {id: row.condition_id})
+                    ON CREATE SET c.label = row.label
+                    WITH c, row
+                    MATCH (r:Remedy {id: row.remedy_id})
+                    MERGE (r)-[rel:INDICATED_FOR {provenance: 'derived'}]->(c)
+                    SET rel.weight = row.weight
+                    """,
+                    batch=cond_rows,
+                )
+            if cause_rows:
+                session.run(
+                    """
+                    UNWIND $batch AS row
+                    WITH row WHERE row.symptom_id IS NOT NULL
+                    MERGE (e:Etiology {id: row.etiology_id})
+                    ON CREATE SET e.label = row.label
+                    WITH e, row
+                    MATCH (s:Symptom {id: row.symptom_id})
+                    MERGE (e)-[:TRIGGERS]->(s)
+                    """,
+                    batch=cause_rows,
+                )
 
     def load_relationships_batch(self, relationships: list[dict[str, Any]]) -> None:
         """MERGE Remedy-to-Remedy relationships (RELATES_TO)."""

@@ -3,6 +3,18 @@ from __future__ import annotations
 from typing import Literal
 from pydantic import BaseModel, Field
 
+CognitiveDomainLiteral = Literal[
+    "Hyperarousal / Anxiety",
+    "Depressive / Melancholic",
+    "Agitation / Irritability",
+    "Cognitive / Delirium",
+    "Obsessive / Fastidious",
+    "Social / Attachment",
+    "Somatic Threat / Fear",
+    "Sleep / Dreams",
+    "None",
+]
+
 
 class ModalityOut(BaseModel):
     direction: Literal["worse", "better"]
@@ -25,15 +37,37 @@ class ModalityOut(BaseModel):
 
 
 class SymptomOut(BaseModel):
-    symptom_raw: str = Field(description="One discrete symptom, verbatim wording")
+    symptom_raw: str = Field(description="One discrete atomic symptom, verbatim wording")
+    canonical_label: str | None = Field(
+        default=None,
+        description="Short normalized concept label, e.g. 'Fear of Death', 'Restlessness', 'Burning Pains'",
+    )
     location_raw: list[str] = Field(default_factory=list)
     sensation_raw: list[str] = Field(default_factory=list)
     laterality: Literal["right", "left", "both", "alternating", "unspecified"] = "unspecified"
     modalities: list[ModalityOut] = Field(default_factory=list)
     concomitants_raw: list[str] = Field(default_factory=list)
+    causes_raw: list[str] = Field(
+        default_factory=list,
+        description="Etiology/triggers or preceding symptoms (e.g. 'fright', 'grief', 'cold drinks')",
+    )
+    clinical_conditions: list[str] = Field(
+        default_factory=list,
+        description="Named nosological/clinical conditions if any (e.g. 'Asthma', 'Neuralgia', 'Croup')",
+    )
+    severity_modifiers: list[str] = Field(
+        default_factory=list,
+        description="Intensity adjectives verbatim from text (e.g. 'great', 'violent', 'extreme', 'slight')",
+    )
+    cognitive_domain: CognitiveDomainLiteral = Field(
+        default="None",
+        description="For mental/affective/dream symptoms, primary cognitive-affective domain",
+    )
     emphasis: Literal["plain", "italic", "bold", "caps"] = "plain"
     evidence_type: Literal["proving", "clinical", "toxicology", "unspecified"] = "unspecified"
-    symptom_kind_hint: Literal["mental", "physical", "general", "clinical", "unknown"] = "unknown"
+    symptom_kind_hint: Literal["mental", "affective", "dream", "physical", "general", "clinical", "unknown"] = "unknown"
+    onset_raw: str | None = Field(default=None, description="Timing/onset if stated, e.g. 'aft. 4 h.'")
+    prover_raw: str | None = Field(default=None, description="Prover attribution if stated, e.g. 'Kr.'")
     evidence_quote: str = Field(description="Verbatim substring of chunk, <= 400 chars")
     confidence: float = Field(ge=0.0, le=1.0, default=1.0)
 
