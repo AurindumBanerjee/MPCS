@@ -5,12 +5,19 @@ from typing import Any
 from rapidfuzz import fuzz
 
 from lkg.config import get_sections_config, get_sources_config
+from lkg.extract.affect import (
+    KNOWN_CLINICAL_CONDITIONS,
+    canonicalize_symptom_label,
+    compute_adjective_severity,
+    compute_linear_regression_weight,
+    compute_vad,
+    resolve_cognitive_domain,
+)
 from lkg.schema.extraction import ChunkExtraction, ModalityOut, SymptomOut
 
 
 def normalize_text(text: str) -> str:
     """Normalize whitespace, case, and lightweight markdown for substring checking."""
-    # Remove markdown formatting characters
     cleaned = re.sub(r"[\*\_#`]", "", text)
     cleaned = re.sub(r"\s+", " ", cleaned).strip().lower()
     return cleaned
@@ -29,7 +36,6 @@ def check_symptom_grounding(symptom_raw: str, quote: str, min_ratio: float = 60.
     """Check whether symptom_raw is grounded in the quote (substring or high fuzzy match)."""
     if is_substring_normalized(symptom_raw, quote):
         return True
-    # Fuzzy fallback for minor rewordings or punctuation differences
     ratio = fuzz.partial_ratio(normalize_text(symptom_raw), normalize_text(quote))
     return ratio >= min_ratio
 
@@ -63,20 +69,23 @@ def validate_direction(direction: str, quote: str) -> dict[str, Any]:
 
 def detect_markup_emphasis(symptom_raw: str, chunk_text: str) -> str:
     """Deterministic markup check: inspect chunk_text around symptom text for **bold**, _italic_, or CAPS."""
-    clean_sym = symptom_raw.strip()
+    clean_sym = re.sub(r"[\*\_`]", "", symptom_raw).strip()
     if not clean_sym:
         return "plain"
 
-    # Check for bold pattern **...**
     escaped = re.escape(clean_sym)
-    if re.search(rf"\*\*[^*]*{escaped}[^*]*\*\*", chunk_text, re.IGNORECASE):
-        return "bold"
+    # 1. Check if symptom_raw sits inside a **bold** span
+    for m in re.finditer(r"\*\*([^*]+)\*\*", chunk_text):
+        if re.search(escaped, m.group(1), re.IGNORECASE):
+            return "bold"
 
-    # Check for italic pattern _..._ or *...*
-    if re.search(rf"(?:_|\*)[^_*\n]*{escaped}[^_*\n]*(?:_|\*)", chunk_text, re.IGNORECASE):
-        return "italic"
+    # 2. Check if symptom_raw sits inside an _italic_ span
+    for m in re.finditer(r"(?<!\*)(?:_([^_\n]+)_|\*([^*\n]+)\*)(?!\*)", chunk_text):
+        span_txt = m.group(1) or m.group(2) or ""
+        if re.search(escaped, span_txt, re.IGNORECASE):
+            return "italic"
 
-    # Check if symptom is predominantly in ALL CAPS in chunk
+    # 3. Check if symptom is predominantly in ALL CAPS in chunk
     match = re.search(escaped, chunk_text)
     if match:
         matched_chunk_slice = match.group(0)
@@ -99,8 +108,12 @@ def compute_grade(emphasis: str, source_id: str = "boericke_pocket_manual") -> i
     return int(grade_map.get(emphasis, 1))
 
 
-def resolve_symptom_kind(section: str, symptom_kind_hint: str = "unknown") -> str:
-    """Determine symptom kind deterministically from section, falling back to hint for unknown sections."""
+def resolve_symptom_kind(section: str, symptom_kind_hint: str = "unknown", symptom_raw: str = "") -> str:
+    """Determine symptom kind deterministically from section + content."""
+    low_sym = symptom_raw.lower()
+    if "dream" in low_sym or "nightmare" in low_sym or symptom_kind_hint == "dream":
+        return "dream"
+
     sections_cfg = get_sections_config()
     sec_info = sections_cfg.get(section, {})
     if "kind" in sec_info:
@@ -113,14 +126,81 @@ def resolve_symptom_kind(section: str, symptom_kind_hint: str = "unknown") -> st
     elif section.lower() in ("intro", "introduction"):
         return "general"
 
-    if symptom_kind_hint in ("mental", "physical", "general", "clinical"):
-        return symptom_kind_hint
+    if symptom_kind_hint in ("mental", "affective", "dream", "physical", "general", "clinical"):
+        return "mental" if symptom_kind_hint == "affective" else symptom_kind_hint
     return "physical"
+
+
+def _infer_factor_type(factor_raw: str) -> str:
+    low = factor_raw.lower()
+    if re.search(r"\b(morning|evening|night|midnight|noon|afternoon|hour|day|periodic)\b", low):
+        return "time"
+    if re.search(r"\b(heat|warm\w*|cold|cool|open air|heated|chill)\b", low):
+        return "temperature"
+    if re.search(r"\b(wet|damp|dry|wind\w*|storm\w*|weather|change of)\b", low):
+        return "weather"
+    if re.search(r"\b(lying|sitting|standing|stooping|rising|bending)\b", low):
+        return "position"
+    if re.search(r"\b(motion|walking|running|exertion|rest|ascending)\b", low):
+        return "motion"
+    if re.search(r"\b(touch|pressure|rubbing|scratching|riding)\b", low):
+        return "touch_pressure"
+    if re.search(r"\b(drink\w*|food|milk|coffee|wine|fat|fruit|eating|fasting)\b", low):
+        return "food_drink"
+    if re.search(r"\b(sleep\w*|waking|slumber)\b", low):
+        return "sleep"
+    if re.search(r"\b(alone|company|consolation|strangers)\b", low):
+        return "company"
+    if re.search(r"\b(fright|grief|anger|vexation|excitement|weeping)\b", low):
+        return "emotion"
+    return "other"
+
+
+def harvest_unclaimed_modalities(
+    chunk_text: str,
+    existing_factors: set[str],
+) -> list[dict[str, Any]]:
+    """Fallback harvester: catch explicit 'Worse ...; better ...' clauses the LLM missed."""
+    harvested: list[dict[str, Any]] = []
+    clean_lines = [
+        line.strip()
+        for line in chunk_text.splitlines()
+        if line.strip() and not line.strip().startswith("###")
+    ]
+    full_text = " ".join(clean_lines)
+
+    # Match clauses starting with Worse / Aggravated / < or Better / Ameliorated / >
+    clause_pattern = re.compile(
+        r"\b(worse|aggravated|agg\.|better|ameliorated|amel\.|relieved)\b\s*(?:from|by|in|at|on|after|during|,)?\s*([^.;\n]+)",
+        re.IGNORECASE,
+    )
+    for m in clause_pattern.finditer(full_text):
+        cue = m.group(1).lower()
+        raw_tail = m.group(2).strip()
+        direction = "worse" if cue.startswith(("worse", "agg")) else "better"
+        quote = m.group(0).strip()
+        # Split on ',' or ' and '
+        parts = [p.strip() for p in re.split(r",|\band\b", raw_tail) if p.strip()]
+        for part in parts:
+            norm_part = normalize_text(part)
+            if not norm_part or len(norm_part) < 3:
+                continue
+            if any(norm_part in ef or ef in norm_part for ef in existing_factors):
+                continue
+            existing_factors.add(norm_part)
+            harvested.append({
+                "direction": direction,
+                "factor_raw": part,
+                "factor_type": _infer_factor_type(part),
+                "evidence_quote": quote,
+            })
+    return harvested
 
 
 class ValidationResult:
     def __init__(self):
         self.accepted_symptoms: list[dict[str, Any]] = []
+        self.harvested_modalities: list[dict[str, Any]] = []
         self.rejected_items: list[dict[str, Any]] = []
         self.flags: list[dict[str, Any]] = []
 
@@ -132,10 +212,14 @@ def validate_chunk_extraction(
     section: str,
     source_id: str = "boericke_pocket_manual",
 ) -> ValidationResult:
-    """Validate extraction results against chunk text per plan Stage 3."""
+    """Validate extraction results against chunk text and enrich with VAD, severity, and domains."""
     res = ValidationResult()
+    chunk_has_markup = bool(re.search(r"(\*\*[^*]+\*\*|_[^_\n]+_)", chunk_text))
+    existing_factors: set[str] = set()
 
-    # Validate each symptom
+    for gm in extraction.general_modalities:
+        existing_factors.add(normalize_text(gm.modality.factor_raw))
+
     for sym in extraction.symptoms:
         # 1. Quote Faithfulness: quote must be a substring of chunk
         if not is_substring_normalized(sym.evidence_quote, chunk_text):
@@ -156,9 +240,13 @@ def validate_chunk_extraction(
             })
             continue
 
-        # 3. Emphasis Check: Markup wins!
+        # 3. Authoritative Emphasis Check: Markup in chunk_text strictly wins!
         detected_emphasis = detect_markup_emphasis(sym.symptom_raw, chunk_text)
-        actual_emphasis = detected_emphasis if detected_emphasis != "plain" else sym.emphasis
+        if chunk_has_markup:
+            actual_emphasis = detected_emphasis
+        else:
+            actual_emphasis = detected_emphasis if detected_emphasis != "plain" else sym.emphasis
+
         if actual_emphasis != sym.emphasis:
             res.flags.append({
                 "type": "emphasis_override",
@@ -167,15 +255,16 @@ def validate_chunk_extraction(
                 "markup_emphasis": actual_emphasis,
             })
 
-        # 4. Compute Grade
+        # 4. Compute Typography Grade (1-3)
         grade = compute_grade(actual_emphasis, source_id=source_id)
 
         # 5. Symptom Kind
-        kind = resolve_symptom_kind(section, sym.symptom_kind_hint)
+        kind = resolve_symptom_kind(section, sym.symptom_kind_hint, sym.symptom_raw)
 
         # 6. Direction Sanity Check on attached modalities
         validated_modalities = []
         for mod in sym.modalities:
+            existing_factors.add(normalize_text(mod.factor_raw))
             dir_check = validate_direction(mod.direction, sym.evidence_quote)
             if dir_check["flagged"]:
                 res.flags.append({
@@ -185,7 +274,10 @@ def validate_chunk_extraction(
                     "reason": dir_check["reason"],
                     "quote": sym.evidence_quote,
                 })
-            validated_modalities.append(mod.model_dump())
+            mod_dump = mod.model_dump()
+            if mod_dump.get("factor_type", "other") == "other":
+                mod_dump["factor_type"] = _infer_factor_type(mod.factor_raw)
+            validated_modalities.append(mod_dump)
 
         # 7. Confidence check
         confidence = float(sym.confidence)
@@ -196,11 +288,52 @@ def validate_chunk_extraction(
                 "confidence": confidence,
             })
 
+        # 8. Enrich with Adjective Severity, VAD Affect Vector, Cognitive Domain & Linear Regression Weight
+        adj_score, matched_adjs = compute_adjective_severity(
+            f"{sym.symptom_raw} {sym.evidence_quote}", sym.severity_modifiers
+        )
+        vad = compute_vad(f"{sym.symptom_raw} {sym.evidence_quote}")
+        cog_domain = resolve_cognitive_domain(sym.symptom_raw, section, sym.cognitive_domain)
+        composite_weight = compute_linear_regression_weight(
+            grade=grade,
+            adj_severity=adj_score,
+            arousal=vad["arousal"],
+            confidence=confidence,
+        )
+        canon_label = canonicalize_symptom_label(sym.symptom_raw, sym.canonical_label)
+
+        # Detect clinical conditions mentioned in the symptom
+        conds = list(sym.clinical_conditions)
+        for tok in re.findall(r"[a-z]+", sym.symptom_raw.lower()):
+            if tok in KNOWN_CLINICAL_CONDITIONS and tok.capitalize() not in conds:
+                conds.append(tok.capitalize())
+
         sym_dict = sym.model_dump()
+        sym_dict["canonical_label"] = canon_label
         sym_dict["emphasis"] = actual_emphasis
         sym_dict["grade"] = grade
         sym_dict["kind"] = kind
         sym_dict["modalities"] = validated_modalities
+        sym_dict["severity_modifiers"] = matched_adjs or sym.severity_modifiers
+        sym_dict["adjective_severity"] = adj_score
+        sym_dict["vad"] = vad
+        sym_dict["cognitive_domain"] = cog_domain
+        sym_dict["composite_weight"] = composite_weight
+        sym_dict["clinical_conditions"] = conds
         res.accepted_symptoms.append(sym_dict)
+
+    # 9. Harvest any explicit Worse/Better clauses in the chunk that the LLM missed
+    unclaimed = harvest_unclaimed_modalities(chunk_text, existing_factors)
+    if unclaimed:
+        if res.accepted_symptoms and section.lower() != "modalities":
+            # Attach to the last symptom in the paragraph (or general_modalities)
+            target_sym = res.accepted_symptoms[-1]
+            for hm in unclaimed:
+                target_sym["modalities"].append({
+                    "direction": hm["direction"],
+                    "factor_raw": hm["factor_raw"],
+                    "factor_type": hm["factor_type"],
+                })
+        res.harvested_modalities = unclaimed
 
     return res

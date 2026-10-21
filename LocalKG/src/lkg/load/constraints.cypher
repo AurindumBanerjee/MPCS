@@ -6,6 +6,9 @@ CREATE CONSTRAINT modality_id IF NOT EXISTS FOR (n:Modality) REQUIRE n.id IS UNI
 CREATE CONSTRAINT occurrence_id IF NOT EXISTS FOR (n:Occurrence) REQUIRE n.id IS UNIQUE;
 CREATE CONSTRAINT chunk_id IF NOT EXISTS FOR (n:Chunk) REQUIRE n.id IS UNIQUE;
 CREATE CONSTRAINT source_id IF NOT EXISTS FOR (n:Source) REQUIRE n.id IS UNIQUE;
+CREATE CONSTRAINT domain_id IF NOT EXISTS FOR (n:CognitiveDomain) REQUIRE n.id IS UNIQUE;
+CREATE CONSTRAINT condition_id IF NOT EXISTS FOR (n:ClinicalCondition) REQUIRE n.id IS UNIQUE;
+CREATE CONSTRAINT etiology_id IF NOT EXISTS FOR (n:Etiology) REQUIRE n.id IS UNIQUE;
 CREATE INDEX alias_text IF NOT EXISTS FOR (n:Alias) ON (n.text);
 CREATE INDEX symptom_label IF NOT EXISTS FOR (n:Symptom) ON (n.label);
 CREATE INDEX symptom_kind IF NOT EXISTS FOR (n:Symptom) ON (n.kind);

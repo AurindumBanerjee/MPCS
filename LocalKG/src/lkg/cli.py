@@ -285,6 +285,59 @@ def run(
             console.print(f"[yellow]Neo4j load skipped: {e}[/yellow]")
     if not skip_chroma:
         load_chroma(extracted)
+    viz([extracted])
+
+
+@app.command()
+def build_remedy(
+    remedy_name: str = typer.Argument(..., help="Remedy name, e.g. 'Arnica montana' or 'Belladonna'"),
+    chunks_file: Optional[Path] = typer.Option(None, help="Path to pre-prepared remedy chunks.jsonl"),
+    source_pdf: Optional[Path] = typer.Option(None, help="Raw PDF to parse if chunks not provided"),
+    limit: Optional[int] = typer.Option(None, help="Limit number of chunks for a pilot test"),
+    workers: int = typer.Option(2, help="Parallel workers (constrained per machine rules)"),
+):
+    """Build an individual remedy Knowledge Graph (merging classical book + PubMed literature)."""
+    from lkg.build_remedy import (
+        build_single_remedy_kg,
+        extract_remedy_from_parsed,
+    )
+    from lkg.ingest.parse_pdf import parse_pdf_source
+
+    slug = remedy_name.lower().replace(" ", "_")
+    if not chunks_file:
+        if not source_pdf:
+            source_pdf = PROJECT_ROOT / "data" / "Materia_medica.pdf"
+            if not source_pdf.exists():
+                source_pdf = Path(r"D:\MyStuff\GitHub\MPCS\docs\Materia Medica Samuel Hahnemann.pdf")
+        parsed_out = parse_pdf_source(source_pdf, source_key=f"parsed_{slug}")
+        chunks_file = DATA_DIR / "chunks" / f"{slug}_chunks.jsonl"
+        count = extract_remedy_from_parsed(remedy_name, parsed_out, chunks_file)
+        console.print(f"[green]Extracted {count} section chunks for {remedy_name} to:[/green] {chunks_file}")
+
+    html_name = f"kg_{slug}.html"
+    console.print(f"Preparing single-remedy KG for [bold]{remedy_name}[/bold] (workers={workers})...")
+    out = build_single_remedy_kg(
+        remedy_name=remedy_name,
+        chunks_path=chunks_file,
+        output_html_name=html_name,
+        workers=workers,
+        limit=limit,
+    )
+    console.print(f"[bold green]Individual KG generated successfully![/bold green] Open at: {out}")
+
+
+@app.command()
+def viz(
+    extracted_files: list[Path] = typer.Argument(..., help="One or more extracted JSONL files to merge & visualize"),
+    output_html: Optional[Path] = typer.Option(None, help="Output interactive HTML path"),
+    title: str = typer.Option("Materia Medica & Cognitive-Affective Knowledge Graph", help="Graph header title"),
+):
+    """Build unified multi-source concept graph and export interactive dark-mode HTML visualizer."""
+    from lkg.viz.graph_viz import export_interactive_html
+
+    out = export_interactive_html(extracted_files, output_html=output_html, title=title)
+    console.print(f"[green]Interactive KG exported to:[/green] {out}")
+    console.print(f"[dim]Graph JSON exported to:[/dim] {out.with_suffix('.graph.json')}")
 
 
 @app.command()

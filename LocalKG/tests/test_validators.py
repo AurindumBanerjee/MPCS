@@ -90,3 +90,61 @@ def test_validate_chunk_extraction_full():
     # Verify hallucinated quote was rejected
     assert len(res.rejected_items) == 1
     assert res.rejected_items[0]["reason"] == "quote_not_in_chunk"
+
+
+def test_false_positive_emphasis_is_overridden_to_plain():
+    chunk_text = "_Fears death_, believes that he will soon die; predicts the day."
+    sym1 = SymptomOut(
+        symptom_raw="Fears death",
+        emphasis="italic",
+        evidence_quote=chunk_text,
+    )
+    sym2 = SymptomOut(
+        symptom_raw="believes that he will soon die; predicts the day",
+        emphasis="italic",  # LLM falsely claims italic -> validator overrides to plain!
+        evidence_quote=chunk_text,
+    )
+    extraction = ChunkExtraction(symptoms=[sym1, sym2])
+    res = validate_chunk_extraction(
+        extraction=extraction,
+        chunk_text=chunk_text,
+        remedy_name="Aconitum Napellus",
+        section="Mind",
+    )
+    assert len(res.accepted_symptoms) == 2
+    assert res.accepted_symptoms[0]["emphasis"] == "italic"
+    assert res.accepted_symptoms[0]["grade"] == 2
+    assert res.accepted_symptoms[1]["emphasis"] == "plain"
+    assert res.accepted_symptoms[1]["grade"] == 1
+    assert any(f["type"] == "emphasis_override" for f in res.flags)
+
+
+def test_modality_fallback_harvester_and_cognitive_domains():
+    chunk_text = (
+        "### Aconitum Napellus: Mind\n\n"
+        "Restlessness, tossing about. Worse in the evening and at night; better in open air."
+    )
+    sym = SymptomOut(
+        symptom_raw="Restlessness, tossing about",
+        emphasis="plain",
+        evidence_quote="Restlessness, tossing about.",
+    )
+    extraction = ChunkExtraction(symptoms=[sym])
+    res = validate_chunk_extraction(
+        extraction=extraction,
+        chunk_text=chunk_text,
+        remedy_name="Aconitum Napellus",
+        section="Mind",
+    )
+    accepted = res.accepted_symptoms[0]
+    assert accepted["cognitive_domain"] == "Hyperarousal / Anxiety"
+    assert accepted["vad"]["arousal"] >= 0.80
+    assert accepted["composite_weight"] > 1.0
+    # Verify fallback harvester caught the 3 missed modalities
+    mods = accepted["modalities"]
+    assert len(mods) >= 3
+    dirs = {m["factor_raw"].lower(): m["direction"] for m in mods}
+    assert any("evening" in k and v == "worse" for k, v in dirs.items())
+    assert any("night" in k and v == "worse" for k, v in dirs.items())
+    assert any("open air" in k and v == "better" for k, v in dirs.items())
+
