@@ -1,0 +1,103 @@
+# Seed modality vocabulary: standard factors and their canonical types.
+# factor_type: time | temperature | weather | position | motion | touch_pressure | food_drink | eating | sleep | emotion | company | season | other
+
+modalities:
+  - id: "modality:night"
+    label: "night"
+    factor_type: "time"
+    aliases: ["at night", "during the night", "nightly"]
+
+  - id: "modality:midnight"
+    label: "midnight"
+    factor_type: "time"
+    aliases: ["around midnight", "about midnight"]
+
+  - id: "modality:after_midnight"
+    label: "after midnight"
+    factor_type: "time"
+    aliases: ["past midnight", "1 to 3 a.m.", "1 to 2 a.m."]
+
+  - id: "modality:morning"
+    label: "morning"
+    factor_type: "time"
+    aliases: ["in the morning", "on waking in morning", "early morning"]
+
+  - id: "modality:evening"
+    label: "evening"
+    factor_type: "time"
+    aliases: ["in the evening", "towards evening", "at twilight"]
+
+  - id: "modality:afternoon"
+    label: "afternoon"
+    factor_type: "time"
+    aliases: ["in afternoon", "4 to 8 p.m."]
+
+  - id: "modality:cold"
+    label: "cold"
+    factor_type: "temperature"
+    aliases: ["cold in general", "becoming cold", "exposure to cold"]
+
+  - id: "modality:cold_air"
+    label: "cold air"
+    factor_type: "temperature"
+    aliases: ["in cold air", "from cold air", "breathing cold air"]
+
+  - id: "modality:cold_drinks"
+    label: "cold drinks"
+    factor_type: "food_drink"
+    aliases: ["cold water", "drinking cold water"]
+
+  - id: "modality:warmth"
+    label: "warmth"
+    factor_type: "temperature"
+    aliases: ["warmth in general", "heat", "warm room", "external warmth"]
+
+  - id: "modality:warm_drinks"
+    label: "warm drinks"
+    factor_type: "food_drink"
+    aliases: ["warm water", "hot drinks"]
+
+  - id: "modality:open_air"
+    label: "open air"
+    factor_type: "weather"
+    aliases: ["in the open air", "fresh air", "out of doors"]
+
+  - id: "modality:motion"
+    label: "motion"
+    factor_type: "motion"
+    aliases: ["moving", "movement", "on motion", "from motion"]
+
+  - id: "modality:rest"
+    label: "rest"
+    factor_type: "motion"
+    aliases: ["at rest", "quiet", "lying still"]
+
+  - id: "modality:pressure"
+    label: "pressure"
+    factor_type: "touch_pressure"
+    aliases: ["hard pressure", "from pressure", "tight bandage"]
+
+  - id: "modality:touch"
+    label: "touch"
+    factor_type: "touch_pressure"
+    aliases: ["light touch", "contact", "being touched"]
+
+  - id: "modality:lying_down"
+    label: "lying down"
+    factor_type: "position"
+    aliases: ["lying", "in bed", "when lying down"]
+
+  - id: "modality:lying_on_affected_side"
+    label: "lying on affected side"
+    factor_type: "position"
+    aliases: ["pressure of painful side"]
+
+  - id: "modality:damp_weather"
+    label: "damp weather"
+    factor_type: "weather"
+    aliases: ["wet weather", "rainy weather", "dampness"]
+
+  - id: "modality:dry_weather"
+    label: "dry cold weather"
+    factor_type: "weather"
+    aliases: ["clear cold weather", "dry weather"]

@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "local-kg"
+version = "0.1.0"
+description = "Provenance-linked knowledge graph from classical homeopathic materia medica texts"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+
+dependencies = [
+    "pydantic>=2.0,<3.0",
+    "neo4j>=5.0",
+    "chromadb>=0.4",
+    "rank-bm25>=0.2",
+    "pymupdf>=1.23",
+    "beautifulsoup4>=4.12",
+    "rapidfuzz>=3.0",
+    "tenacity>=8.2",
+    "typer[all]>=0.9",
+    "pyyaml>=6.0",
+    "rich>=13.0",
+    "httpx>=0.25",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "ruff>=0.1",
+]
+ocr = [
+    "pytesseract>=0.3",
+]
+
+[project.scripts]
+lkg = "lkg.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
