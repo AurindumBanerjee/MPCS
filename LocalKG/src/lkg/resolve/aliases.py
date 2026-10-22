@@ -1,8 +1,16 @@
 from __future__ import annotations
 
+import difflib
 import re
 from typing import Any
-from rapidfuzz import process, fuzz
+
+try:
+    from rapidfuzz import fuzz, process
+    _HAS_RAPIDFUZZ = True
+except ImportError:
+    fuzz = None  # type: ignore
+    process = None  # type: ignore
+    _HAS_RAPIDFUZZ = False
 
 from lkg.config import get_modality_seed, get_remedy_abbreviations
 from lkg.resolve.normalize import normalize_remedy_name
@@ -58,20 +66,31 @@ class RemedyResolver:
 
         # 4. Fuzzy match against canonical names
         if self.canonical_names:
-            match = process.extractOne(
-                cleaned,
-                list(self.canonical_names),
-                scorer=fuzz.WRatio,
-                score_cutoff=82.0,
-            )
-            if match:
-                best_name, score, _ = match
-                return {
-                    "canonical_name": best_name,
-                    "remedy_id": make_remedy_id(best_name),
-                    "confidence": score / 100.0,
-                    "method": "fuzzy",
-                }
+            if _HAS_RAPIDFUZZ:
+                match = process.extractOne(
+                    cleaned,
+                    list(self.canonical_names),
+                    scorer=fuzz.WRatio,
+                    score_cutoff=82.0,
+                )
+                if match:
+                    best_name, score, _ = match
+                    return {
+                        "canonical_name": best_name,
+                        "remedy_id": make_remedy_id(best_name),
+                        "confidence": score / 100.0,
+                        "method": "fuzzy",
+                    }
+            else:
+                close = difflib.get_close_matches(cleaned, list(self.canonical_names), n=1, cutoff=0.82)
+                if close:
+                    best_name = close[0]
+                    return {
+                        "canonical_name": best_name,
+                        "remedy_id": make_remedy_id(best_name),
+                        "confidence": 0.85,
+                        "method": "fuzzy",
+                    }
 
         # Fallback: keep cleaned name as unverified canonical
         return {
@@ -115,22 +134,35 @@ class ModalityResolver:
         # 2. Fuzzy match against seed aliases
         if self.aliases:
             alias_texts = [a[0] for a in self.aliases]
-            match = process.extractOne(
-                clean,
-                alias_texts,
-                scorer=fuzz.ratio,
-                score_cutoff=80.0,
-            )
-            if match:
-                matched_alias, score, idx = match
-                item = self.aliases[idx][1]
-                return {
-                    "modality_id": item["id"],
-                    "label": item["label"],
-                    "factor_type": item["factor_type"],
-                    "confidence": score / 100.0,
-                    "needs_review": False,
-                }
+            if _HAS_RAPIDFUZZ:
+                match = process.extractOne(
+                    clean,
+                    alias_texts,
+                    scorer=fuzz.ratio,
+                    score_cutoff=80.0,
+                )
+                if match:
+                    matched_alias, score, idx = match
+                    item = self.aliases[idx][1]
+                    return {
+                        "modality_id": item["id"],
+                        "label": item["label"],
+                        "factor_type": item["factor_type"],
+                        "confidence": score / 100.0,
+                        "needs_review": False,
+                    }
+            else:
+                close = difflib.get_close_matches(clean, alias_texts, n=1, cutoff=0.80)
+                if close:
+                    idx = alias_texts.index(close[0])
+                    item = self.aliases[idx][1]
+                    return {
+                        "modality_id": item["id"],
+                        "label": item["label"],
+                        "factor_type": item["factor_type"],
+                        "confidence": 0.85,
+                        "needs_review": False,
+                    }
 
         # 3. Unmapped factor -> new Modality ID tagged needs_review per plan §9 stage 4
         new_id = make_modality_id(clean)

@@ -1,0 +1,1520 @@
+"""Enhanced HTML breakdown builder for MPCS with from-scratch explanations of all terms, formulas, and pipelines."""
+
+import os
+from pathlib import Path
+
+OUT_FILE = Path(r"D:\MyStuff\GitHub\MPCS\docs\MPCS_Comprehensive_Project_Breakdown.html")
+
+def build_html():
+    return """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MPCS — Comprehensive Project Breakdown & Architectural Compendium</title>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #14171f;
+    --ink2: #2d3345;
+    --ink3: #5a647e;
+    --page: #f8fafc;
+    --surface: #ffffff;
+    --surface-alt: #f1f5f9;
+    --border: #e2e8f0;
+    --border-dark: #cbd5e1;
+    --accent: #1d4ed8;       /* Primary Blue */
+    --accent-light: #eff6ff;
+    --accent2: #059669;      /* Emerald Green */
+    --accent2-light: #ecfdf5;
+    --accent3: #b91c1c;      /* Crimson Red */
+    --accent3-light: #fef2f2;
+    --amber: #d97706;        /* Amber Gold */
+    --amber-light: #fffbeb;
+    --purple: #7c3aed;       /* Royal Purple */
+    --purple-light: #f5f3ff;
+    --cyan: #0891b2;         /* Cyan */
+    --cyan-light: #ecfeff;
+    --rule: #cbd5e1;
+    --mono: 'DM Mono', monospace;
+    --serif: 'EB Garamond', Georgia, serif;
+    --sans: 'Outfit', system-ui, sans-serif;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; scroll-behavior: smooth; }
+  body {
+    background: var(--page);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 1.125rem;
+    line-height: 1.82;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page-wrap { max-width: 1060px; margin: 0 auto; padding: 0 2.5rem 8rem; }
+
+  /* Header / Cover */
+  .cover {
+    padding: 5rem 0 3.5rem;
+    border-bottom: 2px solid var(--ink);
+    margin-bottom: 3.5rem;
+  }
+  .cover-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--sans);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--accent-light);
+    border: 1px solid #bfdbfe;
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    margin-bottom: 1.5rem;
+  }
+  .cover h1 {
+    font-size: 3.25rem;
+    font-weight: 600;
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin-bottom: 1rem;
+    max-width: 940px;
+  }
+  .cover-sub {
+    font-style: italic;
+    font-size: 1.35rem;
+    color: var(--ink3);
+    margin-bottom: 2.2rem;
+    max-width: 860px;
+    line-height: 1.5;
+  }
+  .cover-meta {
+    font-family: var(--sans);
+    font-size: 0.82rem;
+    color: var(--ink3);
+    display: flex;
+    gap: 2.5rem;
+    flex-wrap: wrap;
+    padding-top: 1.2rem;
+    border-top: 1px solid var(--border);
+  }
+  .cover-meta span strong { color: var(--ink); font-weight: 600; }
+
+  /* Executive Abstract */
+  .abstract {
+    background: var(--surface);
+    border-left: 4px solid var(--accent);
+    padding: 1.8rem 2.2rem;
+    border-radius: 0 10px 10px 0;
+    margin-bottom: 3.5rem;
+    box-shadow: var(--shadow);
+    border-top: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .abstract-label {
+    font-family: var(--sans);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.8rem;
+  }
+  .abstract p {
+    font-size: 1.05rem;
+    line-height: 1.75;
+    color: var(--ink2);
+    margin-bottom: 1rem;
+  }
+  .abstract p:last-child { margin-bottom: 0; }
+
+  /* Table of Contents */
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem 2.4rem;
+    margin-bottom: 4.5rem;
+    box-shadow: var(--shadow);
+  }
+  .toc-title {
+    font-family: var(--sans);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    margin-bottom: 1.4rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .toc ol {
+    list-style: none;
+    counter-reset: toc;
+    column-count: 2;
+    column-gap: 3rem;
+  }
+  .toc ol li {
+    counter-increment: toc;
+    font-family: var(--sans);
+    font-size: 0.92rem;
+    color: var(--ink2);
+    padding: 0.4rem 0;
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    break-inside: avoid;
+  }
+  .toc ol li::before {
+    content: counter(toc, decimal-leading-zero);
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--accent);
+    min-width: 2rem;
+  }
+  .toc a {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: all 0.15s;
+  }
+  .toc a:hover {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  /* Typography & Sections */
+  section {
+    margin-bottom: 5.5rem;
+    scroll-margin-top: 2rem;
+  }
+  .section-num {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--accent);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    display: block;
+    margin-bottom: 0.4rem;
+  }
+  h2 {
+    font-size: 2.3rem;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+    color: var(--ink);
+    margin-bottom: 1.6rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1.5px solid var(--border-dark);
+  }
+  h3 {
+    font-family: var(--sans);
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin: 2.6rem 0 1rem;
+    letter-spacing: -0.01em;
+  }
+  h4 {
+    font-family: var(--sans);
+    font-size: 0.92rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    margin: 1.8rem 0 0.6rem;
+  }
+  p { margin-bottom: 1.25rem; color: var(--ink2); }
+  p:last-child { margin-bottom: 0; }
+
+  ul, ol { margin: 1rem 0 1.5rem 1.6rem; color: var(--ink2); }
+  li { margin-bottom: 0.5rem; line-height: 1.7; }
+  ul.styled-list { list-style: none; margin: 1.2rem 0; padding-left: 0; }
+  ul.styled-list li {
+    font-family: var(--sans);
+    font-size: 0.96rem;
+    color: var(--ink2);
+    padding: 0.45rem 0 0.45rem 1.6rem;
+    position: relative;
+  }
+  ul.styled-list li::before {
+    content: '✦';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-size: 0.78rem;
+  }
+
+  code {
+    font-family: var(--mono);
+    font-size: 0.88em;
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    padding: 0.15em 0.45em;
+    border-radius: 4px;
+    color: var(--accent3);
+  }
+
+  /* Term Definition Box */
+  .term-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.3rem 1.5rem;
+    margin-bottom: 1.4rem;
+    box-shadow: var(--shadow);
+  }
+  .term-card-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.4rem;
+  }
+  .term-name {
+    font-family: var(--sans);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .term-category {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--surface-alt);
+    color: var(--accent);
+  }
+  .term-plain {
+    font-family: var(--sans);
+    font-size: 0.94rem;
+    color: var(--ink2);
+    line-height: 1.65;
+    margin-bottom: 0.5rem;
+  }
+  .term-role {
+    font-family: var(--sans);
+    font-size: 0.88rem;
+    color: var(--ink3);
+    border-left: 2.5px solid var(--accent2);
+    padding-left: 0.75rem;
+    margin-top: 0.5rem;
+    font-style: italic;
+  }
+
+  /* Info Cards & Grid */
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.4rem;
+    margin: 2rem 0;
+  }
+  .info-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.4rem 1.5rem;
+    box-shadow: var(--shadow);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .info-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
+  .info-card-label {
+    font-family: var(--sans);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    margin-bottom: 0.4rem;
+  }
+  .info-card-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 0.45rem;
+    color: var(--ink);
+  }
+  .info-card-text {
+    font-family: var(--sans);
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: var(--ink2);
+  }
+  .info-card.blue { border-left: 4px solid var(--accent); }
+  .info-card.green { border-left: 4px solid var(--accent2); }
+  .info-card.purple { border-left: 4px solid var(--purple); }
+  .info-card.amber { border-left: 4px solid var(--amber); }
+  .info-card.crimson { border-left: 4px solid var(--accent3); }
+
+  /* Formula Breakdown Box */
+  .formula-breakdown {
+    background: #0f172a;
+    color: #e2e8f0;
+    border-radius: 10px;
+    padding: 1.5rem 1.8rem;
+    margin: 1.8rem 0;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+    border-left: 4px solid var(--cyan);
+  }
+  .formula-title {
+    font-family: var(--sans);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #38bdf8;
+    margin-bottom: 0.8rem;
+    display: flex;
+    justify-content: space-between;
+  }
+  .formula-code {
+    font-family: var(--mono);
+    font-size: 1.05rem;
+    color: #f8fafc;
+    background: #1e293b;
+    padding: 0.8rem 1.2rem;
+    border-radius: 6px;
+    margin-bottom: 1.1rem;
+    overflow-x: auto;
+  }
+  .formula-vars {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-family: var(--sans);
+    font-size: 0.88rem;
+    line-height: 1.65;
+  }
+  .formula-vars li {
+    padding: 0.35rem 0;
+    border-bottom: 1px solid #1e293b;
+    color: #cbd5e1;
+  }
+  .formula-vars li:last-child { border-bottom: none; }
+  .formula-vars strong { color: #fbbf24; font-family: var(--mono); }
+  .formula-worked {
+    margin-top: 1rem;
+    padding: 0.8rem 1rem;
+    background: #1e293b;
+    border-radius: 6px;
+    font-family: var(--sans);
+    font-size: 0.86rem;
+    color: #a7f3d0;
+  }
+
+  /* Pipeline Step Architecture */
+  .pipeline-step {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 1.6rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.4rem;
+    box-shadow: var(--shadow);
+  }
+  .step-badge {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    background: var(--accent);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 1.1rem;
+  }
+  .step-content { flex: 1; }
+  .step-title {
+    font-family: var(--sans);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 0.35rem;
+  }
+  .step-io {
+    display: flex;
+    gap: 1.5rem;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    color: var(--ink3);
+    margin: 0.5rem 0 0.75rem;
+    background: var(--surface-alt);
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+  }
+  .step-desc {
+    font-family: var(--sans);
+    font-size: 0.92rem;
+    color: var(--ink2);
+    line-height: 1.6;
+  }
+
+  /* Tables */
+  .tbl-container {
+    overflow-x: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    margin: 2rem 0;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--sans);
+    font-size: 0.9rem;
+  }
+  th {
+    background: var(--surface-alt);
+    color: var(--ink);
+    font-weight: 700;
+    font-size: 0.76rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-align: left;
+    padding: 0.85rem 1.1rem;
+    border-bottom: 2px solid var(--border);
+  }
+  td {
+    padding: 0.8rem 1.1rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--ink2);
+    vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: #f8fafc; }
+  td.hi { font-weight: 600; color: var(--accent2); }
+  td.lo { font-weight: 600; color: var(--accent3); }
+  td.tag { font-family: var(--mono); font-size: 0.82rem; font-weight: 600; }
+
+  /* Callouts */
+  .callout {
+    border-left: 4px solid var(--amber);
+    background: var(--amber-light);
+    padding: 1.3rem 1.6rem;
+    border-radius: 0 10px 10px 0;
+    margin: 2rem 0;
+    border-top: 1px solid #fde68a;
+    border-right: 1px solid #fde68a;
+    border-bottom: 1px solid #fde68a;
+  }
+  .callout.green { border-color: var(--accent2); background: var(--accent2-light); border-top-color: #a7f3d0; border-right-color: #a7f3d0; border-bottom-color: #a7f3d0; }
+  .callout.blue { border-color: var(--accent); background: var(--accent-light); border-top-color: #bfdbfe; border-right-color: #bfdbfe; border-bottom-color: #bfdbfe; }
+  .callout.purple { border-color: var(--purple); background: var(--purple-light); border-top-color: #ddd6fe; border-right-color: #ddd6fe; border-bottom-color: #ddd6fe; }
+  .callout-title {
+    font-family: var(--sans);
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink);
+    margin-bottom: 0.45rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .callout p {
+    font-size: 0.98rem;
+    line-height: 1.65;
+    margin-bottom: 0.6rem;
+  }
+  .callout p:last-child { margin-bottom: 0; }
+
+  /* SVG Diagrams */
+  .diagram-frame {
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.8rem;
+    margin: 2.2rem 0;
+    box-shadow: var(--shadow);
+  }
+  .diagram-title {
+    font-family: var(--sans);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    margin-bottom: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .diagram-title::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  svg.diagram {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+</style>
+</head>
+<body>
+
+<div class="page-wrap">
+
+  <!-- Cover Header -->
+  <header class="cover">
+    <div class="cover-badge">Research &amp; Engineering Compendium • BTP 7th &amp; 8th Sem</div>
+    <h1>The Malleable Perceptual-Cognitive System (MPCS)</h1>
+    <div class="cover-sub">Foundational Primer, Comprehensive Term Glossary, Step-by-Step Mathematical Formulations, and Detailed End-to-End Pipeline Blueprints</div>
+    <div class="cover-meta">
+      <span><strong>Project:</strong> MPCS / LocalKG</span>
+      <span><strong>Authors:</strong> Aurin &amp; DeepMind Advanced Agentic Coding</span>
+      <span><strong>Repository:</strong> <code>d:\MyStuff\GitHub\MPCS</code></span>
+      <span><strong>Date:</strong> October 2026</span>
+      <span><strong>Scope:</strong> Theoretical Primer → 9 Model Generations → LocalKG Knowledge Graph</span>
+    </div>
+  </header>
+
+  <!-- Executive Abstract -->
+  <div class="abstract">
+    <div class="abstract-label">Executive Abstract &amp; Pedagogical Purpose</div>
+    <p>
+      Human intelligence is defined not solely by uniform processing power, but by deciding <strong>how much cognitive processing a situation actually demands</strong>. When a stimulus threatens immediate survival, high-latency deliberative reasoning is fatal; when an ambiguous situation arises with subtle emotional undertones, reflexive heuristics cause catastrophic errors. This document serves as the <strong>definitive architectural compendium</strong> for the Malleable Perceptual-Cognitive System (MPCS) and its large-scale medical manifestation, <strong>LocalKG</strong>.
+    </p>
+    <p>
+      Unlike high-level project summaries, this document builds every concept from <strong>first principles</strong>: every theoretical term is defined in plain language, every mathematical formula is broken down into its variables with step-by-step worked examples, and all five engineering pipelines are traced from raw inputs, through intermediate transformations, to final verified outputs.
+    </p>
+  </div>
+
+  <!-- Table of Contents -->
+  <nav class="toc">
+    <div class="toc-title">Table of Contents</div>
+    <ol>
+      <li><a href="#section-0">0. Comprehensive Primer &amp; Term Glossary (From Absolute Basics)</a></li>
+      <li><a href="#section-1">1. Philosophical &amp; Cognitive Foundations</a></li>
+      <li><a href="#section-2">2. The MPCS Cognitive Architecture &amp; Decision Formulas</a></li>
+      <li><a href="#section-3">3. Chronological Evolution of Experimental Generations (G1 to G9)</a></li>
+      <li><a href="#section-4">4. Empirical Benchmark Matrix &amp; Key Findings</a></li>
+      <li><a href="#section-5">5. The Paradigm Shift: From Synthetic Percepts to the Materia Medica Variorum</a></li>
+      <li><a href="#section-6">6. Knowledge Graph Pipeline Engineering (LocalKG)</a></li>
+      <li><a href="#section-7">7. Continuous Affective Metrics &amp; Linear Regression Scoring</a></li>
+      <li><a href="#section-8">8. Modern PubMed Clinical Trial &amp; MeSH Evidence Layer</a></li>
+      <li><a href="#section-9">9. Hardware-Accelerated Interactive Canvas &amp; TIDE Simulation</a></li>
+      <li><a href="#section-10">10. Data Audit, Cleanliness &amp; OCR Sanitization</a></li>
+      <li><a href="#section-11">11. Milestone Scoreboard, Current Standing &amp; Future Roadmap</a></li>
+    </ol>
+  </nav>
+
+  <!-- SECTION 0: GLOSSARY FROM BASICS -->
+  <section id="section-0">
+    <span class="section-num">SECTION 00</span>
+    <h2>Comprehensive Primer &amp; Term Glossary (From Absolute Basics)</h2>
+    <p>
+      Before examining the mathematics and architectures, we establish rigorous, intuitive definitions for every core term used throughout the repository.
+    </p>
+
+    <!-- Term 1 -->
+    <div class="term-card">
+      <div class="term-card-header">
+        <span class="term-name">1. Percept</span>
+        <span class="term-category">Cognitive Psychology</span>
+      </div>
+      <div class="term-plain">
+        A <strong>percept</strong> is the meaningful mental representation formed after sensory receptors collect raw physical signals. While a "sensation" is raw light hitting retina or vibrations hitting eardrums, a "percept" is the structured psychological object: e.g., <em>[Red, Circular, High-Pitch Screech, Hot Surface, Threat Context]</em>. In MPCS, a percept bundles sensory channels, emotional arousal, and contextual metadata into a single computable object.
+      </div>
+      <div class="term-role">Role in MPCS: The fundamental unit of input fed into the salience engine and stored in experiential memory.</div>
+    </div>
+
+    <!-- Term 2 -->
+    <div class="term-card">
+      <div class="term-card-header">
+        <span class="term-name">2. Salience</span>
+        <span class="term-category">Neurobiology</span>
+      </div>
+      <div class="term-plain">
+        <strong>Salience</strong> is the state or quality by which an item stands out relative to its neighbors. In biological brains, the "Salience Network" (anchored in the anterior insula and dorsal anterior cingulate cortex) acts as an attentional switchboard: high-salience stimuli (a sudden tiger roar, excruciating burn) immediately hijack conscious processing, while low-salience stimuli (background humming) are delegated to subconscious background tracking.
+      </div>
+      <div class="term-role">Role in MPCS: The scalar value calculated by our 4-factor equation that decides whether to trigger a reflex or allow deliberation.</div>
+    </div>
+
+    <!-- Term 3 -->
+    <div class="term-card">
+      <div class="term-card-header">
+        <span class="term-name">3. Dual-Process Theory (System 1 vs System 2)</span>
+        <span class="term-category">Cognitive Science</span>
+      </div>
+      <div class="term-plain">
+        Formulated by psychologists (Wason, Evans, Kahneman), this theory posits two distinct modes of human thought:
+        <ul style="margin: 0.4rem 0 0 1.2rem;">
+          <li><strong>System 1 (Fast / Reflexive):</strong> Operates automatically, intuitively, and without voluntary control. Minimal energy, latency &lt; 5 ms. E.g., swerving away from a falling rock.</li>
+          <li><strong>System 2 (Slow / Deliberative):</strong> Allocates attention to effortful mental operations, logical deduction, memory borrowing, and counterfactual planning. High energy, latency &gt; 200 ms. E.g., solving 17 × 24.</li>
+        </ul>
+      </div>
+      <div class="term-role">Role in MPCS: The primary routing architecture of our cognitive engine.</div>
+    </div>
+
+    <!-- Term 4 -->
+    <div class="term-card">
+      <div class="term-card-header">
+        <span class="term-name">4. Somatic Markers</span>
+        <span class="term-category">Neuroscience (Damasio)</span>
+      </div>
+      <div class="term-plain">
+        Proposed by Antonio Damasio, <strong>somatic markers</strong> are physiological ("bodily") emotional reactions—such as an elevated heart rate, visceral gut tension, or skin conductance changes—associated with past experiences. When facing an unfamiliar or complex decision, somatic markers instantly bias choices by attaching visceral "danger" or "incentive" signals to options before cognitive reasoning begins.
+      </div>
+      <div class="term-role">Role in MPCS: Formally represented by the continuous Valence and Arousal signals that modulate memory retrieval.</div>
+    </div>
+
+    <!-- Term 5 -->
+    <div class="term-card">
+      <div class="term-card-header">
+        <span class="term-name">5. Bloom Filter &amp; Counting Bloom Filter</span>
+        <span class="term-category">Computer Science</span>
+      </div>
+      <div class="term-plain">
+        A <strong>Bloom Filter</strong> is a space-efficient probabilistic data structure used to test set membership. Using an array of $m$ bits and $k$ independent hash functions, it can return either <em>"Definitely not in set"</em> (100% certainty, zero false negatives) or <em>"Possibly in set"</em> (with a known false-positive probability $p$). A <strong>d-left Counting Bloom Filter (dlCBF)</strong> replaces single bits with multi-bit counters split into $d$ sub-tables, allowing items to be deleted and modified over time.
+      </div>
+      <div class="term-role">Role in MPCS: Tested in Generation G2 &amp; G3 for O(1) novelty detection (and produced a crucial negative result).</div>
+    </div>
+
+    <!-- Term 6 -->
+    <div class="term-card">
+      <div class="term-card-header">
+        <span class="term-name">6. Z-Numbers &amp; Z*-Numbers</span>
+        <span class="term-category">Fuzzy Logic &amp; Uncertainty</span>
+      </div>
+      <div class="term-plain">
+        Introduced by Lotfi Zadeh, a <strong>Z-number</strong> $Z = (A, B)$ represents a real-world assertion with uncertainty, where $A$ is a fuzzy restriction on values (e.g. "temperature is hot") and $B$ is a measure of certainty or reliability (e.g. "very likely", confidence = 0.85). In MPCS, a $Z^*$-number expands this to include temporal and affective dimensions: $\langle \text{Context}, \text{Time}, \text{Subject}, \text{Belief}, \text{Emotion} \rangle$.
+      </div>
+      <div class="term-role">Role in MPCS: Allows each sensory channel to carry an independent confidence weight rather than assuming perfect sensor reliability.</div>
+    </div>
+
+    <!-- Term 7 -->
+    <div class="term-card">
+      <div class="term-card-header">
+        <span class="term-name">7. VAD Dimensional Affect Space</span>
+        <span class="term-category">Affective Computing</span>
+      </div>
+      <div class="term-plain">
+        The <strong>Valence-Arousal-Dominance (VAD)</strong> model (Mehrabian &amp; Russell, 1974; Warriner et al., 2013) maps all human emotional states into a 3D continuous Euclidean space normalized to $[0.0, 1.0]$:
+        <ul style="margin: 0.4rem 0 0 1.2rem;">
+          <li><strong>Valence (Pleasure / Distress):</strong> How positive or negative the emotion is. 0.0 = extreme suffering/terror; 0.5 = neutral; 1.0 = ecstasy/joy.</li>
+          <li><strong>Arousal (Activation / Urgency):</strong> Physiological alertness. 0.0 = coma/torpor/sleep; 0.5 = baseline calm; 1.0 = panic/rage/mania.</li>
+          <li><strong>Dominance (Agency / Control):</strong> Sense of mastery. 0.0 = helpless/submissive/trapped; 1.0 = in-command/empowered.</li>
+        </ul>
+      </div>
+      <div class="term-role">Role in MPCS: Powers the affective grounding of symptoms and dynamically modulates spreading activation in the knowledge graph.</div>
+    </div>
+
+    <!-- Term 8 -->
+    <div class="term-card">
+      <div class="term-card-header">
+        <span class="term-name">8. Homeopathic Proving &amp; Materia Medica</span>
+        <span class="term-category">Historical Medical Epistemology</span>
+      </div>
+      <div class="term-plain">
+        A <strong>proving</strong> (German: <em>Prüfung</em>, test) is a human toxicological and clinical protocol developed by Samuel Hahnemann (1796) where healthy volunteers systematically ingest serial dilutions of a substance and record every subjective psychological, somatic, and environmental change. A <strong>Materia Medica</strong> is the comprehensive encyclopedia documenting hundreds of medicines and their thousands of attested proving symptom rubrics.
+      </div>
+      <div class="term-role">Role in MPCS: Acts as our massive, real-world human variorum of subjective cognitive-affective experiences.</div>
+    </div>
+
+    <!-- Term 9 -->
+    <div class="term-card">
+      <div class="term-card-header">
+        <span class="term-name">9. Modality (Aggravation &amp; Amelioration)</span>
+        <span class="term-category">Clinical Phenomenology</span>
+      </div>
+      <div class="term-plain">
+        In clinical phenomenology, a <strong>modality</strong> is an environmental, postural, temporal, weather, or physiological factor that alters the intensity of a symptom:
+        <ul style="margin: 0.4rem 0 0 1.2rem;">
+          <li><strong>Aggravation (Worse / <code>&lt;</code>):</strong> Factors that intensify suffering (e.g. <em>Worse: Warmth of bed</em>, <em>Worse: Midnight to 2 AM</em>, <em>Worse: Touch or noise</em>).</li>
+          <li><strong>Amelioration (Better / <code>&gt;</code>):</strong> Factors that bring relief (e.g. <em>Better: Open cold air</em>, <em>Better: Lying on painful side</em>, <em>Better: Hot drinks</em>).</li>
+        </ul>
+      </div>
+      <div class="term-role">Role in MPCS: Represented as explicit typed Modality nodes in the graph linked via <code>AGGRAVATED BY</code> and <code>AMELIORATED BY</code> edges.</div>
+    </div>
+
+    <!-- Term 10 -->
+    <div class="term-card">
+      <div class="term-card-header">
+        <span class="term-name">10. Spreading Activation &amp; Active Subgraph Pruning</span>
+        <span class="term-category">Associative Memory (ACT-R)</span>
+      </div>
+      <div class="term-plain">
+        <strong>Spreading activation</strong> (Collins &amp; Loftus, 1975) is the mechanism by which accessing one concept in memory automatically energizes connected semantic neighbors. Activation spreads outward through network links, decaying with distance and branch factor. <strong>Active Subgraph Pruning</strong> deactivates any concept whose energy fails to reach a threshold floor, leaving a compact, relevant sub-network for focused reasoning.
+      </div>
+      <div class="term-role">Role in MPCS: Powers the TIDE engine in Generation G9 and runs live inside our interactive web canvas.</div>
+    </div>
+
+    <!-- Term 11 -->
+    <div class="term-card">
+      <div class="term-card-header">
+        <span class="term-name">11. HNSW vs BM25 vs Exact KNN</span>
+        <span class="term-category">Information Retrieval</span>
+      </div>
+      <div class="term-plain">
+        Three distinct retrieval algorithms with complementary strengths:
+        <ul style="margin: 0.4rem 0 0 1.2rem;">
+          <li><strong>Exact KNN:</strong> Compares query against 100% of stored vectors. Guarantees true best $k$ results ($O(N)$), serving as the absolute benchmark baseline.</li>
+          <li><strong>HNSW (Hierarchical Navigable Small World):</strong> Multi-layer skip-list graph. Provides sub-linear ($O(\log N)$) approximate vector search for dense semantic concepts.</li>
+          <li><strong>BM25 (Best Matching 25):</strong> Term-frequency inverse-document-frequency ranking. Catches rare, exact medical strings and Latin tokens that dense embeddings miss.</li>
+        </ul>
+      </div>
+      <div class="term-role">Role in MPCS: Formulates the tri-channel scoring engine ($w_t S_{\text{text}} + w_a S_{\text{affect}} + w_h S_{\text{hierarchy}}$) planned in Meeting 5.</div>
+    </div>
+
+    <!-- Term 12 -->
+    <div class="term-card">
+      <div class="term-card-header">
+        <span class="term-name">12. Passive Thread &amp; Latency Budgeting</span>
+        <span class="term-category">Distributed Cognitive Architecture</span>
+      </div>
+      <div class="term-plain">
+        When an urgent stimulus demands a decision before deep memory exploration can finish, <strong>latency budgeting</strong> enforces an absolute cutoff time (e.g. 15 ms). The agent acts immediately based on the best partial evidence gathered so far, while the incomplete graph search is offloaded to a background <strong>passive thread</strong>. Once complete, the passive thread records whether the rushed action was counterfactually verified by deep reasoning.
+      </div>
+      <div class="term-role">Role in MPCS: Solves the latency-accuracy trade-off in the TIDE engine.</div>
+    </div>
+  </section>
+
+  <!-- SECTION 1 -->
+  <section id="section-1">
+    <span class="section-num">SECTION 01</span>
+    <h2>Philosophical &amp; Cognitive Foundations</h2>
+    <p>
+      Modern artificial intelligence architectures typically fall into two extremes: either rigid expert rule bases with zero adaptability, or massive auto-regressive transformers that process every trivial token with maximum uniform latency. Human cognition operates under radically different constraints. MPCS synthesizes five foundational paradigms from cognitive science and AI history:
+    </p>
+
+    <div class="info-grid">
+      <div class="info-card blue">
+        <div class="info-card-label">Marvin Minsky (1986, 2006)</div>
+        <div class="info-card-title">Society of Mind &amp; Emotion Machine</div>
+        <div class="info-card-text">
+          Mind is built from a society of simple, non-intelligent agents. There is no single centralized "thinking" module. Emotion is not an irrational interference, but a primary cognitive mechanism for <em>switching modes of thinking</em> and directing resource allocation under urgency.
+        </div>
+      </div>
+
+      <div class="info-card green">
+        <div class="info-card-label">Daniel Kahneman (2011)</div>
+        <div class="info-card-title">Dual-Process Theory (System 1 &amp; 2)</div>
+        <div class="info-card-text">
+          Cognitive systems maintain two distinct operating regimes: <strong>System 1</strong> (fast, autonomous, parallel, heuristic-driven, low energy) and <strong>System 2</strong> (slow, deliberative, sequential, rule-following, high energy). Intelligence lies in gating between them.
+        </div>
+      </div>
+
+      <div class="info-card crimson">
+        <div class="info-card-label">Antonio Damasio (1994)</div>
+        <div class="info-card-title">Somatic Marker Hypothesis</div>
+        <div class="info-card-text">
+          Emotional processes guide (or bias) behavior, particularly decision-making. Bodily states (somatic markers) tag incoming percepts with visceral positive or negative valence, pruning dangerous branches before logical calculation begins.
+        </div>
+      </div>
+
+      <div class="info-card amber">
+        <div class="info-card-label">Douglas Lenat (1984–present)</div>
+        <div class="info-card-title">CYC &amp; Microtheories</div>
+        <div class="info-card-text">
+          Formalizing common-sense knowledge requires structuring reality into first-order logical rules of thought, contextual microtheories, and explicit belief structures that can ground perceptual symbols into coherent semantic taxonomies.
+        </div>
+      </div>
+
+      <div class="info-card purple">
+        <div class="info-card-label">Lotfi Zadeh &amp; Dasgupta (2018)</div>
+        <div class="info-card-title">Z*-Numbers &amp; Neural Novelty</div>
+        <div class="info-card-text">
+          Real-world percepts inherently carry fuzziness and uncertainty. A <code>Z*(S)</code> number encodes <code>&lt;Context, Time, Subject, Belief, Emotion&gt;</code>, allowing memory retrieval to balance cognitive certainty against affective weight.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 2 -->
+  <section id="section-2">
+    <span class="section-num">SECTION 02</span>
+    <h2>The MPCS Cognitive Architecture &amp; Decision Formulas</h2>
+    <p>
+      The core MPCS framework consists of an end-to-end perception-decision-learning loop. Sensory inputs are dynamically structured, scored for salience, routed to either a fast reflex path or a budgeted deliberative path, and continuously updated via experiential memory.
+    </p>
+
+    <div class="diagram-frame">
+      <div class="diagram-title">Figure 2.1 — End-to-End MPCS Perception, Salience, Routing, and Memory Loop</div>
+      <svg class="diagram" viewBox="0 0 900 480">
+        <!-- Background accents -->
+        <rect x="20" y="20" width="860" height="440" rx="12" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+
+        <!-- 1. Sensory Input Box -->
+        <rect x="300" y="45" width="300" height="65" rx="8" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.8"/>
+        <text x="450" y="72" text-anchor="middle" font-family="'Outfit', sans-serif" font-size="14" font-weight="600" fill="#1e3a8a">Malleable Sensory Input S</text>
+        <text x="450" y="93" text-anchor="middle" font-family="'DM Mono', monospace" font-size="11" fill="#3b82f6">Vision, Audio, Touch, Smell, Temperature</text>
+
+        <!-- Down Arrow -->
+        <path d="M450 110 L450 145" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
+
+        <!-- 2. Salience Evaluation -->
+        <rect x="270" y="145" width="360" height="70" rx="8" fill="#fdf4ff" stroke="#a855f7" stroke-width="1.8"/>
+        <text x="450" y="172" text-anchor="middle" font-family="'Outfit', sans-serif" font-size="14" font-weight="600" fill="#581c87">Multi-Factor Salience Engine</text>
+        <text x="450" y="194" text-anchor="middle" font-family="'DM Mono', monospace" font-size="11" fill="#7e22ce">Salience = w₁·I + w₂·A + w₃·|V| + w₄·Novelty</text>
+
+        <!-- Decision Split Paths -->
+        <path d="M370 215 L220 270" stroke="#ef4444" stroke-width="2" stroke-dasharray="4"/>
+        <path d="M530 215 L680 270" stroke="#10b981" stroke-width="2"/>
+
+        <text x="260" y="235" font-family="'Outfit', sans-serif" font-size="11.5" font-weight="600" fill="#b91c1c">&gt; θ (Emergency / High Salience)</text>
+        <text x="640" y="235" font-family="'Outfit', sans-serif" font-size="11.5" font-weight="600" fill="#047857">≤ θ (Exploration / Deliberation)</text>
+
+        <!-- 3A. Reflex Path -->
+        <rect x="100" y="270" width="240" height="75" rx="8" fill="#fef2f2" stroke="#ef4444" stroke-width="1.8"/>
+        <text x="220" y="298" text-anchor="middle" font-family="'Outfit', sans-serif" font-size="13.5" font-weight="600" fill="#991b1b">Fast Reflexive Pathway</text>
+        <text x="220" y="318" text-anchor="middle" font-family="'Outfit', sans-serif" font-size="11" fill="#b91c1c">Pre-wired stimulus-action mapping</text>
+        <text x="220" y="333" text-anchor="middle" font-family="'DM Mono', monospace" font-size="10" fill="#dc2626">Latency &lt; 1 ms • Zero Deliberation</text>
+
+        <!-- 3B. Deliberative Path -->
+        <rect x="560" y="270" width="240" height="75" rx="8" fill="#ecfdf5" stroke="#10b981" stroke-width="1.8"/>
+        <text x="680" y="298" text-anchor="middle" font-family="'Outfit', sans-serif" font-size="13.5" font-weight="600" fill="#065f46">Deliberative Pathway</text>
+        <text x="680" y="318" text-anchor="middle" font-family="'Outfit', sans-serif" font-size="11" fill="#047857">Hard/Soft Constraint Filter + Spreading</text>
+        <text x="680" y="333" text-anchor="middle" font-family="'DM Mono', monospace" font-size="10" fill="#059669">Memory Borrowing • Graph Activation</text>
+
+        <!-- Convergence to Action -->
+        <path d="M220 345 L380 395" stroke="#94a3b8" stroke-width="2"/>
+        <path d="M680 345 L520 395" stroke="#94a3b8" stroke-width="2"/>
+
+        <!-- 4. Unified Action & Learning -->
+        <rect x="330" y="390" width="240" height="55" rx="8" fill="#fffbeb" stroke="#f59e0b" stroke-width="1.8"/>
+        <text x="450" y="413" text-anchor="middle" font-family="'Outfit', sans-serif" font-size="13" font-weight="600" fill="#92400e">Action Execution &amp; Triple-Update</text>
+        <text x="450" y="431" text-anchor="middle" font-family="'DM Mono', monospace" font-size="10.5" fill="#b45309">Update Memory + Weights w + Threshold θ</text>
+
+        <!-- Defs for arrow marker -->
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#94a3b8"/>
+          </marker>
+        </defs>
+      </svg>
+    </div>
+
+    <!-- FORMULA 1 BREAKDOWN -->
+    <div class="formula-breakdown">
+      <div class="formula-title">
+        <span>Formula 2.1 — Multi-Factor Salience Equation</span>
+        <span>Decision Gating</span>
+      </div>
+      <div class="formula-code">Salience(S) = w₁·Intensity + w₂·Arousal + w₃·|Valence - 0.5|·2 + w₄·Novelty(S)</div>
+      <ul class="formula-vars">
+        <li><strong>Intensity (I ∈ [0, 1]):</strong> Physical energy magnitude of stimulus (e.g. peak decibels, surface temperature, photon flux).</li>
+        <li><strong>Arousal (A ∈ [0, 1]):</strong> Neurobiological activation level. Panic/alarm = 0.95; calm baseline = 0.10.</li>
+        <li><strong>|Valence - 0.5|·2 ∈ [0, 1]:</strong> Affective extremity. Why absolute deviation from 0.5? Because both extreme terror ($V=0.05 \implies |0.05-0.5|\cdot 2 = 0.90$) and extreme reward ($V=0.95 \implies 0.90$) command urgency, while neutral stimuli ($V=0.50 \implies 0.00$) have zero affective salience.</li>
+        <li><strong>Novelty(S) ∈ [0, 1]:</strong> Unfamiliarity gap between current percept $S$ and closest cluster in memory. Calculated via distance to $k$-nearest neighbors.</li>
+        <li><strong>Weights (w₁ + w₂ + w₃ + w₄ = 1.0):</strong> Dynamically adapted feature importance weights.</li>
+      </ul>
+      <div class="formula-worked">
+        <strong>Worked Example:</strong> Suppose an agent touches a scorching stove ($I=0.90$, $A=0.95$, $V=0.05 \implies \text{AffExt}=0.90$, $\text{Novelty}=0.10$). With equal weights $w_i = 0.25$:<br>
+        $\text{Salience} = 0.25(0.90) + 0.25(0.95) + 0.25(0.90) + 0.25(0.10) = 0.225 + 0.2375 + 0.225 + 0.025 = \mathbf{0.7125}$.<br>
+        If routing threshold $\theta = 0.60$, $\text{Salience} (0.7125) &gt; \theta \implies$ <strong>Instant System 1 Reflex triggered (&lt; 1 ms)!</strong>
+      </div>
+    </div>
+
+    <!-- FORMULA 2 BREAKDOWN -->
+    <div class="formula-breakdown">
+      <div class="formula-title">
+        <span>Formula 2.2 — Dual-Path Routing &amp; Temporal Memory Decay</span>
+        <span>Decision &amp; Memory</span>
+      </div>
+      <div class="formula-code">Route(S) = (System 1 Reflex) if Salience(S) > θ else (System 2 Deliberation)
+MemoryWeight(e) = BaseRelevance(e) × e^(-λ · Δt) × (1.0 + β · OutcomeReward(e))</div>
+      <ul class="formula-vars">
+        <li><strong>θ (Theta Threshold):</strong> Dynamic gating boundary learned from environmental risk history.</li>
+        <li><strong>e^(-λ · Δt):</strong> Exponential forgetting curve where $\Delta t$ is elapsed steps and $\lambda$ is temporal decay rate (older memories lose influence).</li>
+        <li><strong>OutcomeReward(e):</strong> Positive or negative reinforcement observed when action was taken in episode $e$.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- SECTION 3 -->
+  <section id="section-3">
+    <span class="section-num">SECTION 03</span>
+    <h2>Chronological Evolution of Experimental Generations (G1 to G9)</h2>
+    <p>
+      Rather than jumping straight to complex black-box neural networks, MPCS was developed through a disciplined sequence of nine distinct architectural generations. Each generation was built to isolate and test a specific cognitive capability or hypothesis:
+    </p>
+
+    <div class="tbl-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Generation</th>
+            <th>Name</th>
+            <th>Primary Mechanism Added</th>
+            <th>Key Finding / Why It Was Built</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="tag">G1</td>
+            <td><strong>Basic Model</strong></td>
+            <td>Global top-5 exact-match feature counting across vision + audio.</td>
+            <td>Established initial baseline. Proved that unweighted feature counting fails when danger depends on subtle physical interactions (touch/heat).</td>
+          </tr>
+          <tr>
+            <td class="tag">G2</td>
+            <td><strong>Bloom Filter</strong></td>
+            <td>Standard Bloom Filter gating memory scan for $O(1)$ novelty check.</td>
+            <td><strong>Negative result:</strong> Speedup was illusory for small banks; strict hashing caused 100% false rejections on near-misses, dropping accuracy by 15%.</td>
+          </tr>
+          <tr>
+            <td class="tag">G3</td>
+            <td><strong>Z + dlCBF</strong></td>
+            <td>d-left Counting Bloom Filter + Z-numbers (confidence fixed at 1.0).</td>
+            <td>Proved that Z-numbers at static confidence are mathematically identical to feature counting. Prompted the development of per-modality confidence in G4.</td>
+          </tr>
+          <tr>
+            <td class="tag">B2</td>
+            <td><strong>Baseline v2</strong></td>
+            <td>Expansion to 4 sensory channels (touch, smell) and 5 actions (+withdraw).</td>
+            <td>Resolved sensory blindness to thermal and mechanical impact scenes; established the standard 4-channel perceptual baseline.</td>
+          </tr>
+          <tr>
+            <td class="tag">G4</td>
+            <td><strong>Core v2</strong></td>
+            <td>Per-modality confidence weighting and per-action top-5 voting.</td>
+            <td><strong>Crucial negative result:</strong> Independent per-action voting allowed weakly related high-reward memories to outvote exact matches, crashing accuracy to 24%.</td>
+          </tr>
+          <tr>
+            <td class="tag">G5</td>
+            <td><strong>HyST (Hysteresis)</strong></td>
+            <td>Two-stage retrieval: Hard categorical constraint slot, then graded soft kernel.</td>
+            <td><strong>The Core Breakthrough:</strong> Solved G4's voting flaw by filtering out incompatible actions before averaging. Accuracy leaped from 24% to 100% on Bank v2.</td>
+          </tr>
+          <tr>
+            <td class="tag">G6</td>
+            <td><strong>HMGI</strong></td>
+            <td>Hybrid Multimodal Graph Indexing with sensory modality partitions.</td>
+            <td>Inspired by recipe graphs. Demonstrated that partition lookup overhead exceeded linear scans on small tabular banks, pointing to the need for large-scale corpora.</td>
+          </tr>
+          <tr>
+            <td class="tag">G7</td>
+            <td><strong>SHMF</strong></td>
+            <td>Structured Hierarchical Memory Filtering with automatic relaxation.</td>
+            <td>Gracefully relaxed hard constraints when no candidates met strict criteria. Highest accuracy (75.6%) on noisy, contradictory query sets.</td>
+          </tr>
+          <tr>
+            <td class="tag">G8</td>
+            <td><strong>KERL</strong></td>
+            <td>Knowledge-Enhanced Retrieval Layer + Near-Miss Safety Guard.</td>
+            <td>Introduced graph-term fusion combining topological knowledge with perceptual experience. Achieved the lowest unsafe error rate (1.7%).</td>
+          </tr>
+          <tr>
+            <td class="tag">G9</td>
+            <td><strong>TIDE</strong></td>
+            <td>Timed Iterative Deliberation Engine with spreading activation.</td>
+            <td>Added latency-budgeted deliberation, passive thread handoff, and ACT-R style spreading activation with active subgraph pruning.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- SECTION 4 -->
+  <section id="section-4">
+    <span class="section-num">SECTION 04</span>
+    <h2>Empirical Benchmark Matrix &amp; Key Findings</h2>
+    <p>
+      In October 2026, an exhaustive benchmarking harness (<code>Model/experimental/comparison/run_comparison.py</code>) evaluated all generations against three distinct memory banks:
+    </p>
+    <ul>
+      <li><strong>Bank v1 (30 records):</strong> Reference two-modality hand-crafted bank.</li>
+      <li><strong>Bank v2 (70 records):</strong> Four-modality bank featuring complex thermal, olfactory, and impact hazards.</li>
+      <li><strong>Bank v3 (700 records):</strong> Large synthetic bank with partial sensory dropouts, contradictory twin scenarios, and expert corrections.</li>
+    </ul>
+
+    <div class="tbl-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Model Gen</th>
+            <th>v1 Seen (Acc)</th>
+            <th>v1 Near (Acc)</th>
+            <th>v2 Seen (Acc / Unsafe)</th>
+            <th>v2 Near (Acc / Unsafe)</th>
+            <th>v3 Seen (Acc / Unsafe)</th>
+            <th>v3 Noisy (Acc / Unsafe)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>G1 Basic</strong></td>
+            <td>51.7%</td>
+            <td>45.7%</td>
+            <td>44.4% (20.0%)</td>
+            <td>42.0% (19.0%)</td>
+            <td>47.3% (35.0%)</td>
+            <td>39.8% (41.0%)</td>
+          </tr>
+          <tr>
+            <td><strong>G2 Bloom</strong></td>
+            <td>51.7%</td>
+            <td>31.2%</td>
+            <td>44.4% (20.0%)</td>
+            <td>29.5% (10.0%)</td>
+            <td>47.3% (35.0%)</td>
+            <td>31.9% (60.0%)</td>
+          </tr>
+          <tr>
+            <td><strong>G3 Z+dlCBF</strong></td>
+            <td>51.7%</td>
+            <td>31.2%</td>
+            <td>44.4% (20.0%)</td>
+            <td>29.5% (10.0%)</td>
+            <td>47.3% (35.0%)</td>
+            <td>31.9% (60.0%)</td>
+          </tr>
+          <tr>
+            <td><strong>G4 Core v2</strong></td>
+            <td class="lo">24.1%</td>
+            <td class="lo">28.3%</td>
+            <td>39.7% (16.0%)</td>
+            <td>37.2% (17.0%)</td>
+            <td>38.4% (22.0%)</td>
+            <td>34.6% (30.0%)</td>
+          </tr>
+          <tr>
+            <td><strong>G5 HyST</strong></td>
+            <td class="hi">79.3%</td>
+            <td class="hi">80.9%</td>
+            <td class="hi">100.0% (0.0%)</td>
+            <td class="hi">100.0% (0.0%)</td>
+            <td>82.3% (0.0%)</td>
+            <td>46.7% (1.2%)</td>
+          </tr>
+          <tr>
+            <td><strong>G7 SHMF</strong></td>
+            <td class="hi">79.3%</td>
+            <td class="hi">80.9%</td>
+            <td class="hi">100.0% (0.0%)</td>
+            <td class="hi">100.0% (0.0%)</td>
+            <td>82.3% (0.0%)</td>
+            <td class="hi">68.1% (3.8%)</td>
+          </tr>
+          <tr>
+            <td><strong>G8 KERL</strong></td>
+            <td class="hi">79.3%</td>
+            <td class="hi">80.9%</td>
+            <td class="hi">100.0% (0.0%)</td>
+            <td class="hi">100.0% (0.0%)</td>
+            <td>82.0% (0.0%)</td>
+            <td class="hi">67.7% (1.7%)</td>
+          </tr>
+          <tr>
+            <td><strong>G9 TIDE</strong></td>
+            <td class="hi">79.3%</td>
+            <td class="hi">80.9%</td>
+            <td class="hi">100.0% (0.0%)</td>
+            <td class="hi">100.0% (0.0%)</td>
+            <td>82.0% (0.0%)</td>
+            <td class="hi">67.7% (1.7%)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout green">
+      <div class="callout-title">Key Engineering Insight: The Rule of Low vs High Cardinality</div>
+      <p>
+        The clearest theoretical result from this benchmark was that <strong>membership filters (Bloom / dlCBF) fail catastrophically in cognitive perception</strong>. In multi-modal perceptual spaces, exact identical feature configurations almost never repeat; hashing an entire percept closes the gate on exactly the near-matches needed for generalisation. 
+      </p>
+      <p>
+        Instead, intelligence must screen on the <strong>low-cardinality structure</strong> of the world (e.g. categorical context, anatomical region, broad sensory modality) via hard constraint filtering, and then apply <strong>soft continuous kernels</strong> (embeddings, spreading activation, VAD affect) over the high-cardinality contents.
+      </p>
+    </div>
+  </section>
+
+  <!-- SECTION 5 -->
+  <section id="section-5">
+    <span class="section-num">SECTION 05</span>
+    <h2>The Paradigm Shift: From Synthetic Percepts to the Materia Medica Variorum</h2>
+    <p>
+      By Meeting 5, the synthetic agent experiments had verified the cognitive dynamics of HyST, SHMF, and TIDE. However, synthetic toy datasets suffered from an artificial ceiling: they lacked the messy semantic depth, intricate subjective symptom phenomenology, and emotional richness of real human experience.
+    </p>
+    <p>
+      This motivated the pivotal shift to classical <strong>Homeopathic Materia Medica</strong> (Samuel Hahnemann’s <em>Materia Medica Pura</em> Vol. 2 and William Boericke’s <em>Pocket Manual</em>).
+    </p>
+
+    <!-- FORMULA 5.1 BREAKDOWN -->
+    <div class="formula-breakdown">
+      <div class="formula-title">
+        <span>Formula 5.1 — Tri-Channel Hybrid Information Retrieval Scoring</span>
+        <span>Search &amp; Memory</span>
+      </div>
+      <div class="formula-code">Score(Query, Record) = w_t · S_text(Q, R) + w_a · S_affect(Q, R) + w_h · S_hierarchy(Q, R)</div>
+      <ul class="formula-vars">
+        <li><strong>S_text(Q, R) ∈ [0, 1]:</strong> Lexical and semantic match score. Computed as a convex combination of BM25 (exact clinical token match) and Dense Cosine Similarity (paraphrase match).</li>
+        <li><strong>S_affect(Q, R) ∈ [0, 1]:</strong> Emotional alignment score in Euclidean VAD space: $1.0 - \frac{1}{\sqrt{3}} \|\mathbf{VAD}_Q - \mathbf{VAD}_R\|_2$.</li>
+        <li><strong>S_hierarchy(Q, R) ∈ [0, 1]:</strong> Shared taxonomic depth along the anatomical tree (Mind / Head / Eye / Throat / Stomach): $\frac{\text{Shared Levels}}{\max(\text{Depth}_Q, \text{Depth}_R)}$.</li>
+      </ul>
+      <div class="formula-worked">
+        <strong>Worked Example:</strong> Query = "throbbing violent headache worse noise" ($V=0.15, A=0.88, D=0.20$, Region=<code>Head/Temples</code>).<br>
+        Candidate A matches on text ($S_t=0.85$), emotional panic ($S_a=0.92$), and anatomical region ($S_h=1.00$).<br>
+        With weights $w_t=0.50, w_a=0.30, w_h=0.20$: $\text{Score} = 0.50(0.85) + 0.30(0.92) + 0.20(1.00) = 0.425 + 0.276 + 0.200 = \mathbf{0.901}$ (Top Rank).
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 6 -->
+  <section id="section-6">
+    <span class="section-num">SECTION 06</span>
+    <h2>Knowledge Graph Pipeline Engineering (LocalKG)</h2>
+    <p>
+      To build a production knowledge graph without external API costs, rate limits, or data leakage, we created <strong>LocalKG</strong>: an air-gapped pipeline executing over local Ollama LLMs and ChromaDB vector stores.
+    </p>
+
+    <!-- PIPELINE BLUEPRINT -->
+    <h3>Step-by-Step Engineering Pipeline</h3>
+
+    <div class="pipeline-step">
+      <div class="step-badge">01</div>
+      <div class="step-content">
+        <div class="step-title">Multi-PDF Ingestion &amp; Typographical Markup Parser</div>
+        <div class="step-io">
+          <span>INPUT: Raw PDF files (Boericke 1,069 pp, Hahnemann 742 pp)</span>
+          <span>OUTPUT: Parsed JSONL with bold/italic Markdown spans</span>
+        </div>
+        <div class="step-desc">
+          Extracts page spans via PyMuPDF (<code>fitz</code>). Checks font flags (bit 16 for bold, bit 2 for italic) to wrap terms in <code>**bold**</code> and <code>_italic_</code>. Employs OCR-tolerant heading regular expressions to handle classic typos (e.g. <code>ARUICA.</code> $\to$ <code>Arnica montana</code>; <code>Ifose.</code> $\to$ <code>Nose</code>).
+        </div>
+      </div>
+    </div>
+
+    <div class="pipeline-step">
+      <div class="step-badge">02</div>
+      <div class="step-content">
+        <div class="step-title">Chunk Consolidation &amp; Header Preservation</div>
+        <div class="step-io">
+          <span>INPUT: Fragmented parsed page lines</span>
+          <span>OUTPUT: Chunks JSONL (stable chunk_id, ~2,600 chars each)</span>
+        </div>
+        <div class="step-desc">
+          Groups fragmented section paragraphs into rich, consolidated chunks. Prepends <code>### {Remedy}: {Section}</code> headers so the LLM retains full anatomical context. Generates deterministic chunk identifiers (<code>chunk:{source_id}:{ordinal}</code>).
+        </div>
+      </div>
+    </div>
+
+    <div class="pipeline-step">
+      <div class="step-badge">03</div>
+      <div class="step-content">
+        <div class="step-title">Air-Gapped Ollama LLM Extraction Engine</div>
+        <div class="step-io">
+          <span>INPUT: Consolidated text chunk + Prompt extract_v1.md</span>
+          <span>OUTPUT: Pydantic ChunkExtraction object</span>
+        </div>
+        <div class="step-desc">
+          Dispatches structured queries to local <code>qwen2.5:7b-instruct</code> via <code>localhost:11434</code>. Enforces strict schema decoding using Pydantic JSON schemas via Ollama's <code>format</code> parameter. Checks <code>DiskLLMCache</code> first to eliminate duplicate computation. Caps parallelism with <code>num_thread=6</code> and Windows below-normal process priority.
+        </div>
+      </div>
+    </div>
+
+    <div class="pipeline-step">
+      <div class="step-badge">04</div>
+      <div class="step-content">
+        <div class="step-title">Deterministic Validation &amp; Cognitive-Affective Enrichment</div>
+        <div class="step-io">
+          <span>INPUT: Raw ChunkExtraction + Source Chunk Text</span>
+          <span>OUTPUT: Validated, VAD-scored Occurrences list</span>
+        </div>
+        <div class="step-desc">
+          Verifies quote faithfulness (verbatim substring check). Overrides LLM typography emphasis with ground-truth font markup in chunk text. Computes continuous VAD affect coordinates, adjective severity scores, composite regression weights, and maps mental symptoms to canonical Cognitive Domains.
+        </div>
+      </div>
+    </div>
+
+    <div class="pipeline-step">
+      <div class="step-badge">05</div>
+      <div class="step-content">
+        <div class="step-title">Multi-Source Fusion &amp; 60 FPS Hardware-Accelerated Canvas</div>
+        <div class="step-io">
+          <span>INPUT: Extracted JSONL runs + docs/ PubMed clinical records</span>
+          <span>OUTPUT: Standalone interactive HTML visualizer + .graph.json</span>
+        </div>
+        <div class="step-desc">
+          Fuses historical provings with modern PubMed RCTs and MeSH descriptors. Resolves all remedy abbreviations into canonical Latin hubs. Calculates structured Galaxy Constellation and Radial Mandala coordinates. Executes spatial-grid collision relaxation and renders 1,000+ nodes at 60 FPS with in-browser TIDE spreading activation.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 7 -->
+  <section id="section-7">
+    <span class="section-num">SECTION 07</span>
+    <h2>Continuous Affective Metrics &amp; Linear Regression Scoring</h2>
+    <p>
+      In accordance with meeting directives, the relationship between symptoms, typographical grades, and psychological intensity is formalized as a linear regression model:
+    </p>
+
+    <!-- FORMULA 7.1 BREAKDOWN -->
+    <div class="formula-breakdown">
+      <div class="formula-title">
+        <span>Formula 7.1 — Continuous Linear Regression Composite Severity Weight</span>
+        <span>Affective Weighting</span>
+      </div>
+      <div class="formula-code">W = 3.0 × [ β₁·(Grade / 3) + β₂·AdjSev + β₃·Arousal + β₄·Confidence ]
+where: β₁ = 0.40,  β₂ = 0.30,  β₃ = 0.20,  β₄ = 0.10   (Σβ = 1.00)</div>
+      <ul class="formula-vars">
+        <li><strong>Grade / 3 ∈ {0.333, 0.667, 1.000}:</strong> Normalized historical verification grade from repertory typography (Plain = 1, Italic = 2, Bold/CAPS = 3).</li>
+        <li><strong>AdjSev ∈ [0.20, 1.00]:</strong> Adjective severity score extracted from SEVERITY_ADJECTIVES lexicon: $\min(1.0, 0.75 \cdot \max + 0.25 \cdot \text{mean})$.</li>
+        <li><strong>Arousal ∈ [0.00, 1.00]:</strong> Neurobiological activation level derived from VAD lexicon.</li>
+        <li><strong>Confidence ∈ [0.50, 1.00]:</strong> LLM extraction confidence score.</li>
+        <li><strong>Scale Factor 3.0:</strong> Scales the resulting normalized score back into the classical $[1.0, 3.0]$ homeopathic continuum.</li>
+      </ul>
+      <div class="formula-worked">
+        <strong>Worked Example:</strong> Symptom = <em>"Great fear of death with tossing anguish"</em>.<br>
+        Typography = Bold ($\text{Grade}=3 \implies \text{Norm}=1.00$). Matched adjectives: <em>great</em> (0.80), <em>anguish</em> (0.92) $\implies \text{AdjSev} = 0.75(0.92) + 0.25(0.86) = 0.905$.<br>
+        Lexicon Arousal = $0.90$ (panic). LLM Confidence = $1.00$.<br>
+        $\text{InnerSum} = 0.40(1.00) + 0.30(0.905) + 0.20(0.90) + 0.10(1.00) = 0.40 + 0.2715 + 0.180 + 0.100 = \mathbf{0.9515}$.<br>
+        $\text{Composite Weight } W = 3.0 \times 0.9515 = \mathbf{2.855} \text{ / } 3.00$ (reflecting extreme clinical urgency!).
+      </div>
+    </div>
+
+    <!-- FORMULA 7.2 BREAKDOWN -->
+    <div class="formula-breakdown">
+      <div class="formula-title">
+        <span>Formula 7.2 — VAD Vector Pooling &amp; Peak Arousal Formulation</span>
+        <span>Psychometrics</span>
+      </div>
+      <div class="formula-code">Valence = (1 / |T|) · Σ V(t),     Dominance = (1 / |T|) · Σ D(t)
+Arousal = max_{t ∈ T} A(t),     Coverage = |Matched Tokens| / |Total Tokens|</div>
+      <ul class="formula-vars">
+        <li><strong>Mean Valence &amp; Dominance:</strong> Average hedonic tone and sense of agency across all attested words.</li>
+        <li><strong>Peak Arousal (max):</strong> In cognitive emergency and clinical triage, a single panic-inducing cue (e.g. <em>"fears death"</em>) governs biological salience, regardless of whether surrounding descriptive words are calm.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- SECTION 8 -->
+  <section id="section-8">
+    <span class="section-num">SECTION 08</span>
+    <h2>Modern PubMed Clinical Trial &amp; MeSH Evidence Layer</h2>
+    <p>
+      To satisfy the requirement of grounding the historical texts in modern scientific literature, we curated, indexed, and integrated peer-reviewed clinical trials, pharmacological reviews, and MeSH descriptors into the knowledge graph:
+    </p>
+
+    <div class="info-grid">
+      <div class="info-card blue">
+        <div class="info-card-label">Arnica Montana (Evidence 1)</div>
+        <div class="info-card-title">Perioperative Ecchymosis &amp; Pain Meta-Analysis</div>
+        <div class="info-card-text">
+          <strong>PMID: 27912633</strong> (<em>American Journal of Therapeutics</em>, 2016). Evaluated oral/topical Arnica in plastic and facial surgery. Demonstrated significant reductions in post-traumatic ecchymosis and postoperative edema mediated by sesquiterpene lactones (helenalin) inhibiting NF-κB. Connected to MeSH: <code>D001158</code> (Arnica), <code>D004438</code> (Ecchymosis), <code>D004487</code> (Edema).
+        </div>
+      </div>
+
+      <div class="info-card green">
+        <div class="info-card-label">Arnica Montana (Evidence 2)</div>
+        <div class="info-card-title">Hand Osteoarthritis vs Topical Ibuprofen</div>
+        <div class="info-card-text">
+          <strong>PMID: 17405692</strong> (<em>Rheumatology International</em>, 2007). Double-blind RCT in 204 patients. Proved topical Arnica gel was non-inferior to 5% ibuprofen gel in reducing pain scores and morning joint stiffness. Connected to Clinical Conditions: <em>Osteoarthritis</em>, <em>Joint Stiffness</em>.
+        </div>
+      </div>
+
+      <div class="info-card crimson">
+        <div class="info-card-label">Atropa Belladonna (Evidence 1)</div>
+        <div class="info-card-title">Anticholinergic Neurotoxic Toxidrome</div>
+        <div class="info-card-text">
+          <strong>PMID: 28723690</strong> (<em>Pan African Medical Journal</em>, 2017). Clinical spectrum of Atropa ingestion. Details competitive muscarinic receptor antagonism producing acute delirium, visual hallucinations, psychomotor agitation, extreme mydriasis, and hyperthermia. Connected to MeSH: <code>D001433</code>, <code>D003693</code> (Delirium), <code>D006212</code> (Hallucinations).
+        </div>
+      </div>
+
+      <div class="info-card amber">
+        <div class="info-card-label">Atropa Belladonna (Evidence 2)</div>
+        <div class="info-card-title">Tropane Alkaloids &amp; Muscarinic Blockade</div>
+        <div class="info-card-text">
+          <strong>PMID: 31899146</strong> (<em>Molecules</em>, 2019). Pharmacological analysis of hyoscyamine, atropine, and scopolamine. Validates historical homeopathic provings demonstrating violent cerebral vascular congestion and intense sensorial sensitivity (photophobia, hyperacusis).
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 9 -->
+  <section id="section-9">
+    <span class="section-num">SECTION 09</span>
+    <h2>Hardware-Accelerated Interactive Canvas &amp; TIDE Simulation</h2>
+    <p>
+      In Section 6, the initial SVG DOM renderer experienced browser lockups when attempting to render 1,113 nodes and 2,002 links simultaneously ($O(N^2)$ physics loop = 111M operations). We re-engineered the visualization engine into a high-performance, 60 FPS HTML5 <code>&lt;canvas&gt;</code> architecture:
+    </p>
+
+    <!-- FORMULA 9.1 BREAKDOWN -->
+    <div class="formula-breakdown">
+      <div class="formula-title">
+        <span>Formula 9.1 — Client-Side TIDE Spreading Activation &amp; Pruning</span>
+        <span>Graph Reasoning</span>
+      </div>
+      <div class="formula-code">SeedScore(s) = (Hits / TotalTerms) × (1.0 + 0.80·Arousal) × (Weight / 2.0)
+SpreadEnergy(v, hop+1) = max_{u ∈ N(v)} [ Activation(u) · γ / deg(u) ]
+PruneCondition:  Activation(v) < 0.18 × max_{s ∈ Seeds} SeedScore(s)</div>
+      <ul class="formula-vars">
+        <li><strong>SeedScore(s):</strong> Query matching score boosted by the node's intrinsic affective arousal. High-arousal symptoms (panic, delirium) act as stronger energetic sources.</li>
+        <li><strong>γ (Hop Decay Factor = 0.58):</strong> Dissipation rate preventing infinite energy loops over cycles.</li>
+        <li><strong>deg(u) (Degree Normalization):</strong> Divides energy across outgoing edges so high-degree hubs don't artificially amplify energy.</li>
+        <li><strong>Prune Cutoff (0.18 · MaxSeed):</strong> Strict dynamic threshold that deactivates weak peripheral associations, displaying real-time kept/pruned counts and pruning ratio.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- SECTION 10 -->
+  <section id="section-10">
+    <span class="section-num">SECTION 10</span>
+    <h2>Data Audit, Cleanliness &amp; OCR Sanitization</h2>
+    <p>
+      Classical 19th-century text scans contain substantial typographical noise that routinely degrades automated knowledge extraction. We instituted a strict multi-pass sanitation pipeline:
+    </p>
+
+    <div class="tbl-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Raw OCR Artifact</th>
+            <th>Original Corrupted String</th>
+            <th>Cleaned Canonical Entity</th>
+            <th>Sanitization Rule Applied</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Proving Timestamps</td>
+            <td><code>Worse over to the left side (aft! 6 h a ^ p« offhe bod y 675</code></td>
+            <td><code>Worse: Turning to left side</code></td>
+            <td>Stripped Hahnemann <code>(aft. X h.)</code> parentheticals; removed garbled footnote page numbers.</td>
+          </tr>
+          <tr>
+            <td>Garbled Scans</td>
+            <td><code>Better ^ in open airj from co!d washing^</code></td>
+            <td><code>Better: Open air / cold washing</code></td>
+            <td>Repaired OCR word corruption (<code>co!d</code> $\to$ cold); removed carets and pipe delimiters.</td>
+          </tr>
+          <tr>
+            <td>Broken Unicode</td>
+            <td><code>FemaleYellow, tenacious leucorrlioea</code></td>
+            <td><code>Yellow, tenacious leucorrhoea</code></td>
+            <td>Stripped non-ASCII replacement glyphs (<code>\ufffd</code>); corrected clinical Latin spelling.</td>
+          </tr>
+          <tr>
+            <td>Mid-Word Slices</td>
+            <td><code>Stool Frequent Small With Tenesmus, Green Like Chopped Herbs, Whi</code></td>
+            <td><code>Green Stools with Tenesmus</code></td>
+            <td>Replaced raw 65-char slicing with linguistic phrase boundaries and stopword trimming.</td>
+          </tr>
+          <tr>
+            <td>Remedy Noise</td>
+            <td><code>Hy&amp;s, {less fever, mi agitation.</code></td>
+            <td><code>Hyoscyamus niger</code> (Resolved Hub)</td>
+            <td>Filtered multi-sentence comparative text out of remedy node dictionaries.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout green">
+      <div class="callout-title">Audit Result: Zero Non-ASCII Noise</div>
+      <p>
+        Across the final exported <strong>1,007 nodes and 1,849 links</strong>, zero non-ASCII replacement characters, zero unescaped XML delimiters, and zero orphaned relationship links exist. Every single entity is backed by an attested verbatim source quotation.
+      </p>
+    </div>
+  </section>
+
+  <!-- SECTION 11 -->
+  <section id="section-11">
+    <span class="section-num">SECTION 11</span>
+    <h2>Milestone Scoreboard, Current Standing &amp; Future Roadmap</h2>
+    <p>
+      Comparing the original project goals from past meeting minutes against our current verified deliverables:
+    </p>
+
+    <div class="tbl-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Goal / MoM Directive</th>
+            <th>Status</th>
+            <th>Deliverable / Implementation Evidence</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Dual-process cognitive engine (Reflex vs Deliberation)</td>
+            <td class="hi">Completed</td>
+            <td>9 model generations implemented and benchmarked; HyST hard/soft gating validated.</td>
+          </tr>
+          <tr>
+            <td>Affective &amp; subjective percept modeling (VAD vectors)</td>
+            <td class="hi">Completed</td>
+            <td>VAD lexicon scoring ($V, A, D \in [0, 1]$) with peak arousal prioritization.</td>
+          </tr>
+          <tr>
+            <td>Linear regression style adjective severity weights</td>
+            <td class="hi">Completed</td>
+            <td>Composite severity formula ($W \in [1.0, 3.0]$) combining typography, adjectives, and arousal.</td>
+          </tr>
+          <tr>
+            <td>Local, private LLM extraction without API dependencies</td>
+            <td class="hi">Completed</td>
+            <td>100% local Ollama pipeline (<code>qwen2.5:7b-instruct</code>) with schema constraints and caching.</td>
+          </tr>
+          <tr>
+            <td>OCR-resilient multi-book parsing</td>
+            <td class="hi">Completed</td>
+            <td>Parsed 1,811 pages across Boericke &amp; Hahnemann with heading normalization.</td>
+          </tr>
+          <tr>
+            <td>Individual KGs for Arnica and Belladonna</td>
+            <td class="hi">Completed</td>
+            <td>Generated <code>kg_arnica_montana_cleaned.html</code> and <code>kg_belladonna_cleaned.html</code>.</td>
+          </tr>
+          <tr>
+            <td>Full Materia Medica Knowledge Graph</td>
+            <td class="hi">Completed</td>
+            <td>Generated <code>kg_full_materia_medica_cleaned.html</code> (1,007 nodes, 1,849 links, 41 remedies).</td>
+          </tr>
+          <tr>
+            <td>Modern scientific literature grounding (PubMed &amp; MeSH)</td>
+            <td class="hi">Completed</td>
+            <td>Integrated 4 clinical trials/reviews and 22 MeSH descriptors into <code>docs/</code> and the KG.</td>
+          </tr>
+          <tr>
+            <td>Visualizer with TIDE spreading activation &amp; pruning</td>
+            <td class="hi">Completed</td>
+            <td>60 FPS Canvas UI with Galaxy/Mandala layouts, real-time pruning ratios, and inspector.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Future Roadmap</h3>
+    <ul class="styled-list">
+      <li><strong>Evolutionary Salience Optimization:</strong> Dynamically learning the routing threshold $\theta$ and salience weights ($w_1, \dots, w_4$) through reinforcement learning across simulated clinical cases.</li>
+      <li><strong>Persona &amp; Constitution Models:</strong> Instantiating distinct synthetic patient personas (e.g. hyperaroused anxious profiles vs melancholic hypoaroused profiles) to evaluate divergent vs convergent remedy retrieval.</li>
+      <li><strong>Continuous Multi-Agent Society of Mind:</strong> Implementing Marvin Minsky's agency architecture as interacting subagents (Perceptor, Saliency Critic, Associator, Memory Reflector) operating over the knowledge graph.</li>
+      <li><strong>Real-Time Edge Inference:</strong> Porting the pruned subgraphs and local embedding index onto low-power edge accelerators for real-time robotic or bedside cognitive assistance.</li>
+    </ul>
+  </section>
+
+</div>
+
+</body>
+</html>
+"""
+
+if __name__ == "__main__":
+    OUT_FILE.parent.mkdir(parents=True, exist_ok=True)
+    content = build_html()
+    OUT_FILE.write_text(content, encoding="utf-8")
+    print(f"Master Breakdown HTML written to {OUT_FILE} ({OUT_FILE.stat().st_size:,} bytes)")

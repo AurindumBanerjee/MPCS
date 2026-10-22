@@ -1,8 +1,23 @@
 from __future__ import annotations
 
+import difflib
 import re
 from typing import Any
-from rapidfuzz import fuzz
+
+try:
+    from rapidfuzz import fuzz as _rf_fuzz
+except ImportError:
+    _rf_fuzz = None  # type: ignore
+
+
+def _partial_ratio(a: str, b: str) -> float:
+    if _rf_fuzz is not None:
+        return float(_rf_fuzz.partial_ratio(a, b))
+    if not a or not b:
+        return 0.0
+    if a in b or b in a:
+        return 100.0
+    return difflib.SequenceMatcher(None, a, b).ratio() * 100.0
 
 from lkg.config import get_sections_config, get_sources_config
 from lkg.extract.affect import (
@@ -36,7 +51,7 @@ def check_symptom_grounding(symptom_raw: str, quote: str, min_ratio: float = 60.
     """Check whether symptom_raw is grounded in the quote (substring or high fuzzy match)."""
     if is_substring_normalized(symptom_raw, quote):
         return True
-    ratio = fuzz.partial_ratio(normalize_text(symptom_raw), normalize_text(quote))
+    ratio = _partial_ratio(normalize_text(symptom_raw), normalize_text(quote))
     return ratio >= min_ratio
 
 
