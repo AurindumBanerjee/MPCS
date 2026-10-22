@@ -68,7 +68,7 @@ uv pip install -e . pytest
 
 # 3. Configure environment
 cp .env.example .env
-# Edit .env to set XAI_API_KEY (optional for mock testing)
+# Edit .env to set GROQ_API_KEY (optional for mock testing)
 ```
 
 ### Start Services

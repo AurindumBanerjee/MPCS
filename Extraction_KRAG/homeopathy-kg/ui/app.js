@@ -18,8 +18,25 @@ document.addEventListener("DOMContentLoaded", () => {
   const guideModalBackdrop = document.getElementById("guide-modal-backdrop");
   const modalCloseBtn = document.getElementById("modal-close-btn");
   const modalDismissBtn = document.getElementById("modal-dismiss-btn");
+  const runSelect = document.getElementById("run-select");
 
-  let graphData = window.GRAPH_DATA || {};
+  const allRuns = window.ALL_RUNS || { "hybrid": window.GRAPH_DATA || {} };
+  let currentRunKey = allRuns["hybrid"] ? "hybrid" : (Object.keys(allRuns)[0] || "hybrid");
+  let graphData = allRuns[currentRunKey] || window.GRAPH_DATA || {};
+
+  if (runSelect) {
+    runSelect.value = currentRunKey;
+    runSelect.addEventListener("change", (e) => {
+      currentRunKey = e.target.value;
+      graphData = allRuns[currentRunKey] || {};
+      initSelector();
+      const firstSchema = remedySelect.value || Object.keys(graphData)[0];
+      if (firstSchema) {
+        loadSchema(firstSchema);
+      }
+    });
+  }
+
   let currentSchema = null;
   let simulation = null;
   let svg = d3.select("#graph-svg");
@@ -64,7 +81,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const opt = document.createElement("option");
       opt.value = k;
       opt.textContent = k;
-      if (k === "Arsenicum Album (Featured Schema)") {
+      if (k.startsWith("Combined") || k.includes("Combined Knowledge Graph")) {
         opt.selected = true;
       }
       remedySelect.appendChild(opt);
@@ -81,7 +98,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Zoom Setup
   function initZoom() {
     zoom = d3.zoom()
-      .scaleExtent([0.2, 4])
+      .scaleExtent([0.1, 5])
       .on("zoom", (event) => {
         g.attr("transform", event.transform);
       });
@@ -106,11 +123,16 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function resetView() {
-    const width = container.clientWidth;
-    const height = container.clientHeight;
+    const width = container.clientWidth || 1000;
+    const height = container.clientHeight || 650;
+    const isLarge = currentSchema && currentSchema.nodes.length > 80;
+    const initialScale = isLarge ? 0.32 : 1.0;
+    const tx = isLarge ? (width / 2) * (1 - initialScale) : 0;
+    const ty = isLarge ? (height / 2) * (1 - initialScale) : 0;
+
     svg.transition().duration(750).call(
       zoom.transform,
-      d3.zoomIdentity.translate(0, 0).scale(1)
+      d3.zoomIdentity.translate(tx, ty).scale(initialScale)
     );
     if (simulation) {
       simulation.alpha(0.8).restart();
@@ -138,6 +160,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const rect = container.getBoundingClientRect();
     const width = rect.width > 100 ? rect.width : 1000;
     const height = rect.height > 100 ? rect.height : 650;
+    const isLarge = nodes.length > 80;
 
     svg.attr("viewBox", [0, 0, width, height]);
 
@@ -146,28 +169,52 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (simulation) simulation.stop();
 
-    // Initialize node positions nicely around center
-    nodes.forEach((n, idx) => {
-      if (n.type === "Medicine") {
-        n.x = width / 2;
-        n.y = height / 2;
-      } else {
-        const nonMed = nodes.filter(x => x.type !== "Medicine");
+    // Initialize node positions
+    const medNodes = nodes.filter(x => x.type === "Medicine");
+    if (medNodes.length === 1) {
+      medNodes[0].x = width / 2;
+      medNodes[0].y = height / 2;
+      const nonMed = nodes.filter(x => x.type !== "Medicine");
+      nonMed.forEach((n, idx) => {
         const angle = (idx / Math.max(nonMed.length, 1)) * 2 * Math.PI;
         const dist = n.type === "Modality" ? 220 : (n.type === "Cognitive Domain" ? 170 : 130);
         n.x = width / 2 + dist * Math.cos(angle);
         n.y = height / 2 + dist * Math.sin(angle);
-      }
-    });
+      });
+    } else {
+      // Multi-remedy / Combined Graph: distribute medicines in outer ring
+      medNodes.forEach((n, idx) => {
+        const angle = (idx / Math.max(medNodes.length, 1)) * 2 * Math.PI;
+        const r = 520;
+        n.x = width / 2 + r * Math.cos(angle);
+        n.y = height / 2 + r * Math.sin(angle);
+      });
+      // Cognitive Domain hubs in inner ring
+      const domNodes = nodes.filter(x => x.type === "Cognitive Domain");
+      domNodes.forEach((n, idx) => {
+        const angle = (idx / Math.max(domNodes.length, 1)) * 2 * Math.PI;
+        const r = 160;
+        n.x = width / 2 + r * Math.cos(angle);
+        n.y = height / 2 + r * Math.sin(angle);
+      });
+      // Other nodes (Symptoms, Modalities)
+      const otherNodes = nodes.filter(x => x.type !== "Medicine" && x.type !== "Cognitive Domain");
+      otherNodes.forEach((n, idx) => {
+        const angle = (idx / Math.max(otherNodes.length, 1)) * 2 * Math.PI;
+        const r = 320 + (idx % 7) * 40;
+        n.x = width / 2 + r * Math.cos(angle);
+        n.y = height / 2 + r * Math.sin(angle);
+      });
+    }
 
-    // Force simulation
+    // Force simulation parameters tuned for scale
     simulation = d3.forceSimulation(nodes)
-      .force("link", d3.forceLink(links).id(d => d.id).distance(140))
-      .force("charge", d3.forceManyBody().strength(-450))
+      .force("link", d3.forceLink(links).id(d => d.id).distance(isLarge ? 75 : 140))
+      .force("charge", d3.forceManyBody().strength(isLarge ? -110 : -450))
       .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("collision", d3.forceCollide().radius(d => getNodeRadius(d) + 26))
-      .force("x", d3.forceX(width / 2).strength(0.06))
-      .force("y", d3.forceY(height / 2).strength(0.06));
+      .force("collision", d3.forceCollide().radius(d => getNodeRadius(d) + (isLarge ? 10 : 26)))
+      .force("x", d3.forceX(width / 2).strength(isLarge ? 0.04 : 0.06))
+      .force("y", d3.forceY(height / 2).strength(isLarge ? 0.04 : 0.06));
 
     // Arrow markers
     const defs = svg.selectAll("defs").data([0]).join("defs");
@@ -341,6 +388,20 @@ document.addEventListener("DOMContentLoaded", () => {
         <div>
           <div class="info-label">Clinical / Affective Notes</div>
           <div class="info-box">${d.details}</div>
+        </div>
+      ` : ""}
+
+      ${d.remedy ? `
+        <div>
+          <div class="info-label">Associated Remedy</div>
+          <div class="info-box" style="color: #70b5ff; font-weight: 500;">${d.remedy}</div>
+        </div>
+      ` : ""}
+
+      ${d.remedies && d.remedies.length > 0 ? `
+        <div>
+          <div class="info-label">Associated Remedies (${d.remedies.length})</div>
+          <div class="info-box" style="color: #70b5ff; font-weight: 500;">${d.remedies.join(', ')}</div>
         </div>
       ` : ""}
 

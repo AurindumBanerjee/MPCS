@@ -18,7 +18,7 @@ SRC_DIR = Path(__file__).resolve().parent.parent / "src"
 sys.path.insert(0, str(SRC_DIR))
 
 from hkg.config import DATA_DIR, settings  # noqa: E402
-from hkg.llm.xai_client import XAIClient   # noqa: E402
+from hkg.llm.groq_client import GroqClient   # noqa: E402
 
 PASS = "[PASS]"
 FAIL = "[FAIL]"
@@ -32,8 +32,8 @@ def banner(title: str) -> None:
 
 # ── 1. API Health Check ──────────────────────────────────────────────────────
 def test_api_health() -> bool:
-    banner("Step 1 / 4: xAI API Health Check")
-    client = XAIClient()
+    banner("Step 1 / 4: Groq API Health Check")
+    client = GroqClient()
     result = client.health_check()
     status = result.get("status")
     print(f"  Status     : {status}")
@@ -197,9 +197,9 @@ def test_extraction(chunks_file: Path) -> bool:
     print(f"  Remedy     : {remedy}")
     print(f"  Section    : {section}")
     print(f"  Text len   : {len(chunk_text)} chars")
-    print(f"  Calling xAI ({settings.LLM_MODEL})...")
+    print(f"  Calling Groq ({settings.LLM_MODEL})...")
 
-    client = XAIClient()
+    client = GroqClient()
     try:
         extraction = client.extract(
             chunk_text=chunk_text,

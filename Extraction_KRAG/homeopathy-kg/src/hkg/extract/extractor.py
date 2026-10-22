@@ -9,7 +9,7 @@ from typing import Any
 from hkg.config import DATA_DIR, settings
 from hkg.extract.validators import validate_chunk_extraction
 from hkg.llm.client import LLMClient
-from hkg.llm.xai_client import XAIClient
+from hkg.llm.groq_client import GroqClient
 from hkg.schema.graph import make_occurrence_id, make_symptom_id
 
 
@@ -19,16 +19,23 @@ class ExtractionPipeline:
     def __init__(
         self,
         llm_client: LLMClient | None = None,
+        method: str = "groq",
         run_id: str | None = None,
         output_dir: Path | None = None,
     ):
         if llm_client:
             self.llm = llm_client
-        elif settings.XAI_API_KEY:
-            self.llm = XAIClient()
+        elif method == "hybrid":
+            from hkg.llm.hybrid_client import HybridExtractor
+            self.llm = HybridExtractor()
+        elif method in ("rule-based", "heuristic", "mock"):
+            from hkg.llm.rule_based_client import RuleBasedExtractor
+            self.llm = RuleBasedExtractor()
+        elif settings.GROQ_API_KEY:
+            self.llm = GroqClient()
         else:
-            from hkg.llm.mock_client import MockLLMClient
-            self.llm = MockLLMClient()
+            from hkg.llm.rule_based_client import RuleBasedExtractor
+            self.llm = RuleBasedExtractor()
         self.run_id = run_id or f"run_{int(time.time())}_{uuid.uuid4().hex[:6]}"
         self.output_dir = output_dir or (DATA_DIR / "extracted")
         self.output_dir.mkdir(parents=True, exist_ok=True)

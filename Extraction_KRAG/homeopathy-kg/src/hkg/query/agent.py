@@ -5,7 +5,7 @@ import re
 from typing import Any
 
 from hkg.config import settings
-from hkg.llm.xai_client import XAIClient
+from hkg.llm.groq_client import GroqClient
 from hkg.query.tools import HKGQueryTools
 
 # Emergency symptoms regex guard per plan §10
@@ -36,11 +36,11 @@ class SingleLLMAgent:
     def __init__(
         self,
         tools: HKGQueryTools | None = None,
-        xai_client: XAIClient | None = None,
+        llm_client: GroqClient | None = None,
         max_iterations: int = 4,
     ):
         self.tools = tools or HKGQueryTools()
-        self.client = xai_client or XAIClient()
+        self.client = llm_client or GroqClient()
         self.max_iterations = max_iterations
 
     def check_emergency(self, query: str) -> str | None:
@@ -119,6 +119,7 @@ class SingleLLMAgent:
                 answer = self.client._call_api(
                     prompt=SYSTEM_PROMPT,
                     user_content=f"Context:\n{assembled_context}\n\nQuestion: {user_question}",
+                    json_mode=False,
                 )
             else:
                 # Deterministic synthesis if API key not supplied

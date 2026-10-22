@@ -23,6 +23,32 @@ class ModalityOut(BaseModel):
         "other",
     ] = "other"
 
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_factor_type(cls, values: Any) -> Any:
+        valid_types = {
+            "time", "temperature", "weather", "position", "motion",
+            "touch_pressure", "food_drink", "eating", "sleep", "emotion",
+            "company", "season", "other",
+        }
+        alias_map = {
+            "food": "food_drink",
+            "drink": "food_drink",
+            "activity": "motion",
+            "exercise": "motion",
+            "mental": "emotion",
+            "mind": "emotion",
+            "physical": "other",
+            "environment": "weather",
+            "exposure": "weather",
+            "substance": "other",
+        }
+        if isinstance(values, dict):
+            ft = values.get("factor_type")
+            if ft and ft not in valid_types:
+                values["factor_type"] = alias_map.get(str(ft).lower(), "other")
+        return values
+
 
 class SymptomOut(BaseModel):
     symptom_raw: str = Field(description="One discrete symptom, verbatim wording")
@@ -45,6 +71,9 @@ class SymptomOut(BaseModel):
             for key in ("location_raw", "sensation_raw", "modalities", "concomitants_raw"):
                 if key in values and values[key] is None:
                     values[key] = []
+            et = values.get("evidence_type")
+            if et and et not in {"proving", "clinical", "toxicology", "unspecified"}:
+                values["evidence_type"] = "unspecified"
         return values
 
 

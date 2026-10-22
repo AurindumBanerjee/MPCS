@@ -1,13 +1,16 @@
 from hkg.llm.client import LLMClient
 from hkg.llm.cache import DiskLLMCache
 from hkg.llm.ratelimit import TokenBucketRateLimiter
-from hkg.llm.xai_client import XAIClient
-from hkg.llm.mock_client import MockLLMClient
+from hkg.llm.groq_client import GroqClient
+from hkg.llm.rule_based_client import RuleBasedExtractor, MockLLMClient
+from hkg.llm.hybrid_client import HybridExtractor
 
 __all__ = [
     "LLMClient",
     "DiskLLMCache",
     "TokenBucketRateLimiter",
-    "XAIClient",
+    "GroqClient",
+    "RuleBasedExtractor",
     "MockLLMClient",
+    "HybridExtractor",
 ]
