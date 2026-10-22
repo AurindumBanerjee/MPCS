@@ -18,23 +18,43 @@ from hkg.llm.ratelimit import TokenBucketRateLimiter
 from hkg.schema.extraction import ChunkExtraction
 
 
-class XAIClient(LLMClient):
-    """Client for xAI Grok API (via OpenAI-compatible endpoint)."""
+class GroqClient(LLMClient):
+    """Client for Groq LPU API (via OpenAI-compatible endpoint) with round-robin key rotation."""
 
     def __init__(
         self,
-        api_key: str | None = None,
+        api_key: str | list[str] | None = None,
         base_url: str | None = None,
         model: str | None = None,
         cache: DiskLLMCache | None = None,
         rate_limiter: TokenBucketRateLimiter | None = None,
     ):
-        self.api_key = api_key or settings.XAI_API_KEY
-        self.base_url = base_url or settings.XAI_BASE_URL
+        raw_keys = api_key or settings.GROQ_API_KEYS or settings.GROQ_API_KEY
+        if isinstance(raw_keys, list):
+            self.api_keys = [k.strip() for k in raw_keys if k and k.strip()]
+        elif isinstance(raw_keys, str):
+            self.api_keys = [k.strip() for k in raw_keys.split(",") if k.strip()]
+        else:
+            self.api_keys = []
+
+        self._key_index = 0
+        self.api_key = self.api_keys[0] if self.api_keys else ""
+        self.base_url = base_url or settings.GROQ_BASE_URL
         self.model = model or settings.LLM_MODEL
         self.cache = cache or DiskLLMCache()
-        self.rate_limiter = rate_limiter or TokenBucketRateLimiter(settings.RATE_LIMIT_RPM)
+
+        # Scale rate limit proportionally with number of keys in the pool
+        effective_rpm = settings.RATE_LIMIT_RPM * max(len(self.api_keys), 1)
+        self.rate_limiter = rate_limiter or TokenBucketRateLimiter(effective_rpm)
         self.prompt_text = self._load_prompt()
+
+    def _rotate_api_key(self) -> str:
+        """Advance round-robin pointer and return next API key."""
+        if not self.api_keys:
+            return ""
+        key = self.api_keys[self._key_index % len(self.api_keys)]
+        self._key_index += 1
+        return key
 
     def _load_prompt(self) -> str:
         prompt_path = (
@@ -50,20 +70,21 @@ class XAIClient(LLMClient):
         return "Extract homeopathic symptoms, modalities, and relationships."
 
     def health_check(self) -> dict[str, Any]:
-        """Test API connectivity and print model info."""
-        if not self.api_key:
+        """Test API connectivity across available keys and print model info."""
+        if not self.api_keys:
             return {
                 "status": "warning",
-                "message": "XAI_API_KEY is not set in environment or .env.",
+                "message": "GROQ_API_KEY (or GROQ_API_KEYS) is not set in environment or .env.",
                 "model": self.model,
                 "base_url": self.base_url,
+                "keys_configured": 0,
             }
 
         try:
             import httpx
 
-            # Try a lightweight models or chat request
-            headers = {"Authorization": f"Bearer {self.api_key}"}
+            # Try a lightweight models request using active key
+            headers = {"Authorization": f"Bearer {self.api_keys[0]}"}
             resp = httpx.get(f"{self.base_url}/models", headers=headers, timeout=10.0)
             if resp.status_code == 200:
                 data = resp.json()
@@ -73,6 +94,7 @@ class XAIClient(LLMClient):
                     "model": self.model,
                     "available_models": models[:5],
                     "base_url": self.base_url,
+                    "keys_configured": len(self.api_keys),
                 }
             else:
                 return {
@@ -80,12 +102,14 @@ class XAIClient(LLMClient):
                     "http_status": resp.status_code,
                     "error": resp.text[:200],
                     "model": self.model,
+                    "keys_configured": len(self.api_keys),
                 }
         except Exception as e:
             return {
                 "status": "error",
                 "error": str(e),
                 "model": self.model,
+                "keys_configured": len(self.api_keys),
             }
 
     @retry(
@@ -94,26 +118,42 @@ class XAIClient(LLMClient):
         stop=stop_after_attempt(3),
         reraise=True,
     )
-    def _call_api(self, prompt: str, user_content: str) -> str:
-        """Call LLM with rate limiting and retry."""
+    def _call_api(self, prompt: str, user_content: str, json_mode: bool = True) -> str:
+        """Call LLM with rate limiting, round-robin key rotation, and 429 failover."""
         self.rate_limiter.acquire(1)
 
         from openai import OpenAI
 
-        client = OpenAI(api_key=self.api_key, base_url=self.base_url)
+        # Pick key via round-robin
+        active_key = self._rotate_api_key()
+        client = OpenAI(api_key=active_key, base_url=self.base_url)
 
-        # Call with response_format json_object for compatibility
-        response = client.chat.completions.create(
-            model=self.model,
-            messages=[
+        kwargs: dict[str, Any] = {
+            "model": self.model,
+            "messages": [
                 {"role": "system", "content": prompt},
                 {"role": "user", "content": user_content},
             ],
-            response_format={"type": "json_object"},
-            temperature=0.0,
-        )
-        content = response.choices[0].message.content or "{}"
-        return content
+            "temperature": 0.0,
+        }
+        if json_mode:
+            kwargs["response_format"] = {"type": "json_object"}
+            if "json" not in prompt.lower() and "json" not in user_content.lower():
+                kwargs["messages"][0]["content"] += "\nRespond in valid JSON format."
+
+        try:
+            response = client.chat.completions.create(**kwargs)
+            content = response.choices[0].message.content or "{}"
+            return content
+        except Exception as e:
+            err_msg = str(e).lower()
+            # If rate limited (429) or quota exceeded, and we have multiple keys in pool, immediately rotate and retry
+            if len(self.api_keys) > 1 and ("429" in err_msg or "rate" in err_msg or "quota" in err_msg):
+                fallback_key = self._rotate_api_key()
+                client_fallback = OpenAI(api_key=fallback_key, base_url=self.base_url)
+                response = client_fallback.chat.completions.create(**kwargs)
+                return response.choices[0].message.content or "{}"
+            raise
 
     def extract(self, chunk_text: str, remedy_name: str, section: str) -> ChunkExtraction:
         """Extract structured symptoms from chunk, using cache first."""

@@ -37,10 +37,11 @@ load_env_file()
 class Settings:
     """Pipeline settings and configuration paths."""
 
-    # LLM Settings
-    XAI_API_KEY: str = os.getenv("XAI_API_KEY", "")
-    XAI_BASE_URL: str = os.getenv("XAI_BASE_URL", "https://api.x.ai/v1")
-    LLM_MODEL: str = os.getenv("LLM_MODEL", "grok-4-1-fast-non-reasoning")
+    # LLM Settings (Groq API endpoint)
+    GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
+    GROQ_API_KEYS: str = os.getenv("GROQ_API_KEYS", "")
+    GROQ_BASE_URL: str = os.getenv("GROQ_BASE_URL", "https://api.groq.com/openai/v1")
+    LLM_MODEL: str = os.getenv("LLM_MODEL", "openai/gpt-oss-120b")
 
     # Neo4j Settings
     NEO4J_URI: str = os.getenv("NEO4J_URI", "bolt://localhost:7687")

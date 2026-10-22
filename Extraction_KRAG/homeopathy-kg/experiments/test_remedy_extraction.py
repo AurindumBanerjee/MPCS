@@ -5,7 +5,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from hkg.config import DATA_DIR, settings
-from hkg.llm.xai_client import XAIClient
+from hkg.llm.groq_client import GroqClient
 
 chunks_file = DATA_DIR / "chunks" / "smoke_test_chunks.jsonl"
 with open(chunks_file) as f:
@@ -41,10 +41,10 @@ print(f"Remedy : {remedy_chunk['remedy_name']}")
 print(f"Section: {remedy_chunk['section']}")
 print(f"Text   : {len(remedy_chunk['chunk_text'])} chars")
 print(f"Model  : {settings.LLM_MODEL}")
-print(f"URL    : {settings.XAI_BASE_URL}")
+print(f"URL    : {settings.GROQ_BASE_URL}")
 print()
 
-client = XAIClient()
+client = GroqClient()
 result = client.extract(
     chunk_text=remedy_chunk["chunk_text"],
     remedy_name=remedy_chunk["remedy_name"],

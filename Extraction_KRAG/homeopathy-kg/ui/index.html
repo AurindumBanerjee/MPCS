@@ -18,6 +18,14 @@
 
     <div class="controls-section">
       <div class="select-wrapper">
+        <label for="run-select" class="select-label">Pipeline Run:</label>
+        <select id="run-select">
+          <option value="hybrid" selected>Hybrid (Heuristic + Groq 120B Audit)</option>
+          <option value="groq">Pure Groq LLM (Direct 120B)</option>
+          <option value="baseline">Rule-Based Baseline</option>
+        </select>
+      </div>
+      <div class="select-wrapper">
         <label for="remedy-select" class="select-label">Select Schema:</label>
         <select id="remedy-select">
           <!-- Populated dynamically by app.js -->
