@@ -130,7 +130,11 @@ class OllamaClient(LLMClient):
             ],
             "stream": False,
             "keep_alive": settings.OLLAMA_KEEP_ALIVE,
-            "options": {"temperature": temperature, "num_ctx": settings.OLLAMA_NUM_CTX},
+            "options": {
+                "temperature": temperature,
+                "num_ctx": settings.OLLAMA_NUM_CTX,
+                "num_thread": getattr(settings, "OLLAMA_NUM_THREAD", 6),
+            },
         }
         if fmt is not None:
             payload["format"] = fmt
