@@ -6,6 +6,9 @@ data/chunks/
 data/llm_cache/
 data/extracted/*
 !data/extracted/run_manual_baseline.jsonl
+!data/extracted/run_groq_01.jsonl
+!data/extracted/run_hybrid_01.jsonl
+
 data/chroma/
 __pycache__/
 *.pyc
