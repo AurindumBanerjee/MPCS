@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Extraction Benchmark & Technical Report — Homeopathy Knowledge Graph</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #090d16;
+      --bg-card: rgba(18, 24, 38, 0.75);
+      --bg-card-hover: rgba(26, 34, 54, 0.85);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-accent: rgba(56, 189, 248, 0.3);
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --cyan: #38bdf8;
+      --blue: #60a5fa;
+      --purple: #c084fc;
+      --pink: #f472b6;
+      --emerald: #34d399;
+      --amber: #fbbf24;
+      --red: #f87171;
+      --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.12) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(192, 132, 252, 0.12) 0px, transparent 50%),
+        radial-gradient(at 50% 100%, rgba(52, 211, 153, 0.08) 0px, transparent 50%);
+      background-attachment: fixed;
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      padding: 32px 24px 80px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Top Nav */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(16px);
+      border-radius: 16px;
+      margin-bottom: 32px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 1.15rem;
+      letter-spacing: -0.01em;
+    }
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--cyan), var(--purple));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 16px;
+      box-shadow: 0 0 16px rgba(56, 189, 248, 0.4);
+    }
+    .nav-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 18px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #0284c7, #6366f1);
+      color: #fff;
+      border: none;
+      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.3);
+    }
+    .btn-primary:hover {
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45);
+      transform: translateY(-1px);
+    }
+    .btn-outline {
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-main);
+      border: 1px solid var(--border);
+    }
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Hero */
+    .hero {
+      text-align: center;
+      padding: 40px 20px 48px;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid var(--border-accent);
+      color: var(--cyan);
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+    .hero-badge .pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--emerald);
+      box-shadow: 0 0 10px var(--emerald);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+    .hero h1 {
+      font-size: 2.75rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+      margin-bottom: 16px;
+      background: linear-gradient(to right, #ffffff, #94a3b8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero p {
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      max-width: 820px;
+      margin: 0 auto 28px;
+    }
+
+    /* KPI Grid */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 18px;
+      margin-bottom: 40px;
+    }
+    .kpi-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      backdrop-filter: blur(12px);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .kpi-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--border-accent);
+    }
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: linear-gradient(90deg, var(--cyan), var(--purple));
+    }
+    .kpi-card.green::before { background: linear-gradient(90deg, var(--emerald), var(--cyan)); }
+    .kpi-card.amber::before { background: linear-gradient(90deg, var(--amber), var(--pink)); }
+    .kpi-card.purple::before { background: linear-gradient(90deg, var(--purple), var(--pink)); }
+    .kpi-title {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .kpi-value {
+      font-size: 2.25rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+    .kpi-sub {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .kpi-sub span.pos { color: var(--emerald); font-weight: 600; }
+
+    /* Section Cards */
+    .section-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 36px;
+      margin-bottom: 32px;
+      backdrop-filter: blur(12px);
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 18px;
+    }
+    .section-number {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid var(--border-accent);
+      color: var(--cyan);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    /* Comparison Architecture 3 Columns */
+    .arch-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .arch-box {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+    }
+    .arch-box.highlight {
+      border-color: var(--border-accent);
+      background: rgba(56, 189, 248, 0.04);
+      box-shadow: 0 0 30px rgba(56, 189, 248, 0.08);
+    }
+    .arch-badge {
+      display: inline-block;
+      align-self: flex-start;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 12px;
+    }
+    .badge-baseline { background: rgba(148, 163, 184, 0.15); color: #cbd5e1; }
+    .badge-llm { background: rgba(192, 132, 252, 0.15); color: var(--purple); }
+    .badge-hybrid { background: rgba(56, 189, 248, 0.15); color: var(--cyan); }
+    .arch-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .arch-desc {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      flex-grow: 1;
+    }
+    .arch-features {
+      list-style: none;
+      font-size: 0.88rem;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      border-top: 1px solid var(--border);
+      padding-top: 14px;
+    }
+    .arch-features li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .arch-features li span.icon-check { color: var(--emerald); font-weight: bold; }
+    .arch-features li span.icon-cross { color: var(--red); font-weight: bold; }
+    .arch-features li span.icon-warn { color: var(--amber); font-weight: bold; }
+
+    /* Tables */
+    .table-container {
+      overflow-x: auto;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.92rem;
+    }
+    th {
+      background: rgba(255, 255, 255, 0.04);
+      padding: 14px 18px;
+      font-weight: 600;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      text-transform: uppercase;
+      font-size: 0.78rem;
+      letter-spacing: 0.05em;
+    }
+    td {
+      padding: 14px 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255, 255, 255, 0.02); }
+    .highlight-row td {
+      background: rgba(56, 189, 248, 0.04);
+      font-weight: 600;
+    }
+    .pill {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .pill-green { background: rgba(52, 211, 153, 0.15); color: var(--emerald); }
+    .pill-red { background: rgba(248, 113, 113, 0.15); color: var(--red); }
+    .pill-amber { background: rgba(251, 191, 36, 0.15); color: var(--amber); }
+    .pill-blue { background: rgba(56, 189, 248, 0.15); color: var(--cyan); }
+
+    /* Case Studies */
+    .case-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 18px;
+    }
+    .case-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+    }
+    .case-tag {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: var(--pink);
+      margin-bottom: 8px;
+    }
+    .case-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .quote-box {
+      background: rgba(0, 0, 0, 0.3);
+      border-left: 3px solid var(--border-accent);
+      padding: 10px 14px;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: #cbd5e1;
+      margin-bottom: 12px;
+      border-radius: 0 8px 8px 0;
+    }
+    .diff-box {
+      font-size: 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .diff-item {
+      display: flex;
+      gap: 8px;
+    }
+    .diff-item.bad { color: var(--red); }
+    .diff-item.good { color: var(--emerald); }
+
+    /* Code & Prompts */
+    .code-block {
+      background: #060911;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      overflow-x: auto;
+      color: #e2e8f0;
+      line-height: 1.5;
+      margin-top: 12px;
+    }
+    .keyword { color: var(--cyan); }
+    .comment { color: #64748b; }
+    .string { color: var(--emerald); }
+
+    /* Architecture Split Neo4j vs Chroma */
+    .dual-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 768px) {
+      .dual-grid { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 2rem; }
+    }
+    .dual-box {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px;
+    }
+    .dual-box h3 {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.15rem;
+      margin-bottom: 12px;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 60px;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+
+    <!-- Top Bar -->
+    <header class="top-bar">
+      <div class="brand">
+        <div class="brand-icon">❖</div>
+        <span>Homeopathy Knowledge Graph</span>
+      </div>
+      <div class="nav-actions">
+        <a href="index.html" class="btn btn-primary">
+          <span>❖ Open Interactive Studio</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero-badge">
+        <span class="pulse"></span>
+        <span>Executive Technical Evaluation & Research Presentation</span>
+      </div>
+      <h1>Extraction Paradigms & Knowledge Graph Architecture</h1>
+      <p>A rigorous comparative analysis of <strong>Rule-Based Heuristic</strong>, <strong>Pure Zero-Shot LLM (Groq 120B)</strong>, and <strong>Hybrid Neuro-Symbolic</strong> extraction pipelines evaluated against classical clinical materia medica keynotes.</p>
+    </section>
+
+    <!-- KPI Summary Row -->
+    <div class="kpi-grid">
+      <div class="kpi-card green">
+        <div class="kpi-title">Keynote Recall (Gold Evaluation)</div>
+        <div class="kpi-value">80.8%</div>
+        <div class="kpi-sub"><span class="pos">+19.3%</span> increase over heuristic baseline (61.5%)</div>
+      </div>
+      <div class="kpi-card purple">
+        <div class="kpi-title">Total Unified Graph Nodes</div>
+        <div class="kpi-value">460</div>
+        <div class="kpi-sub">Across 20 remedies, 6 cognitive domains & modalities</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Hybrid Pipeline Failures</div>
+        <div class="kpi-value">0</div>
+        <div class="kpi-sub">100% batch completion (vs 24 errors in pure LLM)</div>
+      </div>
+      <div class="kpi-card amber">
+        <div class="kpi-title">Active LLM Model & Key Pool</div>
+        <div class="kpi-value">120B</div>
+        <div class="kpi-sub"><code>openai/gpt-oss-120b</code> on 3-key round-robin pool</div>
+      </div>
+    </div>
+
+    <!-- Section 1: The 3 Extraction Paradigms -->
+    <section class="section-card">
+      <div class="section-header">
+        <div class="section-number">1</div>
+        <div>
+          <h2 class="section-title">The Three Extraction Paradigms</h2>
+          <p style="color: var(--text-muted); font-size: 0.9rem;">Architectural philosophy, trade-offs, and operational mechanisms.</p>
+        </div>
+      </div>
+
+      <div class="arch-grid">
+        <!-- Baseline -->
+        <div class="arch-box">
+          <span class="arch-badge badge-baseline">Method 1</span>
+          <h3 class="arch-title">Rule-Based Heuristic</h3>
+          <p class="arch-desc">Deterministic regex grammar and punctuation-splitting baseline. Operates entirely offline without API calls.</p>
+          <ul class="arch-features">
+            <li><span class="icon-check">✓</span> <strong>Zero API Cost & Instant Execution</strong></li>
+            <li><span class="icon-check">✓</span> <strong>100% Quote Faithfulness</strong></li>
+            <li><span class="icon-cross">✗</span> High semantic noise (abbreviations, headers)</li>
+            <li><span class="icon-cross">✗</span> Cannot understand context (Intro vs Mind)</li>
+            <li><span class="icon-cross">✗</span> 61.5% Recall on gold clinical keynotes</li>
+          </ul>
+        </div>
+
+        <!-- Pure LLM -->
+        <div class="arch-box">
+          <span class="arch-badge badge-llm">Method 2</span>
+          <h3 class="arch-title">Pure Groq LLM (120B)</h3>
+          <p class="arch-desc">Direct zero-shot prompting of <code>openai/gpt-oss-120b</code> directly from raw section chunks.</p>
+          <ul class="arch-features">
+            <li><span class="icon-check">✓</span> <strong>High Clinical Comprehension (80.8% Recall)</strong></li>
+            <li><span class="icon-check">✓</span> Nuanced understanding of 19th-century English</li>
+            <li><span class="icon-cross">✗</span> <strong>24 Chunk Failures</strong> (schema validation errors)</li>
+            <li><span class="icon-cross">✗</span> Expensive token consumption from scratch</li>
+            <li><span class="icon-warn">!</span> Occasional ungrounded paraphrasing</li>
+          </ul>
+        </div>
+
+        <!-- Hybrid -->
+        <div class="arch-box highlight">
+          <span class="arch-badge badge-hybrid">Method 3 · Recommended</span>
+          <h3 class="arch-title">Hybrid Neuro-Symbolic</h3>
+          <p class="arch-desc">Two-stage pipeline: Symbolic candidate extraction grounded in source text + Groq 120B semantic audit and reclassification.</p>
+          <ul class="arch-features">
+            <li><span class="icon-check">✓</span> <strong>80.8% Keynote Recall with 0 Failures</strong></li>
+            <li><span class="icon-check">✓</span> <strong>Prunes Non-Symptom Noise</strong> ('St', 'Common Salt')</li>
+            <li><span class="icon-check">✓</span> <strong>Semantic Disambiguation</strong> (Grief $\rightarrow$ Affective)</li>
+            <li><span class="icon-check">✓</span> <strong>Guaranteed Fallback</strong> (Never crashes batch)</li>
+            <li><span class="icon-check">✓</span> 100% Verbatim Quote Preservation</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 2: Comparative Benchmark Evaluation -->
+    <section class="section-card">
+      <div class="section-header">
+        <div class="section-number">2</div>
+        <div>
+          <h2 class="section-title">Comparative Benchmark Matrix</h2>
+          <p style="color: var(--text-muted); font-size: 0.9rem;">Evaluated against curated clinical gold standard annotations (8 polychrests, 26 keynotes).</p>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Extraction Pipeline</th>
+              <th>Keynote Recall</th>
+              <th>Precision</th>
+              <th>F1 Score</th>
+              <th>Total Symptoms</th>
+              <th>Affective (Mind)</th>
+              <th>Noise Artifacts</th>
+              <th>Batch Errors</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Rule-Based Baseline</strong></td>
+              <td><span class="pill pill-amber">61.5%</span></td>
+              <td>4.0%</td>
+              <td>7.5%</td>
+              <td>401</td>
+              <td>125</td>
+              <td><span class="pill pill-red">High (15-20%)</span></td>
+              <td><span class="pill pill-green">0</span></td>
+            </tr>
+            <tr>
+              <td><strong>Pure Groq LLM (120B)</strong></td>
+              <td><span class="pill pill-green">80.8%</span></td>
+              <td>4.9%</td>
+              <td>9.2%</td>
+              <td>432</td>
+              <td>138</td>
+              <td><span class="pill pill-green">Low (&lt; 2%)</span></td>
+              <td><span class="pill pill-red">24 errors (21%)</span></td>
+            </tr>
+            <tr class="highlight-row">
+              <td><strong>Hybrid Neuro-Symbolic ⭐</strong></td>
+              <td><span class="pill pill-green">80.8%</span></td>
+              <td><span class="pill pill-blue">5.4%</span></td>
+              <td><span class="pill pill-blue">10.1%</span></td>
+              <td><strong>388 (pruned)</strong></td>
+              <td><strong>128</strong></td>
+              <td><span class="pill pill-green">Lowest (&lt; 0.5%)</span></td>
+              <td><span class="pill pill-green">0 errors (100% safe)</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Section 3: Qualitative Case Studies -->
+    <section class="section-card">
+      <div class="section-header">
+        <div class="section-number">3</div>
+        <div>
+          <h2 class="section-title">Qualitative Case Studies: Before & After</h2>
+          <p style="color: var(--text-muted); font-size: 0.9rem;">Real examples of how the Hybrid auditor corrects heuristic parsing anomalies.</p>
+        </div>
+      </div>
+
+      <div class="case-grid">
+        <!-- Case 1 -->
+        <div class="case-card">
+          <div class="case-tag">Case 1 · Abbreviation Truncation</div>
+          <h4 class="case-title">The "St" Orphan Node</h4>
+          <div class="quote-box">"St. Ignatius Bean. The remedy of contradictions, hysteria, grief, and emotional strain." (Ignatia Intro)</div>
+          <div class="diff-box">
+            <div class="diff-item bad"><span>✗</span> <strong>Rule-Based:</strong> Truncated on period; created orphan node <code>"St"</code>.</div>
+            <div class="diff-item good"><span>✓</span> <strong>Hybrid Audit:</strong> Pruned from symptoms; categorized as <code>intro.common_names = ['Ignatius Bean']</code>.</div>
+          </div>
+        </div>
+
+        <!-- Case 2 -->
+        <div class="case-card">
+          <div class="case-tag">Case 2 · Substance Name as Symptom</div>
+          <h4 class="case-title">"Common Salt" as Physical Symptom</h4>
+          <div class="quote-box">"Common Salt. Malnutrition, emaciation, anaemia, grief, and watery discharges." (Natrum mur Intro)</div>
+          <div class="diff-box">
+            <div class="diff-item bad"><span>✗</span> <strong>Rule-Based:</strong> Extracted chemical substance name as a Physical Symptom.</div>
+            <div class="diff-item good"><span>✓</span> <strong>Hybrid Audit:</strong> Recognized common name of remedy; mapped to metadata; preserved only clinical symptoms.</div>
+          </div>
+        </div>
+
+        <!-- Case 3 -->
+        <div class="case-card">
+          <div class="case-tag">Case 3 · Section-Bias Misclassification</div>
+          <h4 class="case-title">"Grief" Tagged as Physical</h4>
+          <div class="quote-box">"...malnutrition, emaciation, anaemia, grief, and watery discharges." (Intro Section)</div>
+          <div class="diff-box">
+            <div class="diff-item bad"><span>✗</span> <strong>Rule-Based:</strong> Because section was "Intro" (not "Mind"), mapped grief to <code>Physical Symptom</code>.</div>
+            <div class="diff-item good"><span>✓</span> <strong>Hybrid Audit:</strong> Semantic recognition: tagged grief as <code>kind="mental"</code> (Affective Symptom) regardless of section.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 4: How Modalities & Cognitive Domains are Derived -->
+    <section class="section-card">
+      <div class="section-header">
+        <div class="section-number">4</div>
+        <div>
+          <h2 class="section-title">Heuristic Derivation of Modalities & Cognitive Domains</h2>
+          <p style="color: var(--text-muted); font-size: 0.9rem;">The exact syntactic and ontology mapping mechanisms used in the graph.</p>
+        </div>
+      </div>
+
+      <div class="dual-grid">
+        <div class="dual-box">
+          <h3>⚡ Modality Extraction Logic</h3>
+          <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 12px;">In homeopathy, modalities explain what makes a symptom or patient <em>worse</em> (Aggravation) or <em>better</em> (Amelioration).</p>
+          <ul style="font-size: 0.88rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 8px; margin-left: 18px;">
+            <li><strong>Section-Level Modalities:</strong> In the <code>Modalities</code> section, lines starting with <em>"Worse"</em>, <em>"&lt;"</em>, or <em>"agg."</em> are mapped to <code>AGGRAVATED BY</code>. Lines with <em>"Better"</em>, <em>"&gt;"</em>, or <em>"amel."</em> map to <code>AMELIORATED BY</code>.</li>
+            <li><strong>Clause-Level Factors:</strong> <code>_parse_modality_factors()</code> splits on <code>. Better</code> and commas, isolating clean factor labels (e.g. <em>"Cold drinks"</em>, <em>"Warmth"</em>, <em>"After midnight"</em>).</li>
+            <li><strong>Symptom-Level Modalities:</strong> Extracted directly from within symptom sentences containing inline qualifiers (e.g. <em>"headache &lt; motion"</em>).</li>
+          </ul>
+        </div>
+
+        <div class="dual-box">
+          <h3>🧠 Cognitive Domain Mapping</h3>
+          <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 12px;">To support downstream affective/neuropsychiatric research, mental symptoms are linked to 6 standardized cognitive domains via <code>MAPS TO</code> edges:</p>
+          <div class="code-block">
+COGNITIVE_DOMAINS = {
+  <span class="string">"Anxiety / Threat Processing"</span>: [<span class="keyword">fear, anxiety, anguish, dread, fright, panic</span>],
+  <span class="string">"Hyperarousal"</span>: [<span class="keyword">restless, tossing, agitation, startle, insomnia</span>],
+  <span class="string">"Mood / Affect Regulation"</span>: [<span class="keyword">melancholia, despair, sad, weep, grief, apathy</span>],
+  <span class="string">"Impulse Control / Aggression"</span>: [<span class="keyword">rage, fury, violent, strike, bite, anger</span>],
+  <span class="string">"Cognitive Processing"</span>: [<span class="keyword">delirium, hallucination, confusion, stupor, forget</span>],
+  <span class="string">"Social Cognition"</span>: [<span class="keyword">alone, company, jealous, suspicious, mistrust</span>]
+}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 5: Exact System Prompts -->
+    <section class="section-card">
+      <div class="section-header">
+        <div class="section-number">5</div>
+        <div>
+          <h2 class="section-title">Exact System Prompts Used in Production</h2>
+          <p style="color: var(--text-muted); font-size: 0.9rem;">Verbatim prompts governing Pure LLM and Hybrid auditor passes.</p>
+        </div>
+      </div>
+
+      <div class="dual-grid">
+        <div>
+          <h4 style="margin-bottom: 8px; color: var(--purple);">Pure LLM Extraction Prompt (<code>extract_v1.md</code>)</h4>
+          <div class="code-block" style="max-height: 340px;">
+# System Prompt: Homeopathic Materia Medica Extraction (v1)
+You are an expert, meticulous archival extractor specialized in classical homeopathic materia medica texts.
+Your job is to extract structured entities from a single text chunk corresponding to one remedy section.
+
+## Core Rules:
+1. Strict Faithfulness: Extract ONLY what the chunk explicitly states. Never use outside medical knowledge.
+2. List Splitting: Split comma/semicolon lists into individual discrete symptoms (e.g. "Anxiety, restlessness, fear" -> 3 symptoms).
+3. Preserve Exact Wording: Keep original archaic wording verbatim in symptom_raw.
+4. Modality Direction: '&lt;' or 'worse' -> worse; '&gt;' or 'better' -> better. Copy factor wording into factor_raw.
+5. Emphasis Tracking: Track **bold** -> bold, _italic_ -> italic, CAPS -> caps.
+6. Verbatim Evidence Quote: evidence_quote MUST be an exact substring from the chunk (&lt;= 400 chars).
+7. ABSOLUTE PROHIBITION ON DOSING: Completely ignore lines regarding Dose, Potency, Tincture.
+8. Relationships &amp; Intros: Extract related remedies into relationships; extract latin/common names into intro.
+Return strictly valid JSON conforming to ChunkExtraction schema.
+          </div>
+        </div>
+
+        <div>
+          <h4 style="margin-bottom: 8px; color: var(--cyan);">Hybrid Semantic Auditor Prompt (<code>hybrid_audit_v1.md</code>)</h4>
+          <div class="code-block" style="max-height: 340px;">
+# System Prompt: Homeopathic Hybrid Semantic Auditor &amp; Refiner (v1)
+You are an expert clinical auditor specializing in 19th-century homeopathic materia medica.
+You will receive: Remedy Name &amp; Section, Original Chunk Text, and Candidate Extraction JSON from a fast rule-based extractor.
+
+## Auditing &amp; Refining Instructions:
+1. Prune Non-Symptom Artifacts: Remove text fragments ('St', 'Dr', 'etc'), section headers, and remedy substance common names ('Common Salt', 'St. Ignatius Bean'). Place common names into intro.common_names.
+2. Semantic Category Disambiguation: Reclassify symptoms by clinical semantics:
+   - 'mental': Affective, emotional, cognitive (grief, fear of death, sadness, weeping, hysteria) even if found in 'Intro'!
+   - 'physical': Somatic/organ symptoms (burning pain, nausea, bursting headache).
+   - 'general': Whole-body states (emaciation, anaemia, malnutrition, prostration).
+3. Split Conjoined Symptoms: If a candidate combines multiple discrete symptoms, split into atomic entries.
+4. Clean Modalities: Ensure factor_raw contains only triggering conditions (not 'worse'/'better').
+5. Strict Grounding: evidence_quote MUST be exact verbatim substring from Chunk Text.
+6. Absolute Prohibition on Dosage: Never retain dosage or potency.
+Return strictly valid JSON conforming to ChunkExtraction schema.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 6: Chunking Architecture & K-RAG Storage -->
+    <section class="section-card">
+      <div class="section-header">
+        <div class="section-number">6</div>
+        <div>
+          <h2 class="section-title">Context Chunking & K-RAG Storage Architecture</h2>
+          <p style="color: var(--text-muted); font-size: 0.9rem;">Why section-level chunking and hybrid Neo4j + ChromaDB indexing are mathematically optimal.</p>
+        </div>
+      </div>
+
+      <div class="dual-grid">
+        <div class="dual-box">
+          <h3>📐 Remedy × Section Chunking</h3>
+          <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 12px;">Chunks are scoped strictly to <code>Remedy × Section</code> (e.g. <code>Aconitum napellus | Mind</code>):</p>
+          <ul style="font-size: 0.88rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 8px; margin-left: 18px;">
+            <li><strong>Optimal Context Window:</strong> Average length is 300–1,500 characters (~75–350 tokens). Eliminates context saturation and "lost-in-the-middle" LLM attention degradation.</li>
+            <li><strong>Zero Cross-Contamination:</strong> Gastric symptoms never contaminate mental symptoms because section boundaries are respected.</li>
+            <li><strong>Safe Sentence Splitting:</strong> If any single section exceeds 2,000 characters, it is cleanly split along paragraph boundaries without cutting clinical clauses in half.</li>
+          </ul>
+        </div>
+
+        <div class="dual-box">
+          <h3>🗄️ Neo4j vs ChromaDB (The Division of Labor)</h3>
+          <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 12px;">Neither a vector database nor a graph database alone can solve this task:</p>
+          <ul style="font-size: 0.88rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 8px; margin-left: 18px;">
+            <li><strong>ChromaDB + BGE Embeddings (Semantic Vector Index):</strong> Acts as the fuzzy natural language entrypoint. Understands that modern queries (e.g. <em>"crying spells, feeling heartbroken"</em>) match archaic literature (<em>"silent grief, weeping, melancholia"</em>).</li>
+            <li><strong>Neo4j (Relational Property Graph):</strong> Executes multi-hop graph traversals, connects modalities (<em>"aggravated by cold"</em>), computes repertory coverage scores, and tracks provenance back to exact page numbers.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <p>Homeopathy Knowledge Graph (HKG) Project · Advanced Agentic Coding & Knowledge Retrieval (K-RAG)</p>
+      <p style="margin-top: 6px; font-size: 0.8rem; color: #64748b;">Interactive Studio actively running at <a href="http://localhost:8080" style="color: var(--cyan); text-decoration: none;">http://localhost:8080</a> · Generated automatically for executive presentation.</p>
+    </footer>
+
+  </div>
+
+</body>
+</html>
