@@ -84,7 +84,7 @@ Modality factors are extracted from both:
 ### Step 1: Verify Extracted Data
 The pipeline relies on structured JSONL extraction from Boericke's Materia Medica located at:
 ```
-data/extracted/run_pilot_01.jsonl
+data/extracted/run_manual_baseline.jsonl
 ```
 *(Contains 115 records spanning 20 classical homeopathic remedies)*.
 
@@ -96,7 +96,7 @@ python ui/export_graph_data.py
 ```
 
 **What this script does:**
-1. Ingests `data/extracted/run_pilot_01.jsonl`.
+1. Ingests `data/extracted/run_manual_baseline.jsonl`.
 2. Groups chunks by remedy name across all 20 remedies.
 3. Dynamically extracts `Medicine`, `Physical Symptom`, `Affective Symptom`, `Modality`, and `Cognitive Domain` nodes.
 4. Generates two synchronized files:
@@ -170,7 +170,7 @@ homeopathy-kg/
 │   ├── raw/
 │   │   └── boericke.html            # Digitized raw source text
 │   └── extracted/
-│       └── run_pilot_01.jsonl       # Extracted JSONL entities & modalities
+│       └── run_manual_baseline.jsonl       # Extracted JSONL entities & modalities (mock/manual baseline)
 ├── serve_ui.py                      # Local web server runner (Port 8080)
 └── ui/
     ├── README.md                    # This architecture and execution guide

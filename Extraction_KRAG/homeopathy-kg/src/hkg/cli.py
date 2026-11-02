@@ -21,7 +21,7 @@ from hkg.extract.extractor import ExtractionPipeline
 from hkg.ingest.chunker import create_chunks_from_parsed
 from hkg.ingest.parse_html import parse_html_source
 from hkg.ingest.parse_pdf import parse_pdf_source
-from hkg.llm.xai_client import XAIClient
+from hkg.llm.groq_client import GroqClient
 from hkg.load.chroma_loader import ChromaLoader
 from hkg.load.neo4j_loader import Neo4jLoader
 from hkg.query.agent import SingleLLMAgent
@@ -33,7 +33,7 @@ console = Console()
 
 @app.command()
 def doctor():
-    """Check connectivity to Neo4j, ChromaDB, and xAI API, and print resolved config."""
+    """Check connectivity to Neo4j, ChromaDB, and Groq API, and print resolved config."""
     console.print("\n[bold cyan]=== HKG Doctor: Environment & Connectivity Check ===[/bold cyan]\n")
 
     table = Table(title="System & Configuration")
@@ -51,24 +51,24 @@ def doctor():
         f"Sources: {len(sources)}, Abbreviations: {len(abbrs)}, Sections: {len(sections)}",
     )
 
-    # 2. xAI / LLM API
-    llm = XAIClient()
+    # 2. Groq LLM API
+    llm = GroqClient()
     llm_health = llm.health_check()
     if llm_health.get("status") == "ok":
         table.add_row(
-            "xAI API",
+            "Groq API",
             "[green]CONNECTED[/green]",
-            f"Model: {llm_health.get('model')} (endpoint: {llm.base_url})",
+            f"Model: {llm_health.get('model')} | Keys: {llm_health.get('keys_configured', 1)} (endpoint: {llm.base_url})",
         )
     elif llm_health.get("status") == "warning":
         table.add_row(
-            "xAI API",
+            "Groq API",
             "[yellow]NOT CONFIGURED[/yellow]",
             f"{llm_health.get('message')} Target model: {llm_health.get('model')}",
         )
     else:
         table.add_row(
-            "xAI API",
+            "Groq API",
             "[red]FAILED[/red]",
             f"Error: {llm_health.get('error')}",
         )
@@ -154,10 +154,11 @@ def chunk(
 def extract(
     chunks_file: Path = typer.Argument(..., help="Path to chunks.jsonl file"),
     run_id: Optional[str] = typer.Option(None, help="Custom run ID"),
+    method: str = typer.Option("groq", help="Extraction method: 'groq' (pure LLM), 'hybrid' (rule-based + LLM audit), or 'rule-based' (deterministic)"),
 ):
-    """Run LLM extraction and validation pipeline over chunks."""
-    console.print(f"Running extraction over [bold]{chunks_file}[/bold]...")
-    pipeline = ExtractionPipeline(run_id=run_id)
+    """Run extraction and validation pipeline over chunks."""
+    console.print(f"Running extraction ([cyan]{method}[/cyan]) over [bold]{chunks_file}[/bold]...")
+    pipeline = ExtractionPipeline(run_id=run_id, method=method)
     out_file = pipeline.run_on_chunks_file(chunks_file)
 
     console.print(f"[green]Extraction complete![/green]")

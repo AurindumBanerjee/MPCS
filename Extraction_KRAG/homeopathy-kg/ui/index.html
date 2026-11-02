@@ -18,6 +18,14 @@
 
     <div class="controls-section">
       <div class="select-wrapper">
+        <label for="run-select" class="select-label">Pipeline Run:</label>
+        <select id="run-select">
+          <option value="hybrid" selected>Hybrid (Heuristic + Groq 120B Audit)</option>
+          <option value="groq">Pure Groq LLM (Direct 120B)</option>
+          <option value="baseline">Rule-Based Baseline</option>
+        </select>
+      </div>
+      <div class="select-wrapper">
         <label for="remedy-select" class="select-label">Select Schema:</label>
         <select id="remedy-select">
           <!-- Populated dynamically by app.js -->
@@ -26,6 +34,9 @@
       <button class="guide-toggle-btn" id="guide-toggle-btn" title="View Pipeline & Graph Guide">
         <span class="guide-btn-icon">📖</span> Guide & How to Run
       </button>
+      <a href="report.html" class="guide-toggle-btn" style="text-decoration: none;" title="View Comparative Benchmark & Executive Report">
+        <span class="guide-btn-icon">📊</span> Executive Report
+      </a>
     </div>
   </header>
 
@@ -122,7 +133,7 @@
             <div class="step-content">
               <div class="step-label">Export knowledge graph schemas from extracted JSONL</div>
               <pre class="code-block"><code>python ui/export_graph_data.py</code></pre>
-              <div class="step-hint">Reads <code>data/extracted/run_pilot_01.jsonl</code> and writes both <code>ui/graph_data.json</code> and <code>ui/data.js</code> across all 20 remedies.</div>
+              <div class="step-hint">Reads <code>data/extracted/run_manual_baseline.jsonl</code> and writes both <code>ui/graph_data.json</code> and <code>ui/data.js</code> across all 20 remedies.</div>
             </div>
           </div>
 
