@@ -1,0 +1,183 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 480" width="100%" height="100%" style="background:#0b0f19; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <linearGradient id="bgBox" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <marker id="arrCyan" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M 0 0 L 8 4 L 0 8 z" fill="#38bdf8"/>
+    </marker>
+    <marker id="arrGreen" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M 0 0 L 8 4 L 0 8 z" fill="#34d399"/>
+    </marker>
+    <marker id="arrAmber" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M 0 0 L 8 4 L 0 8 z" fill="#fbbf24"/>
+    </marker>
+    <marker id="arrPurple" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M 0 0 L 8 4 L 0 8 z" fill="#c084fc"/>
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="480" y="30" text-anchor="middle" fill="#f8fafc" font-size="17" font-weight="700">FIGURE 2: LOCALKG CLINICAL &amp; AFFECTIVE EXTRACTION PIPELINE</text>
+  <text x="480" y="50" text-anchor="middle" fill="#94a3b8" font-size="11.5">Historical Medical Literature Ingestion, Typographic Grading, LLM Caching, Affective Scoring &amp; Graph Construction</text>
+
+  <!-- Step 1: Raw Ingestion -->
+  <g transform="translate(30, 80)">
+    <rect width="160" height="360" rx="8" fill="url(#bgBox)" stroke="#475569" stroke-width="1.5"/>
+    <rect x="10" y="10" width="140" height="26" rx="4" fill="#334155"/>
+    <text x="80" y="27" text-anchor="middle" fill="#f1f5f9" font-size="11" font-weight="700">1. RAW SOURCES</text>
+    
+    <rect x="15" y="50" width="130" height="65" rx="5" fill="#0f172a" stroke="#64748b"/>
+    <text x="80" y="70" text-anchor="middle" fill="#38bdf8" font-size="10" font-weight="600">Hahnemann PDF</text>
+    <text x="80" y="86" text-anchor="middle" fill="#cbd5e1" font-size="8.5">Materia Medica Pura</text>
+    <text x="80" y="100" text-anchor="middle" fill="#94a3b8" font-size="8">53.6 MB Scan (1820s)</text>
+
+    <rect x="15" y="125" width="130" height="65" rx="5" fill="#0f172a" stroke="#64748b"/>
+    <text x="80" y="145" text-anchor="middle" fill="#38bdf8" font-size="10" font-weight="600">Kent Repertory</text>
+    <text x="80" y="161" text-anchor="middle" fill="#cbd5e1" font-size="8.5">Boericke / Clarke</text>
+    <text x="80" y="175" text-anchor="middle" fill="#94a3b8" font-size="8">Typographic Grades 1-3</text>
+
+    <rect x="15" y="200" width="130" height="65" rx="5" fill="#0f172a" stroke="#64748b"/>
+    <text x="80" y="220" text-anchor="middle" fill="#38bdf8" font-size="10" font-weight="600">PubMed / MeSH</text>
+    <text x="80" y="236" text-anchor="middle" fill="#cbd5e1" font-size="8.5">Modern Clinical RCTs</text>
+    <text x="80" y="250" text-anchor="middle" fill="#94a3b8" font-size="8">Biomedical Validation</text>
+
+    <rect x="15" y="275" width="130" height="70" rx="5" fill="#1e293b" stroke="#38bdf8"/>
+    <text x="80" y="295" text-anchor="middle" fill="#38bdf8" font-size="10" font-weight="700">OCR Cleaning</text>
+    <text x="80" y="311" text-anchor="middle" fill="#94a3b8" font-size="8.5">clean_ocr_text()</text>
+    <text x="80" y="325" text-anchor="middle" fill="#cbd5e1" font-size="8">Artifact &amp; Glyph Repair</text>
+    <text x="80" y="338" text-anchor="middle" fill="#64748b" font-size="8">Hahnemann '(aft. 6 h.)'</text>
+  </g>
+
+  <!-- Arrow 1 -> 2 -->
+  <path d="M 190 260 L 220 260" fill="none" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrCyan)"/>
+
+  <!-- Step 2: Extraction & LLM Cache -->
+  <g transform="translate(220, 80)">
+    <rect width="210" height="360" rx="8" fill="url(#bgBox)" stroke="#0284c7" stroke-width="1.5"/>
+    <rect x="10" y="10" width="190" height="26" rx="4" fill="#0369a1"/>
+    <text x="105" y="27" text-anchor="middle" fill="#f0f9ff" font-size="11" font-weight="700">2. EXTRACTION &amp; CACHING</text>
+
+    <!-- Structural Parser -->
+    <rect x="15" y="50" width="180" height="65" rx="5" fill="#0f172a" stroke="#38bdf8"/>
+    <text x="105" y="68" text-anchor="middle" fill="#38bdf8" font-size="10" font-weight="600">Heading &amp; Section Parser</text>
+    <text x="105" y="84" text-anchor="middle" fill="#cbd5e1" font-size="8.5">Anatomical Rubrics (Head, Mind)</text>
+    <text x="105" y="98" text-anchor="middle" fill="#94a3b8" font-size="8">Typography: Plain(1), Ital(2), Bold(3)</text>
+
+    <!-- LLM Chunking & Prompt -->
+    <rect x="15" y="125" width="180" height="75" rx="5" fill="#0f172a" stroke="#38bdf8"/>
+    <text x="105" y="143" text-anchor="middle" fill="#38bdf8" font-size="10" font-weight="600">Strict Pydantic Extractor</text>
+    <text x="105" y="159" text-anchor="middle" fill="#cbd5e1" font-size="8.5">ChunkExtraction Schema</text>
+    <text x="105" y="173" text-anchor="middle" fill="#94a3b8" font-size="8">Ollama / Local SLM Prompt</text>
+    <text x="105" y="187" text-anchor="middle" fill="#67e8f9" font-size="8">Zero-Shot Schema Conformance</text>
+
+    <!-- Disk Cache -->
+    <rect x="15" y="210" width="180" height="65" rx="5" fill="#1e1b4b" stroke="#818cf8"/>
+    <text x="105" y="228" text-anchor="middle" fill="#a5b4fc" font-size="10" font-weight="700">Disk Cache (llm_cache/)</text>
+    <text x="105" y="244" text-anchor="middle" fill="#c7d2fe" font-size="8.5">SHA256 Deterministic Key</text>
+    <text x="105" y="258" text-anchor="middle" fill="#818cf8" font-size="8">Eliminates Duplicate API/SLM Calls</text>
+
+    <!-- Causal Modality Parser -->
+    <rect x="15" y="285" width="180" height="60" rx="5" fill="#0f172a" stroke="#fbbf24"/>
+    <text x="105" y="303" text-anchor="middle" fill="#fbbf24" font-size="10" font-weight="600">Modality Decomposition</text>
+    <text x="105" y="319" text-anchor="middle" fill="#fed7aa" font-size="8.5">AGGRAVATED_BY (&lt;agg&gt; / worse)</text>
+    <text x="105" y="333" text-anchor="middle" fill="#fed7aa" font-size="8.5">AMELIORATED_BY (&lt;amel&gt; / better)</text>
+  </g>
+
+  <!-- Arrow 2 -> 3 -->
+  <path d="M 430 260 L 460 260" fill="none" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrCyan)"/>
+
+  <!-- Step 3: Affect & Weighting -->
+  <g transform="translate(460, 80)">
+    <rect width="230" height="360" rx="8" fill="url(#bgBox)" stroke="#059669" stroke-width="1.5"/>
+    <rect x="10" y="10" width="210" height="26" rx="4" fill="#064e3b"/>
+    <text x="115" y="27" text-anchor="middle" fill="#ecfdf5" font-size="11" font-weight="700">3. VAD &amp; REGRESSION WEIGHTING</text>
+
+    <!-- VAD Scoring Box -->
+    <rect x="15" y="50" width="200" height="85" rx="5" fill="#0f172a" stroke="#34d399"/>
+    <text x="115" y="68" text-anchor="middle" fill="#34d399" font-size="10" font-weight="700">VAD Lexicon Vector Pool</text>
+    <text x="115" y="85" text-anchor="middle" fill="#cbd5e1" font-size="8.5">Tokens mapped to (V, A, D) in [0, 1]</text>
+    <text x="115" y="101" text-anchor="middle" fill="#a7f3d0" font-size="8.5">Arousal A = Max(A_i) (Panic/Urgency)</text>
+    <text x="115" y="117" text-anchor="middle" fill="#94a3b8" font-size="8">Valence V, Dominance D = Mean(Hits)</text>
+
+    <!-- Severity Adjectives -->
+    <rect x="15" y="145" width="200" height="65" rx="5" fill="#0f172a" stroke="#34d399"/>
+    <text x="115" y="163" text-anchor="middle" fill="#34d399" font-size="10" font-weight="700">Adjective Severity Lexicon</text>
+    <text x="115" y="180" text-anchor="middle" fill="#cbd5e1" font-size="8.5">Extreme: 'violent', 'unbearable' (1.0)</text>
+    <text x="115" y="196" text-anchor="middle" fill="#94a3b8" font-size="8">S = 0.75 * Peak + 0.25 * Mean</text>
+
+    <!-- Linear Regression Weight Formula -->
+    <rect x="15" y="220" width="200" height="75" rx="5" fill="#132e27" stroke="#10b981" stroke-width="1.5"/>
+    <text x="115" y="238" text-anchor="middle" fill="#6ee7b7" font-size="9.5" font-weight="700">Continuous Regression Formula</text>
+    <text x="115" y="256" text-anchor="middle" fill="#ffffff" font-size="8.5" font-weight="600">W = 3.0 * (β1·G/3 + β2·S + β3·A + β4·C)</text>
+    <text x="115" y="272" text-anchor="middle" fill="#a7f3d0" font-size="8">β = [0.40, 0.30, 0.20, 0.10]</text>
+    <text x="115" y="286" text-anchor="middle" fill="#6ee7b7" font-size="7.5">Output Scale: W in [0.0, 3.0]</text>
+
+    <!-- Cognitive Domain Mapper -->
+    <rect x="15" y="305" width="200" height="45" rx="5" fill="#0f172a" stroke="#34d399"/>
+    <text x="115" y="322" text-anchor="middle" fill="#34d399" font-size="9.5" font-weight="600">Cognitive Domain Mapping</text>
+    <text x="115" y="338" text-anchor="middle" fill="#94a3b8" font-size="8">7 Regex Patterns + LLM Refinement</text>
+  </g>
+
+  <!-- Arrow 3 -> 4 -->
+  <path d="M 690 260 L 720 260" fill="none" stroke="#34d399" stroke-width="2" marker-end="url(#arrGreen)"/>
+
+  <!-- Step 4: 9-Node Ontology Graph -->
+  <g transform="translate(720, 80)">
+    <rect width="210" height="360" rx="8" fill="url(#bgBox)" stroke="#7c3aed" stroke-width="1.5"/>
+    <rect x="10" y="10" width="190" height="26" rx="4" fill="#3b0764"/>
+    <text x="105" y="27" text-anchor="middle" fill="#faf5ff" font-size="11" font-weight="700">4. 9-ENTITY LOCALKG GRAPH</text>
+
+    <!-- Entity Grid -->
+    <g transform="translate(15, 48)">
+      <!-- Row 1 -->
+      <rect x="0" y="0" width="85" height="36" rx="4" fill="#0f172a" stroke="#58b8ff"/>
+      <text x="42" y="16" text-anchor="middle" fill="#58b8ff" font-size="8" font-weight="700">Medicine</text>
+      <text x="42" y="28" text-anchor="middle" fill="#94a3b8" font-size="7">Botanical/Min</text>
+
+      <rect x="95" y="0" width="85" height="36" rx="4" fill="#0f172a" stroke="#c5b3f8"/>
+      <text x="137" y="16" text-anchor="middle" fill="#c5b3f8" font-size="8" font-weight="700">Affective Sym</text>
+      <text x="137" y="28" text-anchor="middle" fill="#94a3b8" font-size="7">Fear, Anguish</text>
+
+      <!-- Row 2 -->
+      <rect x="0" y="44" width="85" height="36" rx="4" fill="#0f172a" stroke="#06d6a0"/>
+      <text x="42" y="60" text-anchor="middle" fill="#06d6a0" font-size="8" font-weight="700">Cognitive Dom</text>
+      <text x="42" y="72" text-anchor="middle" fill="#94a3b8" font-size="7">Anxiety/Grief</text>
+
+      <rect x="95" y="44" width="85" height="36" rx="4" fill="#0f172a" stroke="#f48fb1"/>
+      <text x="137" y="60" text-anchor="middle" fill="#f48fb1" font-size="8" font-weight="700">Physical Sym</text>
+      <text x="137" y="72" text-anchor="middle" fill="#94a3b8" font-size="7">Fever, Burning</text>
+
+      <!-- Row 3 -->
+      <rect x="0" y="88" width="85" height="36" rx="4" fill="#0f172a" stroke="#ffd166"/>
+      <text x="42" y="104" text-anchor="middle" fill="#ffd166" font-size="8" font-weight="700">Modality</text>
+      <text x="42" y="116" text-anchor="middle" fill="#94a3b8" font-size="7">Agg / Amel</text>
+
+      <rect x="95" y="88" width="85" height="36" rx="4" fill="#0f172a" stroke="#ff8a65"/>
+      <text x="137" y="104" text-anchor="middle" fill="#ff8a65" font-size="8" font-weight="700">Body Region</text>
+      <text x="137" y="116" text-anchor="middle" fill="#94a3b8" font-size="7">Head, Heart</text>
+
+      <!-- Row 4 -->
+      <rect x="0" y="132" width="85" height="36" rx="4" fill="#0f172a" stroke="#4dd0e1"/>
+      <text x="42" y="148" text-anchor="middle" fill="#4dd0e1" font-size="8" font-weight="700">Clinical Cond</text>
+      <text x="42" y="160" text-anchor="middle" fill="#94a3b8" font-size="7">Asthma, Croup</text>
+
+      <rect x="95" y="132" width="85" height="36" rx="4" fill="#0f172a" stroke="#ffb74d"/>
+      <text x="137" y="148" text-anchor="middle" fill="#ffb74d" font-size="8" font-weight="700">Sensation</text>
+      <text x="137" y="160" text-anchor="middle" fill="#94a3b8" font-size="7">Tearing, Stabs</text>
+
+      <!-- Row 5 -->
+      <rect x="47" y="176" width="85" height="36" rx="4" fill="#0f172a" stroke="#ff8a80"/>
+      <text x="89" y="192" text-anchor="middle" fill="#ff8a80" font-size="8" font-weight="700">Etiology</text>
+      <text x="89" y="204" text-anchor="middle" fill="#94a3b8" font-size="7">Fright, Trauma</text>
+    </g>
+
+    <!-- Multi-Remedy & Cross-Links -->
+    <rect x="15" y="270" width="180" height="75" rx="5" fill="#1e1b4b" stroke="#c084fc"/>
+    <text x="105" y="290" text-anchor="middle" fill="#c084fc" font-size="10" font-weight="700">Graph Relationships</text>
+    <text x="105" y="306" text-anchor="middle" fill="#cbd5e1" font-size="8">EXPRESSES, AGGRAVATED_BY,</text>
+    <text x="105" y="320" text-anchor="middle" fill="#cbd5e1" font-size="8">AMELIORATED_BY, LOCATED_IN,</text>
+    <text x="105" y="334" text-anchor="middle" fill="#38bdf8" font-size="8">COMPARE, ANTIDOTE, SIMILAR</text>
+  </g>
+</svg>

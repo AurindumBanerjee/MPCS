@@ -445,8 +445,11 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   <div class="legend" id="legend"></div>
   <div class="controls">
     <button id="layout-btn" class="active-toggle" onclick="toggleLayoutMode()">Layout: Galaxy Clusters</button>
+    <button id="persona-btn" class="active-toggle" onclick="togglePersonaMode()">Persona: Exploratory</button>
+    <button id="hover-mode-btn" onclick="toggleHoverEdgeMode()">Hover: Subgraph + Outside</button>
+    <button id="edge-style-btn" onclick="toggleEdgeStyle()">Edge: Straight</button>
     <button id="labels-btn" onclick="toggleAllLabels()">Labels: Smart Auto</button>
-    <input id="query-input" type="text" placeholder="TIDE Spreading Activation (e.g. fear of death, delirium, midnight, bruising)..." style="width: 310px;" onkeydown="if(event.key==='Enter')runSpreadingActivation()"/>
+    <input id="query-input" type="text" placeholder="TIDE Spreading Activation (e.g. fear of death, delirium, midnight, bruising)..." style="width: 270px;" onkeydown="if(event.key==='Enter')runSpreadingActivation()"/>
     <button class="primary" onclick="runSpreadingActivation()">Activate &amp; Prune (TIDE)</button>
     <button onclick="resetActivation()">Reset</button>
   </div>
@@ -474,11 +477,20 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     <div class="card">
       <h3>MPCS Spreading Activation &amp; Pruning</h3>
       <div class="stat-row"><span>Mode</span><strong id="act-mode">Full Graph</strong></div>
+      <div class="stat-row"><span>Query Persona</span><strong id="act-persona" style="color:var(--cyan)">Exploratory (Broad)</strong></div>
+      <div class="stat-row"><span>Hover Highlight</span><strong id="act-hover-mode" style="color:var(--blue)">Subgraph + Outside</strong></div>
+      <div class="stat-row"><span>Edge Style</span><strong id="act-edge-style" style="color:var(--gold)">Straight Lines</strong></div>
       <div class="stat-row"><span>Visible Nodes</span><strong id="act-total">0</strong></div>
       <div class="stat-row"><span>Seeded Nodes</span><strong id="act-seeded">0</strong></div>
       <div class="stat-row"><span>Kept (Active Subgraph)</span><strong id="act-kept" style="color:var(--green)">0</strong></div>
       <div class="stat-row"><span>Pruned Nodes</span><strong id="act-pruned" style="color:var(--pink)">0</strong></div>
       <div class="stat-row"><span>Pruning Ratio</span><strong id="act-ratio">0%</strong></div>
+      <div class="stat-row"><span>Subgraph Internal Edges</span><strong id="act-internal-edges" style="color:var(--green)">0</strong></div>
+      <div class="stat-row"><span>External Bridge Edges</span><strong id="act-external-edges" style="color:var(--pink)">0</strong></div>
+      <div style="margin-top:10px;font-size:11px;color:var(--muted);display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);padding-top:6px;">
+        <span style="color:#06d6a0;">● Subgraph Link</span>
+        <span style="color:#ff79c6;">┄ External Bridge</span>
+      </div>
     </div>
     <div class="card" id="inspector">
       <h3>Node Inspector</h3>
@@ -509,6 +521,69 @@ let hoveredNode = null;
 let minWeight = 1.0;
 let layoutMode = "galaxy"; // "galaxy" | "force"
 let labelMode = "smart";   // "smart" | "all" | "hubs"
+let personaMode = "exploratory"; // "confident" | "exploratory"
+let hoverEdgeMode = "subgraph_all"; // "subgraph_all" | "subgraph_only" | "all_unified"
+let edgeStyle = "straight"; // "straight" | "curved" | "glow"
+
+function toggleHoverEdgeMode() {
+  const modes = ["subgraph_all", "subgraph_only", "all_unified"];
+  hoverEdgeMode = modes[(modes.indexOf(hoverEdgeMode) + 1) % modes.length];
+  const btn = document.getElementById("hover-mode-btn");
+  const titles = {
+    subgraph_all: "Hover: Subgraph + Outside",
+    subgraph_only: "Hover: Subgraph Only",
+    all_unified: "Hover: Classic Focus"
+  };
+  btn.textContent = titles[hoverEdgeMode];
+  btn.classList.toggle("active-toggle", hoverEdgeMode !== "all_unified");
+  const el = document.getElementById("act-hover-mode");
+  if (el) {
+    const desc = {
+      subgraph_all: "Subgraph + Outside",
+      subgraph_only: "Subgraph Only (Strict)",
+      all_unified: "Classic Unified"
+    };
+    el.textContent = desc[hoverEdgeMode];
+    el.style.color = hoverEdgeMode === "subgraph_only" ? "var(--green)" : (hoverEdgeMode === "subgraph_all" ? "var(--blue)" : "var(--muted)");
+  }
+  drawCanvas();
+}
+
+function toggleEdgeStyle() {
+  const styles = ["straight", "curved", "glow"];
+  edgeStyle = styles[(styles.indexOf(edgeStyle) + 1) % styles.length];
+  const btn = document.getElementById("edge-style-btn");
+  const titles = {
+    straight: "Edge: Straight",
+    curved: "Edge: Curved Arcs",
+    glow: "Edge: Neon Glow"
+  };
+  btn.textContent = titles[edgeStyle];
+  btn.classList.toggle("active-toggle", edgeStyle !== "straight");
+  const el = document.getElementById("act-edge-style");
+  if (el) {
+    const desc = {
+      straight: "Straight Vectors",
+      curved: "Curved Arcs",
+      glow: "Neon Glow (Bloom)"
+    };
+    el.textContent = desc[edgeStyle];
+    el.style.color = edgeStyle === "glow" ? "var(--gold)" : (edgeStyle === "curved" ? "var(--cyan)" : "var(--muted)");
+  }
+  drawCanvas();
+}
+
+function togglePersonaMode() {
+  personaMode = personaMode === "exploratory" ? "confident" : "exploratory";
+  const btn = document.getElementById("persona-btn");
+  btn.textContent = personaMode === "confident" ? "Persona: Confident (Core)" : "Persona: Exploratory (Core+Assoc)";
+  btn.classList.toggle("active-toggle", personaMode === "exploratory");
+  const el = document.getElementById("act-persona");
+  if (el) el.textContent = personaMode === "confident" ? "Confident (Strict Core)" : "Exploratory (Broad Assoc)";
+  if (document.getElementById("query-input").value.trim()) {
+    runSpreadingActivation();
+  }
+}
 
 // Build adjacency lookup for fast neighborhood inspection
 const neighborsMap = new Map();
@@ -577,7 +652,31 @@ function selectRemedy(remId) {
   rebuildGraphLayout();
   if (remId !== "ALL") {
     const found = simNodes.find(n => n.id === remId);
-    if (found) inspectNode(found);
+    if (found) {
+      inspectNode(found);
+      // Picked Subgraph: tag visible ego-network nodes as active subgraph
+      activeNodes.clear();
+      simNodes.forEach(n => activeNodes.set(n.id, 1.0));
+      let internalCount = 0, externalCount = 0;
+      simLinks.forEach(l => {
+        const inA = activeNodes.has(l.source);
+        const inB = activeNodes.has(l.target);
+        if (inA && inB) internalCount++;
+        else if (inA || inB) externalCount++;
+      });
+      const elInt = document.getElementById("act-internal-edges");
+      if (elInt) elInt.textContent = internalCount;
+      const elExt = document.getElementById("act-external-edges");
+      if (elExt) elExt.textContent = externalCount;
+      document.getElementById("act-mode").textContent = `Subgraph: ${found.label}`;
+      document.getElementById("act-kept").textContent = simNodes.length;
+      const pruned = Math.max(0, GRAPH_DATA.nodes.length - simNodes.length);
+      document.getElementById("act-pruned").textContent = pruned;
+      document.getElementById("act-ratio").textContent = `${Math.round((pruned / GRAPH_DATA.nodes.length) * 100)}%`;
+      drawCanvas();
+    }
+  } else {
+    resetActivation();
   }
 }
 
@@ -677,92 +776,143 @@ function rebuildGraphLayout() {
   const regions = simNodes.filter(n => n.type === "Body Region" || n.type === "Clinical Condition");
   const others = simNodes.filter(n => !["Medicine", "Cognitive Domain", "Body Region", "Clinical Condition"].includes(n.type));
 
-  if (selectedRemedy !== "ALL" || meds.length <= 2) {
-    // Focused Single-Remedy Radial Mandala Layout
-    const centerRem = simNodes.find(n => n.id === selectedRemedy) || meds[0];
-    if (centerRem) { centerRem.x = 0; centerRem.y = 0; centerRem.pinned = true; }
+  const isSingleRemedy = (selectedRemedy !== "ALL" || meds.length <= 2);
 
-    domains.forEach((d, idx) => {
-      const ang = (2 * Math.PI * idx) / Math.max(1, domains.length);
-      d.x = 260 * Math.cos(ang);
-      d.y = 260 * Math.sin(ang);
-    });
+  if (layoutMode === "galaxy") {
+    if (isSingleRemedy) {
+      // Single-Remedy Galaxy Clusters Layout:
+      const centerRem = simNodes.find(n => n.id === selectedRemedy) || meds[0];
+      if (centerRem) { centerRem.x = 0; centerRem.y = 0; centerRem.pinned = true; }
 
-    regions.forEach((r, idx) => {
-      const ang = (2 * Math.PI * idx) / Math.max(1, regions.length) + 0.3;
-      r.x = 340 * Math.cos(ang);
-      r.y = 340 * Math.sin(ang);
-    });
-
-    others.forEach((n, idx) => {
-      const ring = n.type === "Affective Symptom" ? 480 : (n.type === "Modality" ? 640 : 800);
-      const spread = (idx % 3 - 1) * 65;
-      const ang = (2 * Math.PI * idx) / Math.max(1, others.length);
-      n.x = (ring + spread) * Math.cos(ang);
-      n.y = (ring + spread) * Math.sin(ang);
-    });
-  } else if (layoutMode === "galaxy") {
-    // Multi-Remedy Galaxy Layout:
-    // - Cognitive Domains in inner ring (R = 320)
-    // - Major Remedies on Golden-Angle Phyllotaxis / Constellation Rings (R = 750..1850)
-    // - Symptoms, Modalities & Conditions orbiting their parent Remedy/Domain hubs!
-    domains.forEach((d, idx) => {
-      const ang = (2 * Math.PI * idx) / Math.max(1, domains.length);
-      d.x = 340 * Math.cos(ang);
-      d.y = 340 * Math.sin(ang);
-    });
-
-    regions.forEach((r, idx) => {
-      const ang = (2 * Math.PI * idx) / Math.max(1, regions.length);
-      r.x = 640 * Math.cos(ang);
-      r.y = 640 * Math.sin(ang);
-    });
-
-    const goldenAngle = Math.PI * (3 - Math.sqrt(5));
-    meds.forEach((m, idx) => {
-      const r = 950 + 260 * Math.sqrt(idx + 1);
-      const theta = idx * goldenAngle;
-      m.x = r * Math.cos(theta);
-      m.y = r * Math.sin(theta);
-    });
-
-    // Place each symptom/modality near the centroid of its connected hubs + orbital offset
-    others.forEach((n, idx) => {
-      const connectedHubs = [];
-      const nbrs = neighborsMap.get(n.id) || [];
-      nbrs.forEach(nb => {
-        const target = nodeMap.get(nb.id);
-        if (target && (target.type === "Medicine" || target.type === "Cognitive Domain" || target.type === "Body Region")) {
-          connectedHubs.push(target);
-        }
+      const hubList = [...domains, ...regions];
+      hubList.forEach((h, idx) => {
+        const ang = (2 * Math.PI * idx) / Math.max(1, hubList.length);
+        const r = h.type === "Cognitive Domain" ? 360 : 540;
+        h.x = r * Math.cos(ang);
+        h.y = r * Math.sin(ang);
       });
 
-      let cx = 0, cy = 0;
-      if (connectedHubs.length > 0) {
-        connectedHubs.forEach(h => { cx += h.x; cy += h.y; });
-        cx /= connectedHubs.length;
-        cy /= connectedHubs.length;
-      } else {
-        const ang = 2 * Math.PI * hashStr(n.id);
-        cx = 1600 * Math.cos(ang);
-        cy = 1600 * Math.sin(ang);
-      }
+      // Cluster symptoms & modalities around their connected hubs like star systems
+      others.forEach((n, idx) => {
+        const connectedHubs = [];
+        const nbrs = neighborsMap.get(n.id) || [];
+        nbrs.forEach(nb => {
+          const target = nodeMap.get(nb.id);
+          if (target && target !== centerRem && (target.type === "Cognitive Domain" || target.type === "Body Region" || target.type === "Clinical Condition")) {
+            connectedHubs.push(target);
+          }
+        });
 
-      const orbitRadius = 115 + (idx % 5) * 42;
-      const orbitAngle = 2 * Math.PI * hashStr(n.id + ":" + idx);
-      n.x = cx + orbitRadius * Math.cos(orbitAngle);
-      n.y = cy + orbitRadius * Math.sin(orbitAngle);
-    });
+        let cx = 0, cy = 0;
+        if (connectedHubs.length > 0) {
+          connectedHubs.forEach(h => { cx += h.x; cy += h.y; });
+          cx /= connectedHubs.length;
+          cy /= connectedHubs.length;
+        } else {
+          const ang = (2 * Math.PI * idx) / Math.max(1, others.length);
+          cx = 450 * Math.cos(ang);
+          cy = 450 * Math.sin(ang);
+        }
+
+        const orbitRadius = 85 + (idx % 4) * 35;
+        const orbitAngle = 2 * Math.PI * hashStr(n.id + ":" + idx);
+        n.x = cx + orbitRadius * Math.cos(orbitAngle);
+        n.y = cy + orbitRadius * Math.sin(orbitAngle);
+      });
+    } else {
+      // Multi-Remedy Galaxy Layout:
+      // - Cognitive Domains in inner ring (R = 320)
+      // - Major Remedies on Golden-Angle Phyllotaxis / Constellation Rings (R = 750..1850)
+      // - Symptoms, Modalities & Conditions orbiting their parent Remedy/Domain hubs!
+      domains.forEach((d, idx) => {
+        const ang = (2 * Math.PI * idx) / Math.max(1, domains.length);
+        d.x = 340 * Math.cos(ang);
+        d.y = 340 * Math.sin(ang);
+      });
+
+      regions.forEach((r, idx) => {
+        const ang = (2 * Math.PI * idx) / Math.max(1, regions.length);
+        r.x = 640 * Math.cos(ang);
+        r.y = 640 * Math.sin(ang);
+      });
+
+      const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+      meds.forEach((m, idx) => {
+        const r = 950 + 260 * Math.sqrt(idx + 1);
+        const theta = idx * goldenAngle;
+        m.x = r * Math.cos(theta);
+        m.y = r * Math.sin(theta);
+      });
+
+      // Place each symptom/modality near the centroid of its connected hubs + orbital offset
+      others.forEach((n, idx) => {
+        const connectedHubs = [];
+        const nbrs = neighborsMap.get(n.id) || [];
+        nbrs.forEach(nb => {
+          const target = nodeMap.get(nb.id);
+          if (target && (target.type === "Medicine" || target.type === "Cognitive Domain" || target.type === "Body Region")) {
+            connectedHubs.push(target);
+          }
+        });
+
+        let cx = 0, cy = 0;
+        if (connectedHubs.length > 0) {
+          connectedHubs.forEach(h => { cx += h.x; cy += h.y; });
+          cx /= connectedHubs.length;
+          cy /= connectedHubs.length;
+        } else {
+          const ang = 2 * Math.PI * hashStr(n.id);
+          cx = 1600 * Math.cos(ang);
+          cy = 1600 * Math.sin(ang);
+        }
+
+        const orbitRadius = 115 + (idx % 5) * 42;
+        const orbitAngle = 2 * Math.PI * hashStr(n.id + ":" + idx);
+        n.x = cx + orbitRadius * Math.cos(orbitAngle);
+        n.y = cy + orbitRadius * Math.sin(orbitAngle);
+      });
+    }
   } else {
     // Concentric Semantic Rings Layout
-    const groups = [
-      { list: domains, r: 280 },
-      { list: meds, r: 720 },
-      { list: regions, r: 1120 },
-      { list: others.filter(n => n.type === "Affective Symptom"), r: 1520 },
-      { list: others.filter(n => n.type === "Modality"), r: 1920 },
-      { list: others.filter(n => n.type !== "Affective Symptom" && n.type !== "Modality"), r: 2400 }
-    ];
+    if (isSingleRemedy) {
+      const centerRem = simNodes.find(n => n.id === selectedRemedy) || meds[0];
+      if (centerRem) { centerRem.x = 0; centerRem.y = 0; centerRem.pinned = true; }
+
+      const rings = [
+        { list: domains, r: 240 },
+        { list: regions, r: 420 },
+        { list: others.filter(n => n.type === "Affective Symptom"), r: 640 },
+        { list: others.filter(n => n.type === "Modality"), r: 840 },
+        { list: others.filter(n => n.type !== "Affective Symptom" && n.type !== "Modality"), r: 1040 }
+      ];
+
+      rings.forEach(rg => {
+        rg.list.forEach((n, i) => {
+          const ang = (2 * Math.PI * i) / Math.max(1, rg.list.length);
+          const jitter = (i % 2 === 0 ? 1 : -1) * 30;
+          n.x = (rg.r + jitter) * Math.cos(ang);
+          n.y = (rg.r + jitter) * Math.sin(ang);
+        });
+      });
+    } else {
+      const groups = [
+        { list: domains, r: 280 },
+        { list: meds, r: 720 },
+        { list: regions, r: 1120 },
+        { list: others.filter(n => n.type === "Affective Symptom"), r: 1520 },
+        { list: others.filter(n => n.type === "Modality"), r: 1920 },
+        { list: others.filter(n => n.type !== "Affective Symptom" && n.type !== "Modality"), r: 2400 }
+      ];
+      groups.forEach(g => {
+        g.list.forEach((n, i) => {
+          const ang = (2 * Math.PI * i) / Math.max(1, g.list.length);
+          const jitter = (i % 2 === 0 ? 1 : -1) * 45;
+          n.x = (g.r + jitter) * Math.cos(ang);
+          n.y = (g.r + jitter) * Math.sin(ang);
+        });
+      });
+    }
+  }
     groups.forEach(g => {
       g.list.forEach((n, i) => {
         const ang = (2 * Math.PI * i) / Math.max(1, g.list.length);
@@ -896,40 +1046,123 @@ function drawCanvas() {
   ctx.lineWidth = 1.2 / Math.max(0.5, Math.sqrt(scale));
   simLinks.forEach(l => {
     const a = l.sourceNode, b = l.targetNode;
-    const isHoveredLink = hoveredNode && (a.id === hoveredNode.id || b.id === hoveredNode.id);
-    const isInspectedLink = !hoveredNode && inspectedNode && (a.id === inspectedNode.id || b.id === inspectedNode.id);
+    const isIncident = (hoveredNode && (a.id === hoveredNode.id || b.id === hoveredNode.id))
+                    || (!hoveredNode && inspectedNode && (a.id === inspectedNode.id || b.id === inspectedNode.id));
     const bothActive = !hasActivation || (activeNodes.has(a.id) && activeNodes.has(b.id));
 
-    if (isHoveredLink || isInspectedLink) {
-      ctx.strokeStyle = "#58b8ff";
-      ctx.globalAlpha = 0.85;
-      ctx.lineWidth = 2.0 / Math.max(0.6, Math.sqrt(scale));
+    ctx.setLineDash([]);
+    let isGlowing = false;
+    let strokeColor = "#333e5c";
+    let strokeAlpha = simNodes.length > 400 ? 0.28 : 0.48;
+    let strokeWidth = 1.1 / Math.max(0.6, Math.sqrt(scale));
+    let showLabel = false;
+    let labelColor = "#98a6c4";
+    let labelPrefix = "";
+
+    if (hasActivation && isIncident) {
+      if (bothActive) {
+        // [COLOR 1: Subgraph Internal Link] - Both endpoints in active subgraph
+        strokeColor = "#06d6a0"; // Intense Emerald Green
+        strokeAlpha = 0.96;
+        strokeWidth = 2.6 / Math.max(0.6, Math.sqrt(scale));
+        showLabel = true;
+        labelColor = "#06d6a0";
+        if (edgeStyle === "glow") isGlowing = true;
+      } else {
+        // Incident link connecting from subgraph outward
+        if (hoverEdgeMode === "subgraph_only") {
+          // Suppress external bridging edges in subgraph-only mode
+          strokeColor = "#252c40";
+          strokeAlpha = 0.04;
+          strokeWidth = 1.0 / Math.max(0.6, Math.sqrt(scale));
+          showLabel = false;
+        } else if (hoverEdgeMode === "all_unified") {
+          // Unified focus highlight
+          strokeColor = "#58b8ff";
+          strokeAlpha = 0.90;
+          strokeWidth = 2.0 / Math.max(0.6, Math.sqrt(scale));
+          showLabel = true;
+          labelColor = "#58b8ff";
+          if (edgeStyle === "glow") isGlowing = true;
+        } else {
+          // Subgraph + Outside: [COLOR 2: Subgraph External Bridging Link]
+          strokeColor = "#ff79c6"; // Electric Fuchsia / Pink
+          strokeAlpha = 0.92;
+          strokeWidth = 2.2 / Math.max(0.6, Math.sqrt(scale));
+          ctx.setLineDash([5, 3]);
+          showLabel = true;
+          labelColor = "#ff79c6";
+          labelPrefix = "[EXTERNAL] ";
+          if (edgeStyle === "glow") isGlowing = true;
+        }
+      }
+    } else if (isIncident) {
+      // Normal hover focus when no subgraph is active
+      strokeColor = "#58b8ff"; // Electric Cyan
+      strokeAlpha = 0.88;
+      strokeWidth = 2.0 / Math.max(0.6, Math.sqrt(scale));
+      showLabel = true;
+      labelColor = "#58b8ff";
+      if (edgeStyle === "glow") isGlowing = true;
     } else if (hasActivation && bothActive) {
-      ctx.strokeStyle = "#06d6a0";
-      ctx.globalAlpha = 0.72;
-      ctx.lineWidth = 1.8 / Math.max(0.6, Math.sqrt(scale));
+      strokeColor = "#06d6a0";
+      strokeAlpha = 0.65;
+      strokeWidth = 1.6 / Math.max(0.6, Math.sqrt(scale));
+      if (edgeStyle === "glow") isGlowing = true;
     } else if (hasActivation && !bothActive) {
-      ctx.strokeStyle = "#252c40";
-      ctx.globalAlpha = 0.08;
-      ctx.lineWidth = 1.0 / Math.max(0.6, Math.sqrt(scale));
+      strokeColor = "#252c40";
+      strokeAlpha = 0.06;
+      strokeWidth = 1.0 / Math.max(0.6, Math.sqrt(scale));
     } else {
-      ctx.strokeStyle = "#333e5c";
-      ctx.globalAlpha = simNodes.length > 400 ? 0.28 : 0.48;
-      ctx.lineWidth = 1.1 / Math.max(0.6, Math.sqrt(scale));
+      strokeColor = "#333e5c";
+      strokeAlpha = simNodes.length > 400 ? 0.28 : 0.48;
+      strokeWidth = 1.1 / Math.max(0.6, Math.sqrt(scale));
     }
 
-    ctx.beginPath();
-    ctx.moveTo(a.x, a.y);
-    ctx.lineTo(b.x, b.y);
-    ctx.stroke();
+    ctx.strokeStyle = strokeColor;
+    ctx.globalAlpha = strokeAlpha;
+    ctx.lineWidth = strokeWidth;
 
-    if ((isHoveredLink || isInspectedLink || (hasActivation && bothActive)) && scale > 0.45) {
-      const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
-      ctx.fillStyle = "#98a6c4";
-      ctx.globalAlpha = 0.9;
+    let midX = (a.x + b.x) / 2, midY = (a.y + b.y) / 2;
+
+    if (edgeStyle === "curved") {
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const dist = Math.hypot(dx, dy) || 1;
+      const nx = -dy / dist, ny = dx / dist;
+      const bend = Math.min(50, Math.max(16, dist * 0.12)) * (hashStr(a.id + b.id) > 0.5 ? 1 : -1);
+      const cx = midX + nx * bend, cy = midY + ny * bend;
+      midX = (midX + cx) / 2;
+      midY = (midY + cy) / 2;
+
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.quadraticCurveTo(cx, cy, b.x, b.y);
+      ctx.stroke();
+    } else {
+      if (isGlowing) {
+        ctx.save();
+        ctx.lineWidth = strokeWidth * 2.8;
+        ctx.globalAlpha = strokeAlpha * 0.32;
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+        ctx.restore();
+      }
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    if (showLabel && scale > 0.4) {
+      ctx.fillStyle = labelColor;
+      ctx.globalAlpha = 0.95;
       ctx.font = `${Math.max(9, Math.round(10 / Math.sqrt(scale)))}px Inter, sans-serif`;
       ctx.textAlign = "center";
-      ctx.fillText(l.label, mx, my - 4);
+      const edgeText = labelPrefix ? `${labelPrefix}${l.label}` : l.label;
+      ctx.fillText(edgeText, midX, midY - 4);
     }
   });
 
@@ -1101,15 +1334,28 @@ function runSpreadingActivation() {
   }
 
   const maxScore = Math.max(...Array.from(activeNodes.values()), 0.001);
-  const cutoff = maxScore * 0.18;
+  const cutoff = personaMode === "confident" ? maxScore * 0.45 : maxScore * 0.18;
   for (const [id, sc] of Array.from(activeNodes.entries())) {
     if (sc < cutoff) activeNodes.delete(id);
   }
 
+  // Count internal vs external edges
+  let internalCount = 0, externalCount = 0;
+  simLinks.forEach(l => {
+    const inA = activeNodes.has(l.source);
+    const inB = activeNodes.has(l.target);
+    if (inA && inB) internalCount++;
+    else if (inA || inB) externalCount++;
+  });
+  const elInt = document.getElementById("act-internal-edges");
+  if (elInt) elInt.textContent = internalCount;
+  const elExt = document.getElementById("act-external-edges");
+  if (elExt) elExt.textContent = externalCount;
+
   const total = simNodes.length;
   const kept = activeNodes.size;
   const pruned = Math.max(0, total - kept);
-  document.getElementById("act-mode").textContent = kept > 0 ? "TIDE Activated Subgraph" : "UNGROUNDED";
+  document.getElementById("act-mode").textContent = kept > 0 ? (personaMode === "confident" ? "Confident Core Subgraph" : "Exploratory Subgraph") : "UNGROUNDED";
   document.getElementById("act-seeded").textContent = seeds;
   document.getElementById("act-kept").textContent = kept;
   document.getElementById("act-pruned").textContent = pruned;
@@ -1126,6 +1372,10 @@ function resetActivation() {
   document.getElementById("act-kept").textContent = simNodes.length;
   document.getElementById("act-pruned").textContent = "0";
   document.getElementById("act-ratio").textContent = "0%";
+  const elInt = document.getElementById("act-internal-edges");
+  if (elInt) elInt.textContent = "0";
+  const elExt = document.getElementById("act-external-edges");
+  if (elExt) elExt.textContent = "0";
   fitToScreen();
 }
 

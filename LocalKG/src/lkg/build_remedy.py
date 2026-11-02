@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-"""Single-Remedy Knowledge Graph Builder.
+r"""Single-Remedy Knowledge Graph Builder.
 
 Prepares and extracts individual remedy subgraphs (e.g. Arnica montana, Belladonna)
 from both classical literature (Hahnemann / Boericke) and modern PubMed clinical/toxicological
@@ -113,9 +113,24 @@ def append_pubmed_literature_to_extracted(
     query_clean = remedy_name.strip().lower()
     appended = 0
 
+    existing_chunk_ids = set()
+    if extracted_jsonl_path.exists():
+        with open(extracted_jsonl_path, "r", encoding="utf-8") as f:
+            for line in f:
+                if line.strip():
+                    try:
+                        rec = json.loads(line)
+                        if "chunk_id" in rec:
+                            existing_chunk_ids.add(rec["chunk_id"])
+                    except Exception:
+                        pass
+
     with open(extracted_jsonl_path, "a", encoding="utf-8") as out:
         for r in records:
-            if query_clean in r.get("remedy", "").lower():
+            chunk_id = f"chunk:pmid_{r['pmid']}"
+            if chunk_id in existing_chunk_ids:
+                continue
+            if query_clean == "all" or query_clean in r.get("remedy", "").lower():
                 occurrences = []
                 for idx, sym in enumerate(r.get("extracted_symptoms", [])):
                     occ_id = f"occ:pmid_{r['pmid']}_{idx}"

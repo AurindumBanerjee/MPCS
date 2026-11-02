@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" width="100%" height="100%" style="background:#0b0f19; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <linearGradient id="gBox4" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <marker id="arrCyan4" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M 0 0 L 8 4 L 0 8 z" fill="#38bdf8"/>
+    </marker>
+    <marker id="arrGreen4" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M 0 0 L 8 4 L 0 8 z" fill="#34d399"/>
+    </marker>
+    <marker id="arrPink4" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M 0 0 L 8 4 L 0 8 z" fill="#f472b6"/>
+    </marker>
+    <marker id="arrPurple4" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M 0 0 L 8 4 L 0 8 z" fill="#c084fc"/>
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="480" y="30" text-anchor="middle" fill="#f8fafc" font-size="17" font-weight="700">FIGURE 4: DUAL-PERSONA QUERY ROUTING &amp; SUBGRAPH EDGE PARTITIONING</text>
+  <text x="480" y="50" text-anchor="middle" fill="#94a3b8" font-size="11.5">Algorithmic Flow: Symptom Influx -&gt; Spreading Activation -&gt; Dual Cutoff -&gt; Topological Classification</text>
+
+  <!-- Query Influx -->
+  <g transform="translate(60, 75)">
+    <rect width="180" height="50" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
+    <text x="90" y="22" text-anchor="middle" fill="#38bdf8" font-size="10.5" font-weight="700">Clinical Query Q</text>
+    <text x="90" y="38" text-anchor="middle" fill="#cbd5e1" font-size="8.5">"fear of death, midnight, restless"</text>
+  </g>
+
+  <!-- Arrow Query to Seed Scoring -->
+  <path d="M 240 100 L 290 100" fill="none" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrCyan4)"/>
+
+  <!-- Seed Scoring -->
+  <g transform="translate(290, 75)">
+    <rect width="260" height="50" rx="6" fill="#0f172a" stroke="#38bdf8" stroke-width="1.2"/>
+    <text x="130" y="20" text-anchor="middle" fill="#38bdf8" font-size="10" font-weight="700">1. Lexical + Affect Seed Scoring</text>
+    <text x="130" y="36" text-anchor="middle" fill="#f8fafc" font-size="8.5" font-weight="600">S_i = (Hits/|T|) * (1 + 0.85*A) * (W/2.2)</text>
+  </g>
+
+  <!-- Arrow Seed to Spreading Activation -->
+  <path d="M 550 100 L 600 100" fill="none" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrCyan4)"/>
+
+  <!-- Spreading Activation 2-hop -->
+  <g transform="translate(600, 75)">
+    <rect width="300" height="50" rx="6" fill="#0f172a" stroke="#c084fc" stroke-width="1.2"/>
+    <text x="150" y="20" text-anchor="middle" fill="#c084fc" font-size="10" font-weight="700">2. Spreading Activation (2 Hops)</text>
+    <text x="150" y="36" text-anchor="middle" fill="#cbd5e1" font-size="8.5">decay = 0.58 | E_j = max(E_j, E_i * decay)</text>
+  </g>
+
+  <!-- Arrow Down to Dual-Persona Decision Diamond -->
+  <path d="M 750 125 L 750 160 L 480 160 L 480 185" fill="none" stroke="#c084fc" stroke-width="2" marker-end="url(#arrPurple4)"/>
+
+  <!-- Persona Selection Diamond / Fork -->
+  <g transform="translate(390, 185)">
+    <polygon points="90,0 180,35 90,70 0,35" fill="#1e1b4b" stroke="#818cf8" stroke-width="1.8"/>
+    <text x="90" y="32" text-anchor="middle" fill="#ffffff" font-size="10" font-weight="700">Persona Mode?</text>
+    <text x="90" y="46" text-anchor="middle" fill="#c7d2fe" font-size="8">Cognitive Stance</text>
+  </g>
+
+  <!-- Left Path: Confident Persona -->
+  <path d="M 390 220 L 220 220 L 220 270" fill="none" stroke="#34d399" stroke-width="2" marker-end="url(#arrGreen4)"/>
+  <text x="290" y="212" text-anchor="middle" fill="#34d399" font-size="9" font-weight="700">CONFIDENT (Acute Triage)</text>
+
+  <!-- Right Path: Exploratory Persona -->
+  <path d="M 570 220 L 740 220 L 740 270" fill="none" stroke="#f472b6" stroke-width="2" marker-end="url(#arrPink4)"/>
+  <text x="670" y="212" text-anchor="middle" fill="#f472b6" font-size="9" font-weight="700">EXPLORATORY (Chronic Diff)</text>
+
+  <!-- Confident Gating Box -->
+  <g transform="translate(70, 270)">
+    <rect width="300" height="95" rx="6" fill="#0f172a" stroke="#059669" stroke-width="1.5"/>
+    <text x="150" y="22" text-anchor="middle" fill="#34d399" font-size="10.5" font-weight="700">Confident Persona Core Gating</text>
+    <text x="150" y="40" text-anchor="middle" fill="#ffffff" font-size="9" font-weight="600">Threshold: θ_conf = max(A) * 0.45</text>
+    <text x="150" y="56" text-anchor="middle" fill="#a7f3d0" font-size="8.5">Strict Noise Pruning: &gt;99% Irrelevant Nodes Cut</text>
+    <text x="150" y="70" text-anchor="middle" fill="#cbd5e1" font-size="8">Isolates Primary Remedy (e.g. Aconitum, Arsenicum)</text>
+    <text x="150" y="84" text-anchor="middle" fill="#6ee7b7" font-size="8">Output: Active Nodes = { v | Score(v) &gt;= θ_conf }</text>
+  </g>
+
+  <!-- Exploratory Gating Box -->
+  <g transform="translate(590, 270)">
+    <rect width="300" height="95" rx="6" fill="#0f172a" stroke="#db2777" stroke-width="1.5"/>
+    <text x="150" y="22" text-anchor="middle" fill="#f472b6" font-size="10.5" font-weight="700">Exploratory Associative Expansion</text>
+    <text x="150" y="40" text-anchor="middle" fill="#ffffff" font-size="9" font-weight="600">Threshold: θ_expl = max(A) * 0.18</text>
+    <text x="150" y="56" text-anchor="middle" fill="#fbcfe8" font-size="8.5">Associative Discovery: Core + 2-Hop Traversal</text>
+    <text x="150" y="70" text-anchor="middle" fill="#cbd5e1" font-size="8">Surfaces Cross-Links, Modalities, Concomitants</text>
+    <text x="150" y="84" text-anchor="middle" fill="#f472b6" font-size="8">Active Nodes = { v | Score(v) &gt;= θ_expl }</text>
+  </g>
+
+  <!-- Arrows from both down to Edge Partitioning -->
+  <path d="M 220 365 L 220 395 L 450 395" fill="none" stroke="#34d399" stroke-width="1.8"/>
+  <path d="M 740 365 L 740 395 L 510 395" fill="none" stroke="#f472b6" stroke-width="1.8"/>
+  <path d="M 480 395 L 480 415" fill="none" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrCyan4)"/>
+
+  <!-- Topological Edge Partitioning & Canvas Shader Box -->
+  <g transform="translate(60, 415)">
+    <rect width="840" height="90" rx="8" fill="url(#gBox4)" stroke="#38bdf8" stroke-width="1.5"/>
+    <text x="420" y="20" text-anchor="middle" fill="#38bdf8" font-size="11" font-weight="700">TOPOLOGICAL EDGE PARTITIONING &amp; HIGH-DPI CANVAS RENDERING</text>
+
+    <!-- Internal Edges -->
+    <g transform="translate(20, 32)">
+      <rect width="250" height="48" rx="5" fill="#064e3b" stroke="#059669"/>
+      <line x1="15" y1="24" x2="45" y2="24" stroke="#06d6a0" stroke-width="3"/>
+      <text x="145" y="18" text-anchor="middle" fill="#34d399" font-size="9" font-weight="700">INTERNAL SUBGRAPH EDGES (e in E_int)</text>
+      <text x="145" y="32" text-anchor="middle" fill="#a7f3d0" font-size="8">Both endpoints in active set (inA &amp; inB)</text>
+      <text x="145" y="44" text-anchor="middle" fill="#ffffff" font-size="7.5">Color: #06D6A0 (Emerald) | Alpha: 0.96 | Width: 2.6px</text>
+    </g>
+
+    <!-- External Bridging Edges -->
+    <g transform="translate(295, 32)">
+      <rect width="250" height="48" rx="5" fill="#4c0519" stroke="#be123c"/>
+      <line x1="15" y1="24" x2="45" y2="24" stroke="#ff79c6" stroke-width="2.2" stroke-dasharray="4,2"/>
+      <text x="145" y="18" text-anchor="middle" fill="#f472b6" font-size="9" font-weight="700">EXTERNAL BRIDGING EDGES (e in E_ext)</text>
+      <text x="145" y="32" text-anchor="middle" fill="#fbcfe8" font-size="8">One endpoint active, one outside (inA != inB)</text>
+      <text x="145" y="44" text-anchor="middle" fill="#ffffff" font-size="7.5">Color: #FF79C6 (Dashed Pink) | Label: [EXTERNAL]</text>
+    </g>
+
+    <!-- Shader Modes -->
+    <g transform="translate(570, 32)">
+      <rect width="250" height="48" rx="5" fill="#1e1b4b" stroke="#6366f1"/>
+      <text x="125" y="16" text-anchor="middle" fill="#c7d2fe" font-size="9" font-weight="700">CANVAS HOVER SHADER MODES</text>
+      <text x="125" y="30" text-anchor="middle" fill="#cbd5e1" font-size="8">subgraph_all: Shows Emerald (int) + Pink (ext)</text>
+      <text x="125" y="42" text-anchor="middle" fill="#94a3b8" font-size="7.5">subgraph_only: External suppressed (alpha=0.04)</text>
+    </g>
+  </g>
+</svg>
