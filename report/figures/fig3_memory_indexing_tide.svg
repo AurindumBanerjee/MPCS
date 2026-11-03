@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" width="100%" height="100%" style="background:#0b0f19; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" width="960" height="500" style="background:#0b0f19; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
   <defs>
     <linearGradient id="gLayer" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#1e293b"/>
@@ -21,43 +21,43 @@
 
   <!-- Influx Query Percept -->
   <g transform="translate(380, 70)">
-    <rect width="200" height="42" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
+    <rect width="960" height="500" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-width="960"/>
     <text x="100" y="20" text-anchor="middle" fill="#38bdf8" font-size="11" font-weight="700">Perceptual Query Q</text>
     <text x="100" y="34" text-anchor="middle" fill="#94a3b8" font-size="9">Multimodal Afferent Object (Vision, Audio, Touch, Smell)</text>
   </g>
 
   <!-- Vertical Arrow to Layer 1 -->
-  <path d="M 480 112 L 480 135" fill="none" stroke="#38bdf8" stroke-width="2" marker-end="url(#arr1)"/>
+  <path d="M 480 112 L 480 135" fill="none" stroke="#38bdf8" stroke-width="960" marker-end="url(#arr1)"/>
 
   <!-- LAYER 1: dlCBF -->
   <g transform="translate(40, 135)">
-    <rect width="880" height="85" rx="8" fill="url(#gLayer)" stroke="#0284c7" stroke-width="1.5"/>
-    <rect x="15" y="12" width="220" height="24" rx="4" fill="#0369a1"/>
+    <rect width="960" height="500" rx="8" fill="url(#gLayer)" stroke="#0284c7" stroke-width="960"/>
+    <rect x="15" y="12" width="960" height="500" rx="4" fill="#0369a1"/>
     <text x="125" y="28" text-anchor="middle" fill="#f0f9ff" font-size="11" font-weight="700">LAYER 1: dlCBF (Exact Hash Gate)</text>
 
     <text x="250" y="30" fill="#cbd5e1" font-size="9.5">4 Subtables x 1024 Buckets | 16-bit Blake2b Fingerprint | O(k) Complexity</text>
     <text x="250" y="48" fill="#94a3b8" font-size="9">Evaluates: Exact verbatim match against 700 canonical records in <tspan fill="#38bdf8" font-weight="700">27 µs</tspan> (p95: 46 µs). Memory: 8.3 KB.</text>
     
     <!-- Decisions -->
-    <rect x="710" y="14" width="150" height="26" rx="4" fill="#064e3b" stroke="#059669"/>
+    <rect x="710" y="14" width="960" height="500" rx="4" fill="#064e3b" stroke="#059669"/>
     <text x="785" y="31" text-anchor="middle" fill="#34d399" font-size="9.5" font-weight="700">Hit: Instant Recall (27 µs)</text>
 
-    <rect x="710" y="48" width="150" height="26" rx="4" fill="#1e1b4b" stroke="#6366f1"/>
+    <rect x="710" y="48" width="960" height="500" rx="4" fill="#1e1b4b" stroke="#6366f1"/>
     <text x="785" y="65" text-anchor="middle" fill="#c7d2fe" font-size="9.5" font-weight="700">Miss: Pass to L2 (Novelty &gt; 0)</text>
   </g>
 
   <!-- Arrow L1 to L2 -->
-  <path d="M 480 220 L 480 245" fill="none" stroke="#34d399" stroke-width="2" marker-end="url(#arr2)"/>
+  <path d="M 480 220 L 480 245" fill="none" stroke="#34d399" stroke-width="960" marker-end="url(#arr2)"/>
 
   <!-- LAYER 2: HyST -->
   <g transform="translate(40, 245)">
-    <rect width="880" height="95" rx="8" fill="url(#gLayer)" stroke="#059669" stroke-width="1.5"/>
-    <rect x="15" y="12" width="220" height="24" rx="4" fill="#064e3b"/>
+    <rect width="960" height="500" rx="8" fill="url(#gLayer)" stroke="#059669" stroke-width="960"/>
+    <rect x="15" y="12" width="960" height="500" rx="4" fill="#064e3b"/>
     <text x="125" y="28" text-anchor="middle" fill="#ecfdf5" font-size="11" font-weight="700">LAYER 2: HyST (Slot Partitioning)</text>
 
     <!-- Hard vs Soft Split -->
     <g transform="translate(250, 15)">
-      <rect width="210" height="68" rx="5" fill="#0f172a" stroke="#10b981"/>
+      <rect width="960" height="500" rx="5" fill="#0f172a" stroke="#10b981"/>
       <text x="105" y="18" text-anchor="middle" fill="#34d399" font-size="9.5" font-weight="700">Hard Constraint Gating</text>
       <text x="105" y="34" text-anchor="middle" fill="#cbd5e1" font-size="8.5">Thermal, Contact, Odor Type</text>
       <text x="105" y="48" text-anchor="middle" fill="#f43f5e" font-size="8.5">Mismatch -&gt; Strict Exclusion (0)</text>
@@ -65,7 +65,7 @@
     </g>
 
     <g transform="translate(475, 15)">
-      <rect width="210" height="68" rx="5" fill="#0f172a" stroke="#10b981"/>
+      <rect width="960" height="500" rx="5" fill="#0f172a" stroke="#10b981"/>
       <text x="105" y="18" text-anchor="middle" fill="#34d399" font-size="9.5" font-weight="700">Soft Residual Kernel</text>
       <text x="105" y="34" text-anchor="middle" fill="#cbd5e1" font-size="8.5">Ordinal Closeness: Span Metric</text>
       <text x="105" y="48" text-anchor="middle" fill="#fed7aa" font-size="8.5">K(a, b) = max(0, 1 - |i - j| / Span)</text>
@@ -73,7 +73,7 @@
     </g>
 
     <g transform="translate(700, 15)">
-      <rect width="165" height="68" rx="5" fill="#132e27" stroke="#059669"/>
+      <rect width="960" height="500" rx="5" fill="#132e27" stroke="#059669"/>
       <text x="82" y="18" text-anchor="middle" fill="#6ee7b7" font-size="9" font-weight="700">Run-time Knobs</text>
       <text x="82" y="34" text-anchor="middle" fill="#e2e8f0" font-size="8">urgent=True (convergent)</text>
       <text x="82" y="48" text-anchor="middle" fill="#e2e8f0" font-size="8">divergent=True (creative 0.6)</text>
@@ -82,17 +82,17 @@
   </g>
 
   <!-- Arrow L2 to L3 -->
-  <path d="M 480 340 L 480 365" fill="none" stroke="#c084fc" stroke-width="2" marker-end="url(#arr3)"/>
+  <path d="M 480 340 L 480 365" fill="none" stroke="#c084fc" stroke-width="960" marker-end="url(#arr3)"/>
 
   <!-- LAYER 3: TIDE Spreading Activation -->
   <g transform="translate(40, 365)">
-    <rect width="880" height="120" rx="8" fill="url(#gLayer)" stroke="#7c3aed" stroke-width="1.8"/>
-    <rect x="15" y="12" width="240" height="24" rx="4" fill="#3b0764"/>
+    <rect width="960" height="500" rx="8" fill="url(#gLayer)" stroke="#7c3aed" stroke-width="960"/>
+    <rect x="15" y="12" width="960" height="500" rx="4" fill="#3b0764"/>
     <text x="135" y="28" text-anchor="middle" fill="#faf5ff" font-size="11" font-weight="700">LAYER 3: TIDE SPREADING ACTIVATION</text>
 
     <!-- Seed Scoring -->
     <g transform="translate(15, 45)">
-      <rect width="260" height="65" rx="5" fill="#0f172a" stroke="#a855f7"/>
+      <rect width="960" height="500" rx="5" fill="#0f172a" stroke="#a855f7"/>
       <text x="130" y="18" text-anchor="middle" fill="#c084fc" font-size="9.5" font-weight="700">1. Affect-Modulated Seed Scoring</text>
       <text x="130" y="34" text-anchor="middle" fill="#e9d5ff" font-size="8.5">A_i^(0) = Sim_s * (1.0 + 0.8 * Arousal_i)</text>
       <text x="130" y="48" text-anchor="middle" fill="#cbd5e1" font-size="8">W_i Boosting: Expert (3.0x), Reflex (2.0x)</text>
@@ -101,7 +101,7 @@
 
     <!-- Recurrence -->
     <g transform="translate(290, 45)">
-      <rect width="285" height="65" rx="5" fill="#0f172a" stroke="#a855f7"/>
+      <rect width="960" height="500" rx="5" fill="#0f172a" stroke="#a855f7"/>
       <text x="142" y="18" text-anchor="middle" fill="#c084fc" font-size="9.5" font-weight="700">2. Episodic Spreading Activation</text>
       <text x="142" y="34" text-anchor="middle" fill="#e9d5ff" font-size="8.5">A_j^(h+1) = A_j^(h) + Σ [ (A_i^(h)·γ / deg(i)) · w_edge · (1+Δt)^(-0.2) ]</text>
       <text x="142" y="48" text-anchor="middle" fill="#cbd5e1" font-size="8">Edges: Prev (0.5), Action (0.7), Object (1.0), Place (1.0)</text>
@@ -110,7 +110,7 @@
 
     <!-- Anytime Budgeting & Verification -->
     <g transform="translate(590, 45)">
-      <rect width="275" height="65" rx="5" fill="#1e1b4b" stroke="#818cf8"/>
+      <rect width="960" height="500" rx="5" fill="#1e1b4b" stroke="#818cf8"/>
       <text x="137" y="18" text-anchor="middle" fill="#818cf8" font-size="9.5" font-weight="700">3. Anytime Budget &amp; Passive Thread</text>
       <text x="137" y="34" text-anchor="middle" fill="#38bdf8" font-size="8.5">B in {3, 5, 10, 20, 50, full} -&gt; 1.25 - 1.54 ms</text>
       <text x="137" y="48" text-anchor="middle" fill="#34d399" font-size="8">Clean Acc: 71.9% (B=3) | Unsafe Rate: 1.2%</text>
