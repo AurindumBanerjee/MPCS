@@ -205,3 +205,7 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# PDFs (papers, books, built reports) are kept locally, not in git
+*.pdf
+*.PDF
