@@ -913,15 +913,6 @@ function rebuildGraphLayout() {
       });
     }
   }
-    groups.forEach(g => {
-      g.list.forEach((n, i) => {
-        const ang = (2 * Math.PI * i) / Math.max(1, g.list.length);
-        const jitter = (i % 2 === 0 ? 1 : -1) * 45;
-        n.x = (g.r + jitter) * Math.cos(ang);
-        n.y = (g.r + jitter) * Math.sin(ang);
-      });
-    });
-  }
 
   // 3. Fast Spatial-Grid Collision Relaxation (guarantees zero overlapping nodes in <40ms!)
   resolveNodeCollisions(simNodes, 6);

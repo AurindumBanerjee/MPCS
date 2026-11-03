@@ -1,9 +1,20 @@
 from __future__ import annotations
 
+import difflib
 import json
 from pathlib import Path
 from typing import Any
-from rapidfuzz import fuzz
+
+try:
+    from rapidfuzz import fuzz as _rf_fuzz
+except ImportError:
+    _rf_fuzz = None  # type: ignore
+
+
+def _ratio(a: str, b: str) -> float:
+    if _rf_fuzz is not None:
+        return float(_rf_fuzz.ratio(a, b))
+    return difflib.SequenceMatcher(None, a, b).ratio() * 100.0
 
 from lkg.config import DATA_DIR
 from lkg.resolve.normalize import normalize_symptom_label
@@ -46,7 +57,7 @@ class SymptomMergeProposalManager:
                 }
 
             # Fuzzy comparison
-            ratio = fuzz.ratio(norm_label.lower(), existing_label.lower())
+            ratio = _ratio(norm_label.lower(), existing_label.lower())
             if ratio >= 92.0:
                 # High confidence non-mental merge
                 return {

@@ -4,8 +4,15 @@ import hashlib
 from pathlib import Path
 from typing import Any
 import numpy as np
-import chromadb
-from rank_bm25 import BM25Okapi
+try:
+    import chromadb
+except ImportError:
+    chromadb = None  # type: ignore
+
+try:
+    from rank_bm25 import BM25Okapi
+except ImportError:
+    BM25Okapi = None  # type: ignore
 
 from lkg.config import settings
 from lkg.schema.graph import make_remedy_id
@@ -52,10 +59,22 @@ class ChromaLoader:
     def __init__(self, chroma_dir: Path | None = None):
         self.chroma_dir = chroma_dir or settings.CHROMA_DIR
         self.chroma_dir.mkdir(parents=True, exist_ok=True)
+        self.embedding_fn: Any = HashEmbeddingFunction()
+        self.embedding_backend = "hash"
+        self._bm25: Any = None
+        self._bm25_doc_ids: list[str] = []
+        self._bm25_docs: list[str] = []
+        self._bm25_metas: dict[str, dict[str, Any]] = {}
+
+        if chromadb is None:
+            self.client = None
+            self.occurrences_col = None
+            self.chunks_col = None
+            return
+
         self.client = chromadb.PersistentClient(path=str(self.chroma_dir))
         # Prefer a local Ollama embedding model (true semantic vectors); fall back
         # to the offline hash embedding if Ollama / the embed model is unavailable.
-        self.embedding_fn: Any = HashEmbeddingFunction()
         suffix = "hash"
         if settings.OLLAMA_EMBED_MODEL.lower() not in ("", "hash", "none"):
             from lkg.llm.ollama_client import OllamaEmbeddingFunction
@@ -79,10 +98,6 @@ class ChromaLoader:
             metadata={"hnsw:space": "cosine"},
         )
 
-        # In-memory BM25 index over loaded occurrences
-        self._bm25: BM25Okapi | None = None
-        self._bm25_doc_ids: list[str] = []
-        self._bm25_docs: list[str] = []
         self._rebuild_bm25_from_store()
 
     def _rebuild_bm25_from_store(self) -> None:
@@ -192,7 +207,7 @@ class ChromaLoader:
         rrf_k: int = 60,
     ) -> list[dict[str, Any]]:
         """Reciprocal Rank Fusion (RRF) between semantic search and BM25 keyword search."""
-        if self.occurrences_col.count() == 0:
+        if self.occurrences_col is None or self.occurrences_col.count() == 0:
             return []
 
         chroma_filter = {}

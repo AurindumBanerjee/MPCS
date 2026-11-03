@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
-from neo4j import GraphDatabase, Driver
+try:
+    from neo4j import GraphDatabase, Driver
+except ImportError:
+    GraphDatabase = None  # type: ignore
+    Driver = Any  # type: ignore
 
 from lkg.config import settings, PROJECT_ROOT
 from lkg.schema.graph import (

@@ -151,7 +151,7 @@ $$\text{digest} = \operatorname{BLAKE2b}(\text{PerceptSummary}, \text{digest\_si
 $$\text{fp} = (\text{digest}[0:8] \pmod{2^{16}}) \lor 1$$
 $$\text{bucket}_j = \text{digest}[8 + 4j : 12 + 4j] \pmod{1\,024}, \quad j \in \{0, 1, 2, 3\}$$
 - **$d$-Left Tie Breaking:** On insertion, if no existing bucket contains the matching fingerprint, the item is inserted into the least-loaded bucket across the $d$ candidate locations, breaking ties toward the leftmost subtable ($j=0$).
-- **Performance Characteristics:** As demonstrated in empirical benchmarks on Bank v3 (700 canonical records), dlCBF requires only **$8.3\,\text{KB}$** of RAM ($12.1\,\text{bytes/record}$) and performs exact membership checks in **$0.027\,\text{ms}$ ($27\,\mu\text{s}$)**, with a 95th percentile latency of **$0.046\,\text{ms}$ ($46\,\mu\text{s}$)**.
+- **Performance Characteristics:** As demonstrated in empirical benchmarks on Bank v3 (700 canonical records), dlCBF requires only **$8.8\,\text{KB}$** of deep memory ($12.8\,\text{bytes/record}$) and performs exact membership checks in **$0.017\,\text{ms}$ ($17\,\mu\text{s}$)**, with a 95th percentile latency of **$0.032\,\text{ms}$ ($32\,\mu\text{s}$)**.
 
 #### 4.2 Layer 2: Hysteresis Categorical Slot Memory (HyST)
 When dlCBF signals a novel percept ($\nu > 0$), the query enters Layer 2: HyST ([`SlotPolicy`](file:///d:/MyStuff/GitHub/MPCS/Model/experimental/04_hyst/hyst_layer.py#L106)). Traditional vector distance metrics (Cosine, Euclidean) suffer from catastrophic false generalization in safety-critical domains: a memory that agrees with a patient on 9 cosmetic features (color, room type, motion) but disagrees on a single vital sign (`thermal: hot` vs `thermal: cold`) will still score $0.90$ similarity, producing lethal recommendations.
@@ -190,7 +190,7 @@ Traversals yielding additions below $\text{Floor}$ are cut immediately, and at m
 
 ##### Sufficiency Routing &amp; Anytime Deadline
 TIDE evaluates candidate records in order of activation energy until an anytime latency budget runs out:
-1. **Sufficiency Routing (Urgent Off):** If the top-scoring action leads the runner-up by margin $\Delta \ge 0.25$ with support $\ge 0.80$, TIDE issues a `DIRECT` prescription ($7.3\%$ share, $97.1\%$ accuracy). When competing alternatives exist, TIDE routes to `SUBGRAPH` mode ($89.2\%$ share, $76.2\%$ accuracy), returning the focused subgraph for differential analysis. If no evidence clears the threshold, it flags `UNGROUNDED` ($3.5\%$ share, preventing hallucination).
+1. **Sufficiency Routing (Urgent Off):** If the top-scoring action leads the runner-up by margin $\Delta \ge 0.25$ with support $\ge 0.80$, TIDE issues a `DIRECT` prescription ($7.7\%$ clean share, $97.3\%$ clean accuracy / $90.0\%$ noisy accuracy). When competing alternatives exist, TIDE routes to `SUBGRAPH` mode ($88.8\%$ clean share, $76.1\%$ clean accuracy / $69.8\%$ noisy accuracy), returning the focused subgraph for differential analysis. If no evidence clears the threshold, it flags `UNGROUNDED` ($3.5\%$ clean share, preventing hallucination).
 2. **Anytime Deadline with Passive Net:** Under hard time limits, candidate evaluation truncates deterministically at budget $B$. An asynchronous background thread reads the remaining candidates to verify decision concordance.
 
 </div>
@@ -259,144 +259,177 @@ The full-width Master Comparison Table below provides an exhaustive comparative 
 <div style="column-span: all; margin: 24px 0;">
   <div style="background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 16px; overflow-x: auto;">
     <div style="font-size: 14px; font-weight: 700; color: #38bdf8; margin-bottom: 12px; text-align: center;">
-      MASTER COMPARATIVE EVALUATION: PERCEPTUAL INDEXING SCHEMES &amp; TIDE RUNTIME (BANK V3, N=700 RECORDS)
+      MASTER COMPARATIVE EVALUATION: PERCEPTUAL INDEXING SCHEMES &amp; MPCS COGNITIVE GENERATIONS (BANK V3, N=700 RECORDS)
     </div>
     <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: right; color: #e2e8f0;">
       <thead>
         <tr style="border-bottom: 2px solid #475569; background: #1e293b; color: #f8fafc;">
           <th style="padding: 10px; text-align: left;">Architecture / Index Scheme</th>
           <th style="padding: 10px; text-align: center;">Time Complexity</th>
-          <th style="padding: 10px;">Space (KB)</th>
+          <th style="padding: 10px;">Deep Space (KB)</th>
           <th style="padding: 10px;">Bytes/Rec</th>
           <th style="padding: 10px;">Build Time</th>
           <th style="padding: 10px;">Clean Mean Lat.</th>
           <th style="padding: 10px;">Clean p95 Lat.</th>
-          <th style="padding: 10px;">Recall@1</th>
-          <th style="padding: 10px;">Recall@5</th>
           <th style="padding: 10px;">Clean Acc %</th>
-          <th style="padding: 10px;">Unsafe %</th>
+          <th style="padding: 10px;">Noisy Acc %</th>
+          <th style="padding: 10px;">Clean Unsafe %</th>
+          <th style="padding: 10px;">Noisy Unsafe %</th>
         </tr>
       </thead>
       <tbody>
         <tr style="border-bottom: 1px solid #334155;">
-          <td style="padding: 8px; text-align: left; font-weight: 600; color: #94a3b8;">Exact KNN (Dense Brute-Force)</td>
+          <td style="padding: 8px; text-align: left; font-weight: 600; color: #94a3b8;">Exact KNN (Malleable Z-Sim)</td>
           <td style="padding: 8px; text-align: center;">$O(N \cdot d)$</td>
-          <td style="padding: 8px;">104.0 KB</td>
-          <td style="padding: 8px;">152.1 B</td>
-          <td style="padding: 8px;">3.14 ms</td>
-          <td style="padding: 8px;">1.959 ms</td>
-          <td style="padding: 8px;">2.848 ms</td>
-          <td style="padding: 8px;">38.1%</td>
-          <td style="padding: 8px;">78.3%</td>
-          <td style="padding: 8px; font-weight: 700; color: #f87171;">38.1%</td>
-          <td style="padding: 8px;">19.4%</td>
+          <td style="padding: 8px;">93.7 KB</td>
+          <td style="padding: 8px;">137.1 B</td>
+          <td style="padding: 8px;">2.58 ms</td>
+          <td style="padding: 8px;">1.546 ms</td>
+          <td style="padding: 8px;">2.400 ms</td>
+          <td style="padding: 8px; font-weight: 700; color: #34d399;">94.8%</td>
+          <td style="padding: 8px; font-weight: 700; color: #38bdf8;">87.9%</td>
+          <td style="padding: 8px;">0.0%</td>
+          <td style="padding: 8px;">1.2%</td>
         </tr>
         <tr style="border-bottom: 1px solid #334155;">
           <td style="padding: 8px; text-align: left; font-weight: 600; color: #94a3b8;">BM25 Inverted Index</td>
-          <td style="padding: 8px; text-align: center;">$O(|Q| \cdot \text{avg}(DF))$</td>
-          <td style="padding: 8px;">100.7 KB</td>
-          <td style="padding: 8px;">147.4 B</td>
-          <td style="padding: 8px;">3.28 ms</td>
-          <td style="padding: 8px;">1.896 ms</td>
-          <td style="padding: 8px;">3.234 ms</td>
-          <td style="padding: 8px;">88.3%</td>
-          <td style="padding: 8px;">98.8%</td>
-          <td style="padding: 8px; font-weight: 700; color: #34d399;">88.3%</td>
-          <td style="padding: 8px;">8.2%</td>
+          <td style="padding: 8px; text-align: center;">$O(|Q| \cdot \overline{DF})$</td>
+          <td style="padding: 8px;">101.6 KB</td>
+          <td style="padding: 8px;">148.6 B</td>
+          <td style="padding: 8px;">2.91 ms</td>
+          <td style="padding: 8px;">1.186 ms</td>
+          <td style="padding: 8px;">1.946 ms</td>
+          <td style="padding: 8px; font-weight: 700; color: #34d399;">94.4%</td>
+          <td style="padding: 8px; font-weight: 700; color: #34d399;">88.1%</td>
+          <td style="padding: 8px;">0.0%</td>
+          <td style="padding: 8px;">1.2%</td>
         </tr>
         <tr style="border-bottom: 1px solid #334155; background: rgba(56, 189, 248, 0.05);">
-          <td style="padding: 8px; text-align: left; font-weight: 600; color: #38bdf8;">Counting Bloom (dlCBF L1)</td>
+          <td style="padding: 8px; text-align: left; font-weight: 600; color: #38bdf8;">Counting Bloom (dlCBF L1 Gate)</td>
           <td style="padding: 8px; text-align: center;">$O(k)$ hash $+ O(1)$</td>
-          <td style="padding: 8px; font-weight: 700; color: #38bdf8;">8.3 KB</td>
-          <td style="padding: 8px; font-weight: 700; color: #38bdf8;">12.1 B</td>
-          <td style="padding: 8px;">3.03 ms</td>
-          <td style="padding: 8px; font-weight: 700; color: #38bdf8;">0.027 ms (27 µs)</td>
-          <td style="padding: 8px;">0.046 ms</td>
-          <td style="padding: 8px;">50.0%</td>
-          <td style="padding: 8px;">50.0%</td>
-          <td style="padding: 8px;">50.0%*</td>
+          <td style="padding: 8px; font-weight: 700; color: #38bdf8;">8.8 KB</td>
+          <td style="padding: 8px; font-weight: 700; color: #38bdf8;">12.8 B</td>
+          <td style="padding: 8px;">2.73 ms</td>
+          <td style="padding: 8px; font-weight: 700; color: #38bdf8;">0.017 ms (17 µs)</td>
+          <td style="padding: 8px;">0.032 ms</td>
+          <td style="padding: 8px;">50.2%*</td>
+          <td style="padding: 8px;">29.4%*</td>
           <td style="padding: 8px;">0.0%</td>
+          <td style="padding: 8px;">1.2%</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #334155;">
+          <td style="padding: 8px; text-align: left; font-weight: 600; color: #94a3b8;">G4 MPCS Core v2 (Soft Z-Sim)</td>
+          <td style="padding: 8px; text-align: center;">$O(N \cdot d)$</td>
+          <td style="padding: 8px;">563.7 KB</td>
+          <td style="padding: 8px;">824.6 B</td>
+          <td style="padding: 8px;">11.79 ms</td>
+          <td style="padding: 8px;">3.638 ms</td>
+          <td style="padding: 8px;">5.293 ms</td>
+          <td style="padding: 8px; color: #f87171;">34.2%</td>
+          <td style="padding: 8px; color: #f87171;">34.6%</td>
+          <td style="padding: 8px; color: #f87171;">31.2%</td>
+          <td style="padding: 8px; color: #f87171;">30.4%</td>
         </tr>
         <tr style="border-bottom: 1px solid #334155; background: rgba(52, 211, 153, 0.05);">
-          <td style="padding: 8px; text-align: left; font-weight: 600; color: #34d399;">HyST Categorical Slots (L2)</td>
+          <td style="padding: 8px; text-align: left; font-weight: 600; color: #34d399;">G5 HyST (Hard/Soft Slots)</td>
           <td style="padding: 8px; text-align: center;">$O(S_{\text{slot}}) + O(N_{\text{cand}})$</td>
-          <td style="padding: 8px;">45.0 KB</td>
-          <td style="padding: 8px;">65.7 B</td>
-          <td style="padding: 8px;">17.33 ms</td>
-          <td style="padding: 8px;">2.489 ms</td>
-          <td style="padding: 8px;">4.106 ms</td>
+          <td style="padding: 8px;">559.0 KB</td>
+          <td style="padding: 8px;">817.8 B</td>
+          <td style="padding: 8px;">11.49 ms</td>
+          <td style="padding: 8px;">1.883 ms</td>
+          <td style="padding: 8px;">2.961 ms</td>
           <td style="padding: 8px;">64.0%</td>
-          <td style="padding: 8px;">97.5%</td>
-          <td style="padding: 8px;">64.0%</td>
+          <td style="padding: 8px;">46.7%</td>
           <td style="padding: 8px; font-weight: 700; color: #34d399;">1.2%</td>
+          <td style="padding: 8px; font-weight: 700; color: #34d399;">1.2%</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #334155; background: rgba(52, 211, 153, 0.08);">
+          <td style="padding: 8px; text-align: left; font-weight: 600; color: #34d399;">G7 SHMF (HMGI + HyST + Relax)</td>
+          <td style="padding: 8px; text-align: center;">$O(|M_Q| \cdot \bar{B}_m)$</td>
+          <td style="padding: 8px;">610.7 KB</td>
+          <td style="padding: 8px;">893.4 B</td>
+          <td style="padding: 8px;">12.14 ms</td>
+          <td style="padding: 8px;">2.094 ms</td>
+          <td style="padding: 8px;">3.854 ms</td>
+          <td style="padding: 8px; font-weight: 700; color: #34d399;">75.6%</td>
+          <td style="padding: 8px; font-weight: 700; color: #34d399;">68.1%</td>
+          <td style="padding: 8px; font-weight: 700; color: #34d399;">2.1%</td>
+          <td style="padding: 8px;">3.8%</td>
         </tr>
         <tr style="border-bottom: 1px solid #334155; background: rgba(192, 132, 252, 0.05);">
-          <td style="padding: 8px; text-align: left; font-weight: 600; color: #c084fc;">TIDE Engine (B=3 Anytime)</td>
-          <td style="padding: 8px; text-align: center;">$O(B \cdot \bar{d}) + O(\text{hops})$</td>
-          <td style="padding: 8px;">48.2 KB</td>
-          <td style="padding: 8px;">68.8 B</td>
-          <td style="padding: 8px;">18.50 ms</td>
-          <td style="padding: 8px; font-weight: 700; color: #c084fc;">1.340 ms</td>
-          <td style="padding: 8px;">2.110 ms</td>
-          <td style="padding: 8px;">71.9%</td>
-          <td style="padding: 8px;">92.4%</td>
-          <td style="padding: 8px; font-weight: 700; color: #c084fc;">71.9%</td>
-          <td style="padding: 8px; font-weight: 700; color: #34d399;">1.2%</td>
+          <td style="padding: 8px; text-align: left; font-weight: 600; color: #c084fc;">G8 KERL (Near-Miss Guard)</td>
+          <td style="padding: 8px; text-align: center;">$O(|M_Q| \cdot \bar{B}_m)$</td>
+          <td style="padding: 8px;">1,039.8 KB</td>
+          <td style="padding: 8px;">1,521.1 B</td>
+          <td style="padding: 8px;">23.22 ms</td>
+          <td style="padding: 8px;">2.662 ms</td>
+          <td style="padding: 8px;">4.782 ms</td>
+          <td style="padding: 8px; font-weight: 700; color: #c084fc;">75.0%</td>
+          <td style="padding: 8px; font-weight: 700; color: #c084fc;">67.7%</td>
+          <td style="padding: 8px; font-weight: 700; color: #34d399;">1.7%</td>
+          <td style="padding: 8px;">3.8%</td>
         </tr>
         <tr style="border-bottom: 1px solid #334155; background: rgba(192, 132, 252, 0.08);">
-          <td style="padding: 8px; text-align: left; font-weight: 600; color: #c084fc;">TIDE Engine (Full Traversal)</td>
+          <td style="padding: 8px; text-align: left; font-weight: 600; color: #c084fc;">G9 TIDE (3-Hop Activation)</td>
           <td style="padding: 8px; text-align: center;">$O(V_{\text{act}} + E_{\text{act}})$</td>
-          <td style="padding: 8px;">48.2 KB</td>
-          <td style="padding: 8px;">68.8 B</td>
-          <td style="padding: 8px;">18.50 ms</td>
-          <td style="padding: 8px;">1.450 ms</td>
-          <td style="padding: 8px;">2.320 ms</td>
-          <td style="padding: 8px;">64.8%</td>
-          <td style="padding: 8px;">89.1%</td>
-          <td style="padding: 8px;">64.8%</td>
-          <td style="padding: 8px; font-weight: 700; color: #34d399;">1.2%</td>
+          <td style="padding: 8px;">1,039.9 KB</td>
+          <td style="padding: 8px;">1,521.2 B</td>
+          <td style="padding: 8px;">25.00 ms</td>
+          <td style="padding: 8px;">4.544 ms</td>
+          <td style="padding: 8px;">9.936 ms</td>
+          <td style="padding: 8px; font-weight: 700; color: #c084fc;">75.0%</td>
+          <td style="padding: 8px; font-weight: 700; color: #c084fc;">67.7%</td>
+          <td style="padding: 8px; font-weight: 700; color: #34d399;">1.7%</td>
+          <td style="padding: 8px;">3.8%</td>
         </tr>
-        <tr style="border-bottom: 2px solid #475569; background: rgba(251, 191, 36, 0.05);">
-          <td style="padding: 8px; text-align: left; font-weight: 600; color: #fbbf24;">Hybrid Tri-Channel (LocalKG)</td>
-          <td style="padding: 8px; text-align: center;">$O(\log N) + O(E_{\text{hops}})$</td>
-          <td style="padding: 8px;">18,400.0 KB</td>
-          <td style="padding: 8px;">262.8 B</td>
-          <td style="padding: 8px;">1,250.0 ms</td>
-          <td style="padding: 8px;">2.450 ms</td>
-          <td style="padding: 8px;">5.800 ms</td>
-          <td style="padding: 8px; font-weight: 700; color: #fbbf24;">96.8%</td>
-          <td style="padding: 8px; font-weight: 700; color: #fbbf24;">99.4%</td>
-          <td style="padding: 8px; font-weight: 700; color: #fbbf24;">96.8%</td>
+        <tr style="border-bottom: 2px solid #475569; background: rgba(251, 191, 36, 0.08);">
+          <td style="padding: 8px; text-align: left; font-weight: 600; color: #fbbf24;">TIDE Urgent (B=3 Anytime)</td>
+          <td style="padding: 8px; text-align: center;">$O(B \cdot \bar{d}) + O(\text{hops})$</td>
+          <td style="padding: 8px;">674.8 KB</td>
+          <td style="padding: 8px;">987.1 B</td>
+          <td style="padding: 8px;">16.50 ms</td>
+          <td style="padding: 8px; font-weight: 700; color: #fbbf24;">1.855 ms</td>
+          <td style="padding: 8px;">2.968 ms</td>
+          <td style="padding: 8px; font-weight: 700; color: #fbbf24;">71.9%</td>
+          <td style="padding: 8px;">50.8%</td>
+          <td style="padding: 8px; font-weight: 700; color: #34d399;">1.2%</td>
           <td style="padding: 8px; font-weight: 700; color: #34d399;">1.2%</td>
         </tr>
       </tbody>
     </table>
     <div style="font-size: 11px; color: #94a3b8; margin-top: 8px;">
-      *dlCBF operates as an exact seen-before membership gate; queries matching stored records return instantaneously at 100% precision, while unseen queries pass to L2.
+      *dlCBF operates as an exact seen-before membership gate (61.9% clean gate blocked, 85.4% noisy gate blocked); in G4–G9 it serves exclusively as a non-blocking O(1) hint. Deep Space (KB) is measured via recursive Python object graph traversal.
     </div>
+  </div>
+</div>
+
+<div style="column-span: all; margin: 24px 0; text-align: center;">
+  <img src="./figures/fig5_benchmark_plots.svg" alt="Figure 5: Empirical Benchmark Suite" style="width: 100%; max-width: 960px; border-radius: 8px; border: 1px solid #334155; box-shadow: 0 4px 20px rgba(0,0,0,0.5);"/>
+  <div style="margin-top: 8px; font-size: 12.5px; color: #94a3b8;">
+    <strong>Figure 5:</strong> Empirical Quantitative Benchmark Suite on Bank v3 (700 Records, 960 Queries). (A) Action recommendation accuracy comparing clean vs. noisy queries. (B) Safety violation rate (Unsafe Action %), highlighting the 26x reduction achieved by HyST hard-slot gating (31.2% &rarr; 1.2%). (C) TIDE anytime deadline budget curve demonstrating the "Less-is-More" semantic foraging effect (71.9% accuracy at B=3 vs. 64.8% at Full Read). (D) TIDE epistemic sufficiency routing accuracy under non-urgent deliberation (DIRECT 97.3% clean accuracy vs. SUBGRAPH 76.1%).
   </div>
 </div>
 
 <div style="column-count: 2; column-gap: 32px; text-align: justify; font-size: 13.5px; line-height: 1.6;">
 
 #### 6.1 Critical Analysis of Indexing Dynamics
-1. **The Sub-Microsecond Speed of dlCBF ($27\,\mu\text{s}$):**
-   dlCBF achieves unprecedented latency by eschewing dense vector dot products entirely. Hashing an incoming summary tuple into four 32-bit integers requires approximately $180$ CPU cycles. For recurring clinical presentations, dlCBF provides instant gate pass verification. However, exact hashing cannot generalize: any typographical variation or novel symptom produces a filter miss, mandating progression to HyST and TIDE.
-2. **HyST Candidate Pruning ($0.45\,\text{ms}$):**
-   HyST eliminates $98\%$ of candidate records through hard-slot gating before computing distance metrics. This allows it to evaluate 700 records in $2.489\,\text{ms}$ while dropping the unsafe error rate from $19.4\%$ (KNN) to $1.2\%$.
-3. **TIDE Anytime Latency Invariance:**
-   As detailed in Table 2 below, TIDE’s anytime deadline mechanism decouples deliberative latency from graph density. Whether budget is set to $B=3$ ($1.34\,\text{ms}$) or $B=50$ ($1.46\,\text{ms}$), latency remains strictly bounded below $2.5\,\text{ms}$ while maintaining an invariant $1.2\%$ unsafe action rate.
+1. **The Sub-Microsecond Speed of dlCBF ($17\,\mu\text{s}$):**
+   dlCBF achieves unprecedented latency ($0.017\,\text{ms}$ mean, $8.8\,\text{KB}$ deep memory) by eschewing dense vector dot products entirely. Hashing an incoming summary tuple into four 32-bit integers requires approximately $180$ CPU cycles. Because exact hashing blocks near-miss variants ($61.9\%$ clean gate-blocked, $85.4\%$ noisy gate-blocked), MPCS generations `G4`–`G9` use dlCBF strictly as an $O(1)$ exact-repeat hint rather than a hard pre-retrieval blocker.
+2. **HyST Safety Jump &amp; SHMF Auto-Relaxation:**
+   Unconstrained soft similarity (`G4`) suffers a $31.2\%$ unsafe action rate. Introducing `G5 HyST` hard safety slots slashes unsafe errors by $26\times$ down to $1.2\%$ while nearly doubling clean accuracy ($34.2\% \rightarrow 64.0\%$). Combining HMGI modality partitioning with HyST and auto-relaxation (`G7 SHMF`) boosts clean accuracy to $75.6\%$ and noisy accuracy to $68.1\%$.
+3. **TIDE Anytime Latency Invariance &amp; "Less-is-More" Foraging:**
+   As detailed in Table 2 below, TIDE’s anytime deadline mechanism decouples deliberative latency from graph density. Latency remains bounded around $1.68 \sim 1.98\,\text{ms}$ while maintaining an invariant $1.2\%$ unsafe action rate across all budgets.
 
 | Budget ($B$) | Read / Avail | Cut Short % | Clean Latency | Clean Acc % | Noisy Latency | Noisy Acc % | Full Read Agreement |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **$B=3$** | 2.2 / 25.4 | 59.2% | **1.34 ms** | **71.9%** | 1.37 ms | **50.8%** | 73.2% |
-| **$B=5$** | 3.3 / 25.4 | 50.2% | **1.36 ms** | **70.6%** | 1.26 ms | **49.6%** | 71.8% |
-| **$B=10$** | 5.6 / 25.4 | 41.0% | **1.43 ms** | **67.9%** | 1.25 ms | **48.5%** | 76.1% |
-| **$B=20$** | 9.2 / 25.4 | 30.2% | **1.54 ms** | **67.3%** | 1.26 ms | **47.3%** | 75.9% |
-| **$B=50$** | 14.4 / 25.4 | 10.0% | **1.46 ms** | **65.4%** | 1.42 ms | **46.9%** | 77.1% |
-| **Full** | 25.4 / 25.4 | 0.0% | **1.45 ms** | **64.8%** | 1.46 ms | **46.2%** | 100.0% |
+| **$B=3$** | 2.2 / 25.4 | 59.2% | **1.86 ms** | **71.9%** | 1.37 ms | **50.8%** | 73.2% |
+| **$B=5$** | 3.3 / 25.4 | 50.2% | **1.79 ms** | **70.6%** | 1.26 ms | **49.6%** | 71.8% |
+| **$B=10$** | 5.6 / 25.4 | 41.0% | **1.68 ms** | **67.9%** | 1.25 ms | **48.5%** | 76.1% |
+| **$B=20$** | 9.2 / 25.4 | 30.2% | **1.75 ms** | **67.3%** | 1.26 ms | **47.3%** | 75.9% |
+| **$B=50$** | 14.4 / 25.4 | 10.0% | **1.98 ms** | **65.4%** | 1.42 ms | **46.9%** | 77.1% |
+| **Full** | 25.4 / 25.4 | 0.0% | **1.88 ms** | **64.8%** | 1.46 ms | **46.2%** | 100.0% |
 
-Notably, accuracy is **highest at $B=3$ ($71.9\%$)**, declining slightly as $B \rightarrow \text{Full}$ ($64.8\%$). This empirically confirms the Hills foraging hypothesis: reading lower-activation peripheral nodes introduces noise rather than signal, whereas prioritizing high-salience seeds yields the most accurate decisions.
+Notably, accuracy is **highest at $B=3$ ($71.9\%$ clean, $50.8\%$ noisy)**, declining gradually as $B \rightarrow \text{Full}$ ($64.8\%$ clean, $46.2\%$ noisy). This empirically confirms the Hills foraging hypothesis: reading lower-activation peripheral nodes dilutes top-seed consensus, whereas prioritizing the top $2.2$ affect-boosted seeds yields the most accurate decisions. Under non-urgent deliberation (`urgent=False`), TIDE routes $7.7\%$ of clean queries to `DIRECT` at **$97.3\%$ accuracy** ($90.0\%$ noisy), $88.8\%$ to `SUBGRAPH` at **$76.1\%$ accuracy** ($69.8\%$ noisy), and $3.5\%$ to `UNGROUNDED`.
 
 ---
 

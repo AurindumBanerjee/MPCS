@@ -194,7 +194,9 @@ def build_single_remedy_kg(
         extracted_file = pipeline.run_on_chunks_file(chunks_path, limit=limit)
 
         # Merge supplementary PubMed records
-        pubmed_path = Path(r"D:\MyStuff\GitHub\MPCS\docs\Arnica_and_Belladonna_PubMed_Records.json")
+        pubmed_path = Path(r"D:\MyStuff\GitHub\MPCS\docs\Materia_Medica_PubMed_Records.json")
+        if not pubmed_path.exists():
+            pubmed_path = Path(r"D:\MyStuff\GitHub\MPCS\docs\Arnica_and_Belladonna_PubMed_Records.json")
         append_pubmed_literature_to_extracted(remedy_name, pubmed_path, extracted_file)
 
         html_out = DATA_DIR / "extracted" / output_html_name

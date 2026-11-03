@@ -191,10 +191,12 @@ class LKGQueryTools:
             pass
 
         # Chroma / memory fallback
-        occurrences = self.chroma.occurrences_col.get(
-            where={"remedy_id": rem_id},
-            include=["documents", "metadatas"],
-        )
+        occurrences = None
+        if self.chroma.occurrences_col is not None:
+            occurrences = self.chroma.occurrences_col.get(
+                where={"remedy_id": rem_id},
+                include=["documents", "metadatas"],
+            )
         sections_dict = {}
         if occurrences and occurrences["ids"]:
             for doc_id, doc, meta in zip(

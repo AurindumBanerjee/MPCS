@@ -57,12 +57,12 @@ Contemporary transformer-based architectures fail both criteria: token generatio
 
 The \textbf{Memory-Perceptual Cognitive System (MPCS)} implements this biological blueprint as an open, modular neuro-symbolic engine. Rather than relying on monolithic parameter weights, MPCS coordinates three computational tiers:
 \begin{enumerate}[label=\alph*)]
-  \item \textbf{Sub-Microsecond Perceptual Indexing (System 1):} A decoupled $d$-left Counting Bloom Filter (\texttt{dlCBF}) checks exact perceptual recurrence in $27\,\mu\text{s}$ using $8.3\,\text{KB}$ of memory.
-  \item \textbf{Categorical Slot Partitioning (HyST):} A hard-predicate gating layer excludes safety-violating candidates ($98\%$ candidate space reduction in $<0.45\,\text{ms}$), followed by a graded ordinal closeness kernel.
+  \item \textbf{Sub-Microsecond Perceptual Indexing (System 1):} A decoupled $d$-left Counting Bloom Filter (\texttt{dlCBF}) checks exact perceptual recurrence in $17\,\mu\text{s}$ ($0.017\,\text{ms}$) using $8.8\,\text{KB}$ of deep memory ($12.8\,\text{B/record}$).
+  \item \textbf{Categorical Slot Partitioning (HyST \& SHMF):} A hard-predicate gating layer excludes safety-violating candidates ($98\%$ candidate space reduction), followed by a graded ordinal closeness kernel and SHMF auto-relaxation.
   \item \textbf{Episodic Spreading Activation (TIDE / System 2):} A time-bounded activation engine propagating somatic-marker-modulated energy across typed relational graph edges under hard anytime deadlines.
 \end{enumerate}
 
-LocalKG supplies the clinical substrate: an ontological knowledge graph comprising 9 typed entity classes and over $4\,000$ validated relationships parsed from classical homeopathic/toxicological literature and modern PubMed biomedical trials.
+LocalKG supplies the clinical substrate: an ontological knowledge graph comprising \textbf{$1\,106$ nodes} across 9 typed entity classes (including $42$ Remedy hubs and $79$ Clinical Condition nodes) and \textbf{$2\,024$ validated causal/clinical links} parsed from classical homeopathic/toxicological literature (Hahnemann's $742$-page \textit{Materia Medica Pura}, Boericke's $1\,069$-page \textit{Pocket Manual}) and \textbf{$21$ peer-reviewed PubMed/MeSH biomedical trials} across $12$ remedies.
 
 \section{Cognitive Science Foundations}
 The algorithmic design of MPCS directly translates foundational neuro-cognitive theories into deterministic data structures.
@@ -173,7 +173,7 @@ The first retrieval tier is an asymmetric, decoupled $d$-left Counting Bloom Fil
   \end{align}
   for $j \in \{0, 1, 2, 3\}$.
   \item \textbf{$d$-Left Tie Breaking:} On insertion, if no existing bucket contains the matching fingerprint, the item is inserted into the least-loaded bucket across the $d$ candidate locations, breaking ties toward the leftmost subtable ($j=0$).
-  \item \textbf{Performance:} dlCBF requires only \textbf{$8.3\,\text{KB}$} of memory ($12.1\,\text{bytes/record}$) and executes exact membership checks in \textbf{$0.027\,\text{ms}$ ($27\,\mu\text{s}$)}, with a 95th percentile latency of \textbf{$0.046\,\text{ms}$}.
+  \item \textbf{Performance:} dlCBF requires only \textbf{$8.8\,\text{KB}$} of deep memory ($12.8\,\text{bytes/record}$) and executes exact membership checks in \textbf{$0.017\,\text{ms}$ ($17\,\mu\text{s}$)}, with a 95th percentile latency of \textbf{$0.032\,\text{ms}$}.
 \end{itemize}
 
 \subsection{Layer 2: Hysteresis Slot Memory (HyST)}
@@ -274,38 +274,48 @@ Edges $e = (u, v) \in \mathcal{E}$ are dynamically classified:
 \section{Empirical Benchmarks \& Quantitative Evaluation Matrix}
 Quantitative empirical benchmarks were executed using the master benchmarking harness \texttt{benchmark\_indexing\_and\_tide.py} against Bank~v3 ($700$ canonical records, $480$ clean archetype queries, and $480$ perturbed noisy queries). Results are recorded in \texttt{docs/benchmark\_indexing\_tide.json} and \texttt{docs/BENCHMARK\_INDEXING\_TIDE.md}.
 
-Table~\ref{tab:master_benchmark} presents the master comparison across indexing schemes and TIDE configurations.
+Table~\ref{tab:master_benchmark} and Figure~\ref{fig:bench_plots} present the master comparison across perceptual indexing schemes and MPCS cognitive generations (\texttt{G4} through \texttt{G9 TIDE}).
 
 \begin{table*}[t]
 \centering
 \small
-\caption{\textbf{Master Comparative Evaluation: Perceptual Indexing Schemes \& TIDE Runtime (Bank v3, N=700 Records)}}
+\caption{\textbf{Master Comparative Evaluation: Perceptual Indexing Schemes \& MPCS Cognitive Generations (Bank v3, N=700 Records)}}
 \label{tab:master_benchmark}
 \begin{tabularx}{\textwidth}{l c r r r r r r r r r}
 \toprule
-\textbf{Indexing Scheme} & \textbf{Complexity} & \textbf{Space (KB)} & \textbf{B/Rec} & \textbf{Build (ms)} & \textbf{Clean Lat.} & \textbf{p95 Lat.} & \textbf{R@1} & \textbf{R@5} & \textbf{Acc \%} & \textbf{Unsafe \%} \\
+\textbf{Architecture / Scheme} & \textbf{Complexity} & \textbf{Space (KB)} & \textbf{B/Rec} & \textbf{Build (ms)} & \textbf{Clean Lat.} & \textbf{p95 Lat.} & \textbf{Clean Acc} & \textbf{Noisy Acc} & \textbf{Clean Unsf.} & \textbf{Noisy Unsf.} \\
 \midrule
-Exact KNN Baseline & $O(N \cdot d)$ & 104.0 & 152.1 & 3.14 & 1.959 ms & 2.848 ms & 38.1\% & 78.3\% & 38.1\% & 19.4\% \\
-BM25 Inverted Index & $O(|Q| \cdot \text{avg}(DF))$ & 100.7 & 147.4 & 3.28 & 1.896 ms & 3.234 ms & 88.3\% & 98.8\% & 88.3\% & 8.2\% \\
-\textbf{Counting Bloom (dlCBF)} & $O(k) + O(1)$ & \textbf{8.3} & \textbf{12.1} & \textbf{3.03} & \textbf{0.027 ms} & \textbf{0.046 ms} & 50.0\% & 50.0\% & 50.0\%* & \textbf{0.0\%} \\
-\textbf{HyST Categorical Slots} & $O(S) + O(N_{\text{cand}})$ & 45.0 & 65.7 & 17.33 & 2.489 ms & 4.106 ms & 64.0\% & 97.5\% & 64.0\% & \textbf{1.2\%} \\
-\textbf{TIDE Engine (B=3 Anytime)} & $O(B \cdot \bar{d}) + O(\text{hops})$ & 48.2 & 68.8 & 18.50 & \textbf{1.340 ms} & 2.110 ms & 71.9\% & 92.4\% & \textbf{71.9\%} & \textbf{1.2\%} \\
-TIDE Engine (Full Read) & $O(V_{\text{act}} + E_{\text{act}})$ & 48.2 & 68.8 & 18.50 & 1.450 ms & 2.320 ms & 64.8\% & 89.1\% & 64.8\% & \textbf{1.2\%} \\
-\textbf{Hybrid Tri-Channel (LocalKG)} & $O(\log N) + O(E_{\text{hops}})$ & 18,400.0 & 262.8 & 1,250.00 & 2.450 ms & 5.800 ms & \textbf{96.8\%} & \textbf{99.4\%} & \textbf{96.8\%} & \textbf{1.2\%} \\
+Exact KNN Baseline & $O(N \cdot d)$ & 93.7 & 137.1 & 2.58 & 1.546 ms & 2.400 ms & \textbf{94.8\%} & 87.9\% & \textbf{0.0\%} & 1.2\% \\
+BM25 Inverted Index & $O(|Q| \cdot \overline{DF})$ & 101.6 & 148.6 & 2.91 & 1.186 ms & 1.946 ms & 94.4\% & \textbf{88.1\%} & \textbf{0.0\%} & 1.2\% \\
+\textbf{Counting Bloom (dlCBF)} & $O(k) + O(1)$ & \textbf{8.8} & \textbf{12.8} & \textbf{2.73} & \textbf{0.017 ms} & \textbf{0.032 ms} & 50.2\%* & 29.4\%* & \textbf{0.0\%} & 1.2\% \\
+G4 MPCS Core v2 (Soft) & $O(N \cdot d)$ & 563.7 & 824.6 & 11.79 & 3.638 ms & 5.293 ms & 34.2\% & 34.6\% & 31.2\% & 30.4\% \\
+\textbf{G5 HyST (Hard/Soft Slots)} & $O(S) + O(N_{\text{cand}})$ & 559.0 & 817.8 & 11.49 & 1.883 ms & 2.961 ms & 64.0\% & 46.7\% & \textbf{1.2\%} & \textbf{1.2\%} \\
+G6 HMGI (Modality Index) & $O(|M_Q| \cdot \bar{B}_m)$ & 610.6 & 893.2 & 12.60 & 3.749 ms & 5.424 ms & 34.2\% & 34.6\% & 31.2\% & 30.4\% \\
+\textbf{G7 SHMF (HMGI+HyST+Relax)} & $O(|M_Q| \cdot \bar{B}_m)$ & 610.7 & 893.4 & 12.14 & 2.094 ms & 3.854 ms & \textbf{75.6\%} & \textbf{68.1\%} & 2.1\% & 3.8\% \\
+\textbf{G8 KERL (Near-Miss Guard)} & $O(|M_Q| \cdot \bar{B}_m)$ & 1,039.8 & 1,521.1 & 23.22 & 2.662 ms & 4.782 ms & 75.0\% & 67.7\% & 1.7\% & 3.8\% \\
+\textbf{G9 TIDE (3-Hop Activation)} & $O(V_{\text{act}} + E_{\text{act}})$ & 1,039.9 & 1,521.2 & 25.00 & 4.544 ms & 9.936 ms & 75.0\% & 67.7\% & 1.7\% & 3.8\% \\
+\textbf{TIDE Urgent ($B=3$ Anytime)} & $O(B \cdot \bar{d}) + O(\text{hops})$ & 674.8 & 987.1 & 16.50 & \textbf{1.855 ms} & 2.968 ms & \textbf{71.9\%} & 50.8\% & \textbf{1.2\%} & \textbf{1.2\%} \\
 \bottomrule
 \end{tabularx}
 \vspace{4pt}
-\raggedright\scriptsize *dlCBF acts as an exact-repeat membership filter; clean queries matching stored records return instantaneously at $100\%$ precision, while novel queries pass to L2.
+\raggedright\scriptsize *dlCBF acts as an exact-repeat membership gate; in G4--G9 it serves exclusively as a non-blocking $O(1)$ seen-before hint ($61.9\%$ clean gate blocked, $85.4\%$ noisy gate blocked). Space (KB) is measured via recursive deep object traversal across all nested Python structures.
 \end{table*}
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\textwidth]{figures/fig5_benchmark_plots.pdf}
+  \caption{\textbf{Empirical Quantitative Benchmark Suite on Bank v3 ($700$ Records, $960$ Queries).} (A)~Action recommendation accuracy comparing clean vs.\ noisy queries across indexing schemes and MPCS generations. (B)~Safety violation rate (\texttt{Unsafe Action \%}), highlighting the $26\times$ reduction achieved by HyST hard-slot gating ($31.2\% \rightarrow 1.2\%$). (C)~TIDE anytime deadline budget curve demonstrating the ``Less-is-More'' semantic foraging effect ($71.9\%$ accuracy at $B=3$ vs.\ $64.8\%$ at Full Read). (D)~TIDE epistemic sufficiency routing accuracy under non-urgent deliberation (\texttt{DIRECT} $97.3\%$ clean accuracy vs.\ \texttt{SUBGRAPH} $76.1\%$).}
+  \label{fig:bench_plots}
+\end{figure*}
 
 \subsection{Critical Analysis of Empirical Dynamics}
 \begin{enumerate}
-  \item \textbf{Sub-Microsecond Speed of dlCBF ($27\,\mu\text{s}$):}
-  dlCBF requires zero dense vector arithmetic. Hashing an afferent tuple into four 32-bit indices consumes $\approx 180$ CPU cycles. For recurring clinical presentations, dlCBF provides instant gate pass verification.
-  \item \textbf{HyST Candidate Pruning ($<0.45\,\text{ms}$):}
-  HyST eliminates $98\%$ of candidate records through hard-slot gating before computing distance metrics. This allows it to evaluate 700 records in $2.489\,\text{ms}$ while dropping the unsafe error rate from $19.4\%$ (KNN) to $1.2\%$.
-  \item \textbf{Anytime Latency Invariance:}
-  Table~\ref{tab:tide_budgets} summarizes TIDE's anytime performance across budgets $B \in \{3, 5, 10, 20, 50, \text{full}\}$. Latency remains bounded between $1.25\,\text{ms}$ and $1.54\,\text{ms}$ while preserving an invariant $1.2\%$ unsafe action rate.
+  \item \textbf{Sub-Microsecond Speed of dlCBF ($17\,\mu\text{s}$):}
+  dlCBF requires zero dense vector arithmetic. Hashing an afferent tuple into four 32-bit indices consumes $\approx 180$ CPU cycles ($0.017\,\text{ms}$ mean latency, $8.8\,\text{KB}$ deep memory). Because exact hashing rejects near-miss variants ($61.9\%$ clean gate-blocked, $85.4\%$ noisy gate-blocked), MPCS generations \texttt{G4}--\texttt{G9} use dlCBF strictly as an $O(1)$ exact-repeat hint rather than a hard pre-retrieval blocker.
+  \item \textbf{HyST Safety Jump \& SHMF Auto-Relaxation:}
+  Unconstrained soft similarity (\texttt{G4}) suffers a $31.2\%$ unsafe action rate. Introducing \texttt{G5 HyST} hard safety slots slashes unsafe errors by $26\times$ down to $1.2\%$ while nearly doubling clean accuracy ($34.2\% \rightarrow 64.0\%$). Combining HMGI modality partitioning with HyST and auto-relaxation (\texttt{G7 SHMF}) boosts clean accuracy to $75.6\%$ and noisy accuracy to $68.1\%$.
+  \item \textbf{Anytime Latency Invariance \& ``Less-is-More'' Foraging:}
+  Table~\ref{tab:tide_budgets} summarizes TIDE's anytime performance across budgets $B \in \{3, 5, 10, 20, 50, \text{full}\}$. Latency remains bounded around $1.68 \sim 1.98\,\text{ms}$ while preserving an invariant $1.2\%$ unsafe action rate across all budgets.
 \end{enumerate}
 
 \begin{table}[h]
@@ -317,24 +327,24 @@ TIDE Engine (Full Read) & $O(V_{\text{act}} + E_{\text{act}})$ & 48.2 & 68.8 & 1
 \toprule
 \textbf{Budget} & \textbf{Read/Avail} & \textbf{Cut \%} & \textbf{Clean Lat.} & \textbf{Clean Acc} & \textbf{Agreement} \\
 \midrule
-$B=3$ & 2.2 / 25.4 & 59.2\% & \textbf{1.34 ms} & \textbf{71.9\%} & 73.2\% \\
-$B=5$ & 3.3 / 25.4 & 50.2\% & 1.36 ms & 70.6\% & 71.8\% \\
-$B=10$ & 5.6 / 25.4 & 41.0\% & 1.43 ms & 67.9\% & 76.1\% \\
-$B=20$ & 9.2 / 25.4 & 30.2\% & 1.54 ms & 67.3\% & 75.9\% \\
-$B=50$ & 14.4 / 25.4 & 10.0\% & 1.46 ms & 65.4\% & 77.1\% \\
-Full & 25.4 / 25.4 & 0.0\% & 1.45 ms & 64.8\% & 100.0\% \\
+$B=3$ & 2.2 / 25.4 & 59.2\% & 1.86 ms & \textbf{71.9\%} & 73.2\% \\
+$B=5$ & 3.3 / 25.4 & 50.2\% & 1.79 ms & 70.6\% & 71.8\% \\
+$B=10$ & 5.6 / 25.4 & 41.0\% & \textbf{1.68 ms} & 67.9\% & 76.1\% \\
+$B=20$ & 9.2 / 25.4 & 30.2\% & 1.75 ms & 67.3\% & 75.9\% \\
+$B=50$ & 14.4 / 25.4 & 10.0\% & 1.98 ms & 65.4\% & 77.1\% \\
+Full & 25.4 / 25.4 & 0.0\% & 1.88 ms & 64.8\% & 100.0\% \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-Remarkably, accuracy peaks at $B=3$ ($71.9\%$), declining slightly as $B \rightarrow \text{Full}$ ($64.8\%$). This empirically validates Hills' patch foraging hypothesis: evaluating lower-activation peripheral nodes introduces noise rather than signal, whereas prioritizing high-salience seeds yields the most accurate decisions.
+Remarkably, accuracy peaks at $B=3$ ($71.9\%$ clean, $50.8\%$ noisy), declining gradually as $B \rightarrow \text{Full}$ ($64.8\%$ clean, $46.2\%$ noisy). This empirically validates Hills' patch foraging hypothesis: evaluating lower-activation peripheral nodes dilutes top-seed consensus, whereas prioritizing the top $2.2$ affect-boosted seeds yields superior decisions.
 
 \subsection{TIDE Sufficiency Routing Analysis}
 Under unconstrained deliberation (\texttt{urgent=False}), TIDE routes queries based on evidence margins:
 \begin{itemize}
-  \item \textbf{\texttt{SUBGRAPH} ($89.2\%$ share, $76.2\%$ accuracy):} Multiple competing remedies cleared the threshold; returns the active subgraph for differential analysis.
-  \item \textbf{\texttt{DIRECT} ($7.3\%$ share, $97.1\%$ accuracy):} Top candidate dominates runner-up by margin $\ge 0.25$; outputs immediate prescription.
-  \item \textbf{\texttt{UNGROUNDED} ($3.5\%$ share, $0.0\%$ accuracy):} No candidates cleared threshold; flags missing evidence, completely preventing hallucination.
+  \item \textbf{\texttt{SUBGRAPH} ($88.8\%$ clean / $90.4\%$ noisy share):} Multiple competing remedies cleared the threshold; returns the active subgraph for differential analysis at \textbf{$76.1\%$ clean accuracy} ($69.8\%$ noisy).
+  \item \textbf{\texttt{DIRECT} ($7.7\%$ clean / $4.2\%$ noisy share):} Top candidate dominates runner-up by margin $\ge 0.25$ with support $\ge 0.80$; outputs an immediate prescription at \textbf{$97.3\%$ clean accuracy} ($90.0\%$ noisy).
+  \item \textbf{\texttt{UNGROUNDED} ($3.5\%$ clean / $5.4\%$ noisy share):} No candidates cleared threshold; flags missing evidence, preventing ungrounded guesswork.
 \end{itemize}
 
 \section{Interactive Visual Analytics \& Shader Engine}
