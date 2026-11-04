@@ -1,15 +1,17 @@
 \documentclass[10pt,twocolumn,letterpaper]{article}
 
 \usepackage[margin=0.7in,top=0.8in,bottom=0.8in,columnsep=24pt]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{mathptmx}
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{booktabs}
 \usepackage{tabularx}
 \usepackage{graphicx}
 \usepackage{xcolor}
 \usepackage{cite}
-\usepackage{microtype}
 \usepackage{enumitem}
-\usepackage{listings}
+\usepackage{fancyvrb}
+\DefineVerbatimEnvironment{codeblock}{Verbatim}{fontsize=\scriptsize,frame=single}
 \usepackage{titlesec}
 \usepackage[hyphens]{url}
 \usepackage[colorlinks=true,linkcolor=blue!70!black,citecolor=blue!70!black,urlcolor=blue!70!black]{hyperref}
@@ -21,15 +23,7 @@
 
 \setlist{nosep}
 
-\lstset{
-  basicstyle=\ttfamily\scriptsize,
-  breaklines=true,
-  frame=single,
-  backgroundcolor=\color{gray!8},
-  keywordstyle=\bfseries\color{blue!80!black},
-  commentstyle=\color{green!50!black},
-  stringstyle=\color{red!70!black}
-}
+
 
 \title{\LARGE\bfseries Neuro-Symbolic Cognitive Architectures for Grounded Clinical and Affective Decision Support: The MPCS-LocalKG Monograph}
 
@@ -44,11 +38,16 @@
 
 \begin{document}
 
-\maketitle
+\twocolumn[
+  \begin{@twocolumnfalse}
+    \maketitle
 
-\begin{abstract}
-Modern Large Language Models (LLMs) deployed in clinical decision support and affective psychiatry suffer from two systemic vulnerabilities: \textbf{ungrounded hallucinations} and \textbf{unpredictable deliberative inference latencies} (typically $800\,\text{ms}$ to $5\,000\,\text{ms}$). In emergency triage and safety-critical medical diagnosis, black-box token generation lacks deterministic verifiability, struggles with hard contraindication enforcement, and fails to maintain epistemic humility when clinical evidence is absent or corrupted. The \textbf{Memory-Perceptual Cognitive System (MPCS)} and its clinical counterpart \textbf{LocalKG} resolve this impasse through a unified neuro-symbolic cognitive architecture. MPCS couples ultra-low-compute perceptual indexing ($<3\,\mu\text{s}$ exact probabilistic hashing and categorical slot gating) with structured, time-bounded spreading activation over high-dimensional clinical knowledge graphs. Drawing from Dual-Process Theory (Kahneman System~1 vs. System~2), Damasio's Somatic Marker Hypothesis (Valence-Arousal-Dominance affect modulation), and Hills' Optimal Foraging in Semantic Memory, the architecture delivers: (1) \textbf{deterministic latency guarantees} via anytime deadline budgets ($B \in \{3, 5, 10, 20, 50, \text{full}\}$) enforcing sub-$2.5\,\text{ms}$ decision boundaries ($1.34\,\text{ms}$ at $B=3$); (2) \textbf{safety-critical grounding} maintaining an invariant $1.2\%$ unsafe action rate under extreme sensor noise, verified by a background counterfactual passive thread achieving $73.2\%$ exact agreement with exhaustive graph traversal; and (3) \textbf{dual-persona retrieval} dynamically partitioning verified core subgraphs ($\theta_{\text{conf}} = \max(A) \cdot 0.45$, pruning $>99\%$ of ambient graph noise for acute triage) from associative cross-remedy expansion ($\theta_{\text{expl}} = \max(A) \cdot 0.18$). We present an exhaustive technical audit of the complete codebase spanning \texttt{Model/} and \texttt{LocalKG/}, supported by quantitative empirical benchmarks on Bank~v3 ($N=700$ canonical records).
-\end{abstract}
+    \begin{abstract}
+    Modern Large Language Models (LLMs) deployed in clinical decision support and affective psychiatry suffer from two systemic vulnerabilities: \textbf{ungrounded hallucinations} and \textbf{unpredictable deliberative inference latencies} (typically $800\,\text{ms}$ to $5\,000\,\text{ms}$). In emergency triage and safety-critical medical diagnosis, black-box token generation lacks deterministic verifiability, struggles with hard contraindication enforcement, and fails to maintain epistemic humility when clinical evidence is absent or corrupted. The \textbf{Memory-Perceptual Cognitive System (MPCS)} and its clinical counterpart \textbf{LocalKG} resolve this impasse through a unified neuro-symbolic cognitive architecture. MPCS couples ultra-low-compute perceptual indexing ($<3\,\mu\text{s}$ exact probabilistic hashing and categorical slot gating) with structured, time-bounded spreading activation over high-dimensional clinical knowledge graphs. Drawing from Dual-Process Theory (Kahneman System~1 vs. System~2), Damasio's Somatic Marker Hypothesis (Valence-Arousal-Dominance affect modulation), and Hills' Optimal Foraging in Semantic Memory, the architecture delivers: (1) \textbf{deterministic latency guarantees} via anytime deadline budgets ($B \in \{3, 5, 10, 20, 50, \text{full}\}$) enforcing sub-$2.5\,\text{ms}$ decision boundaries ($1.34\,\text{ms}$ at $B=3$); (2) \textbf{safety-critical grounding} maintaining an invariant $1.2\%$ unsafe action rate under extreme sensor noise, verified by a background counterfactual passive thread achieving $73.2\%$ exact agreement with exhaustive graph traversal; and (3) \textbf{dual-persona retrieval} dynamically partitioning verified core subgraphs ($\theta_{\text{conf}} = 0.70$, pruning $>99\%$ of ambient graph noise for acute triage) from associative cross-remedy expansion ($\theta_{\text{expl}} = 0.35$). We present an exhaustive technical audit of the complete codebase spanning \texttt{Model/} and \texttt{LocalKG/}, supported by quantitative empirical benchmarks on Bank~v3 ($N=700$ canonical records).
+    \end{abstract}
+    \vspace{1.5em}
+  \end{@twocolumnfalse}
+]
 
 \section{Introduction \& Executive Overview}
 Clinical decision support systems operate under rigorous constraints where failure modes carry life-critical consequences. When evaluating acute somatic shock, toxicology emergencies, or acute psychiatric agitation, decision algorithms must guarantee immediate response times, exact contraindication enforcement, and total auditability.
@@ -88,13 +87,13 @@ Antonio Damasio demonstrated that rational decision-making is inextricably tied 
 Thomas Hills et al. showed that memory retrieval operates as spatial patch foraging governed by the Marginal Value Theorem (MVT). Search agents exploit a semantic patch (a local cluster of related rubrics) until the marginal associative gain drops below the global opportunity cost, triggering an exploratory transition across semantic patches.
 In MPCS, this is formalized via dual-threshold query routing:
 \begin{equation}
-  \theta_{\text{conf}} = \max(A) \cdot 0.45, \quad \theta_{\text{expl}} = \max(A) \cdot 0.18
+  \theta_{\text{conf}} = 0.70, \quad \theta_{\text{expl}} = 0.35
 \end{equation}
 The Confident Persona executes within-patch exploitation (isolating primary keynote remedies), while the Exploratory Persona executes cross-patch traversal (discovering constitutional cross-links, miasmatic complements, and secondary modalities).
 
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=\textwidth]{figures/fig1_cognitive_hierarchy.pdf}
+  \includegraphics[width=\textwidth]{figures/fig1_cognitive_hierarchy}
   \caption{\textbf{MPCS Dual-Process Cognitive Architecture \& Semantic Foraging Loop.} Sensory afferent inputs are bound into Z-number tuples and routed simultaneously to System~1 fast subsymbolic gating (dlCBF + HyST, $<3\,\mu\text{s}$) and the Damasio Somatic Marker engine. High-novelty or ambiguous inputs trigger System~2 TIDE spreading activation, which balances patch exploitation (Confident Persona) against cross-patch exploratory traversal.}
   \label{fig:cog_arch}
 \end{figure*}
@@ -151,9 +150,41 @@ Clinical modalities represent directional causal modifications. LocalKG partitio
 \end{itemize}
 Deterministic regex rules normalize over 80 natural language variations into canonical modality factors.
 
+\subsection{Comparative Evaluation of Extraction Paradigms: Heuristic vs. LLM vs. Hybrid}
+To construct a clinical knowledge graph from 19th-century materia medica treatises, candidate extraction must balance syntactic fidelity against semantic comprehension without introducing ungrounded hallucinations or unhandled runtime exceptions. In the \texttt{Extraction\_KRAG/} framework, three extraction paradigms were evaluated against curated clinical gold standard annotations ($8$ polychrests, $26$ canonical keynotes):
+\begin{enumerate}
+  \item \textbf{Method 1: Rule-Based Heuristic Baseline (\texttt{rule\_based\_client.py}):} A deterministic regex grammar and punctuation-splitting engine executing fully offline ($0$ API cost). While guaranteeing 100\% verbatim quote faithfulness, heuristic parsing suffers from high semantic noise ($15\% \sim 20\%$ non-symptom artifacts) and severe section-header bias, achieving only $61.5\%$ keynote recall ($4.0\%$ precision, $7.5\%$ F1).
+  \item \textbf{Method 2: Pure Zero-Shot LLM (\texttt{groq\_client.py}):} Direct zero-shot prompting of an open-weights large language model (\texttt{openai/gpt-oss-120b} on Groq) constrained by strict Pydantic JSON schemas. While achieving high clinical comprehension ($80.8\%$ keynote recall, a $+19.3\%$ absolute increase over baseline), pure LLM extraction proved operationally brittle: $24$ text chunks failed runtime schema validation ($21.0\%$ batch error rate) due to API timeouts, JSON delimiter truncations, and null modality types.
+  \item \textbf{Method 3: Hybrid Neuro-Symbolic Pipeline (\texttt{hybrid\_client.py}):} A two-stage architecture coupling deterministic candidate extraction with LLM-guided semantic auditing (\texttt{hybrid\_audit\_v1.md}). The symbolic stage grounds candidate tokens verbatim in the source chunk, while the LLM auditor performs noise pruning and semantic disambiguation. The hybrid pipeline matches the $80.8\%$ keynote recall of pure LLMs while eliminating all runtime crashes ($0$ batch errors, $100\%$ completion rate) and suppressing noise artifacts below $0.5\%$ (Table~\ref{tab:extraction_benchmark}).
+\end{enumerate}
+
+\begin{table}[h]
+\centering
+\small
+\caption{\textbf{Comparative Benchmark Evaluation of Extraction Paradigms (Gold Materia Medica Keynote Suite)}}
+\label{tab:extraction_benchmark}
+\begin{tabularx}{\columnwidth}{l r r r r r}
+\toprule
+\textbf{Extraction Pipeline} & \textbf{Recall} & \textbf{Prec.} & \textbf{F1} & \textbf{Noise \%} & \textbf{Batch Fail.} \\
+\midrule
+Rule-Based Baseline & 61.5\% & 4.0\% & 7.5\% & 15--20\% & \textbf{0 errors} \\
+Pure Groq LLM (120B) & \textbf{80.8\%} & 4.9\% & 9.2\% & < 2.0\% & 24 (21.0\%) \\
+\textbf{Hybrid Neuro-Symbolic} & \textbf{80.8\%} & \textbf{5.4\%} & \textbf{10.1\%} & \textbf{< 0.5\%} & \textbf{0 errors} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsubsection{Qualitative Semantic Auditing Case Studies}
+The necessity of neuro-symbolic arbitration is highlighted by three representative failure modes resolved by the hybrid auditor:
+\begin{itemize}
+  \item \textbf{Abbreviation Truncation (\textit{``St''} Orphan Node):} In \textit{Ignatia amara} introductory text (``\textit{St. Ignatius Bean...}''), heuristic period splitting truncated at the period, instantiating an isolated symptom node labeled \texttt{"St"}. The hybrid auditor identified ``\textit{St. Ignatius Bean}'' as the common botanical vernacular, mapping it to \texttt{intro.common\_names} while suppressing symptom creation.
+  \item \textbf{Substance Name Entity Pollution:} In \textit{Natrum muriaticum} (``\textit{Common Salt. Malnutrition, emaciation...}''), baseline regex extracted ``\textit{Common Salt}'' as an active physical pathology. The semantic auditor recognized the chemical identifier, transferring it to remedy metadata.
+  \item \textbf{Section-Bias Affective Disambiguation:} In historical treatises, mental distress frequently appears within introductory summaries rather than dedicated \textit{Mind} sections. Heuristic rules bound to section headers misclassified ``\textit{Grief}'' as a physical symptom; the semantic auditor resolved contextual clinical intent, correctly mapping the rubric to \texttt{kind="mental"} and binding it to the \textit{Mood / Affect Regulation} cognitive domain.
+\end{itemize}
+
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=\textwidth]{figures/fig2_extraction_pipeline.pdf}
+  \includegraphics[width=\textwidth]{figures/fig2_extraction_pipeline}
   \caption{\textbf{LocalKG Clinical \& Affective Ingestion Pipeline.} Historical source texts undergo OCR cleaning, structural section parsing, and strict Pydantic extraction backed by deterministic disk-caching (\texttt{llm\_cache/}). Symptoms are mapped to 3D VAD space and weighted via continuous linear regression ($W \in [0.0, 3.0]$) before integration into the 9-entity ontology graph.}
   \label{fig:ext_pipe}
 \end{figure*}
@@ -223,7 +254,7 @@ where $\gamma_{\text{decay}} = 0.50$, $|\mathcal{N}(i)|$ is the out-degree norma
 
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=\textwidth]{figures/fig3_memory_indexing_tide.pdf}
+  \includegraphics[width=\textwidth]{figures/fig3_memory_indexing_tide}
   \caption{\textbf{Multi-Layer Retrieval \& Spreading Activation Cascade.} Layer~1 executes exact $O(k)$ hash matching in $27\,\mu\text{s}$. Layer~2 applies hard predicate safety exclusions, pruning $98\%$ of candidate records in sub-millisecond time. Layer~3 (TIDE) seeds spreading activation with arousal gain, propagating energy across typed episode edges under strict anytime deadline budgets ($1.25 \sim 1.54\,\text{ms}$).}
   \label{fig:mem_index}
 \end{figure*}
@@ -242,10 +273,10 @@ Given normalized node activation scores $A(v) \in [0, 1]$ over graph vertices $\
 \end{equation}
 where thresholds are parameterized as:
 \begin{itemize}
-  \item \textbf{Confident Persona ($\theta_{\text{conf}} = \max(A) \cdot 0.45$):}
-  Active set $\mathcal{V}_{\text{active}} = \mathcal{V}_{\text{core}}$. In acute shock (e.g., *Aconitum* panic, *Arnica* blunt injury), the engine suppresses $>99\%$ of ambient nodes, isolating only keynote symptoms that exceed $45\%$ of peak energy.
-  \item \textbf{Exploratory Persona ($\theta_{\text{expl}} = \max(A) \cdot 0.18$):}
-  Active set $\mathcal{V}_{\text{active}} = \mathcal{V}_{\text{core}} \cup \mathcal{V}_{\text{expl}}$. In complex constitutional inquiries, the boundary expands down to $18\%$ of peak energy, revealing secondary modalities and remedy cross-links.
+  \item \textbf{Confident Persona ($\theta_{\text{conf}} = 0.70$):}
+  Active set $\mathcal{V}_{\text{active}} = \mathcal{V}_{\text{core}}$. In acute shock (e.g., *Aconitum* panic, *Arnica* blunt injury), the engine suppresses $>99\%$ of ambient nodes, isolating only keynote symptoms that exceed $0.70$ normalized activation energy.
+  \item \textbf{Exploratory Persona ($\theta_{\text{expl}} = 0.35$):}
+  Active set $\mathcal{V}_{\text{active}} = \mathcal{V}_{\text{core}} \cup \mathcal{V}_{\text{expl}}$. In complex constitutional inquiries, the boundary expands down to $0.35$ normalized energy, revealing secondary modalities and remedy cross-links.
 \end{itemize}
 
 \subsection{Topological Edge Classification}
@@ -266,7 +297,7 @@ Edges $e = (u, v) \in \mathcal{E}$ are dynamically classified:
 
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=\textwidth]{figures/fig4_dual_persona_flowchart.pdf}
+  \includegraphics[width=\textwidth]{figures/fig4_dual_persona_flowchart}
   \caption{\textbf{Dual-Persona Query Routing \& Topological Subgraph Partitioning.} Influx query terms seed initial activation with lexical and somatic arousal weights. Spreading activation computes normalized node scores. The query engine branches according to persona mode: Confident Persona applies a strict $45\%$ relative cutoff for core isolation, while Exploratory Persona incorporates secondary associative nodes ($18\%$ cutoff). Edges are dynamically partitioned into internal green links vs. external dashed pink bridging links.}
   \label{fig:dual_persona}
 \end{figure*}
@@ -303,7 +334,7 @@ G6 HMGI (Modality Index) & $O(|M_Q| \cdot \bar{B}_m)$ & 610.6 & 893.2 & 12.60 & 
 
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=\textwidth]{figures/fig5_benchmark_plots.pdf}
+  \includegraphics[width=\textwidth]{figures/fig5_benchmark_plots}
   \caption{\textbf{Empirical Quantitative Benchmark Suite on Bank v3 ($700$ Records, $960$ Queries).} (A)~Action recommendation accuracy comparing clean vs.\ noisy queries across indexing schemes and MPCS generations. (B)~Safety violation rate (\texttt{Unsafe Action \%}), highlighting the $26\times$ reduction achieved by HyST hard-slot gating ($31.2\% \rightarrow 1.2\%$). (C)~TIDE anytime deadline budget curve demonstrating the ``Less-is-More'' semantic foraging effect ($71.9\%$ accuracy at $B=3$ vs.\ $64.8\%$ at Full Read). (D)~TIDE epistemic sufficiency routing accuracy under non-urgent deliberation (\texttt{DIRECT} $97.3\%$ clean accuracy vs.\ \texttt{SUBGRAPH} $76.1\%$).}
   \label{fig:bench_plots}
 \end{figure*}
@@ -399,23 +430,23 @@ On Windows environments, console output defaults to Code Page 1252 (\texttt{cp12
 Resolution was enforced across two tiers:
 \begin{enumerate}
   \item Server and CLI entry points (\texttt{serve\_ui.py}) execute:
-  \begin{lstlisting}[language=Python]
+  \begin{codeblock}
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
-  \end{lstlisting}
+  \end{codeblock}
   \item In file serializers (\texttt{benchmark\_indexing\_and\_tide.py} and \texttt{affect.py}), explicit \texttt{encoding="utf-8"} with \texttt{errors="replace"} was established, alongside regex elimination of unmapped replacement glyphs (\texttt{\textbackslash ufffd}).
 \end{enumerate}
 
 \subsection{Single-Remedy Mandala Constraint Decoupling}
 In early versions of \texttt{graph\_viz.py}, filtering down to a single remedy forced the isolated medicine node onto the golden-angle phyllotaxis spiral, causing the graph center to drift eccentrically off-screen.
 This was resolved by decoupling the single-remedy layout:
-\begin{lstlisting}
+\begin{codeblock}
 const isSingleRemedy = (selectedRemedy !== "ALL" || meds.length <= 2);
 if (layoutMode === "galaxy" && isSingleRemedy) {
   const centerRem = simNodes.find(n => n.id === selectedRemedy) || meds[0];
   if (centerRem) { centerRem.x = 0; centerRem.y = 0; centerRem.pinned = true; }
 }
-\end{lstlisting}
+\end{codeblock}
 guaranteeing an origin-centered Radial Mandala for single-remedy inspections.
 
 \subsection{Action Space Safety Semantics}

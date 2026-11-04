@@ -40,7 +40,7 @@ The conceptual foundation of MPCS merges four seminal cognitive science paradigm
 |                               v                                                   |
 |                        [Patch Foraging]                                           |
 |                     /                   \                                         |
-|    Confident Core (θ=0.45)        Exploratory (θ=0.18)                            |
+|    Confident Core (θ=0.70)        Exploratory (θ=0.35)                            |
 |    [Internal Edges #06D6A0]       [External Edges #FF79C6]                        |
 +-----------------------------------------------------------------------------------+
 ```
@@ -61,8 +61,8 @@ where $\beta_{\text{salience}} = 0.80$ in TIDE configuration ([`TideConfig.salie
 #### 2.3 Hills Optimal Foraging in Semantic Memory
 Thomas Hills et al. demonstrated that human memory retrieval mirrors spatial patch foraging under the Marginal Value Theorem (MVT). Search agents exploit a rich semantic patch (local cluster of related memories or rubrics) until the marginal rate of associative return falls below the average harvest rate of the environment, triggering a strategic switch to exploratory cross-patch traversal.
 In MPCS, this is mathematically operationalized via dual-threshold query routing:
-- **Confident Persona (Patch Exploitation):** Gated at $\theta_{\text{conf}} = \max(A) \cdot 0.45$. The agent harvests strictly verified core nodes within the immediate clinical rubric.
-- **Exploratory Persona (Cross-Patch Traversal):** Gated at $\theta_{\text{expl}} = \max(A) \cdot 0.18$. The agent lowers its associative boundary, transitioning along external bridging links ($\mathcal{E}_{\text{ext}}$) to discover distant analogies, miasmatic relationships, and constitutional remedy cross-links.
+- **Confident Persona (Patch Exploitation):** Gated at $\theta_{\text{conf}} = 0.70$. The agent harvests strictly verified core nodes within the immediate clinical rubric.
+- **Exploratory Persona (Cross-Patch Traversal):** Gated at $\theta_{\text{expl}} = 0.35$. The agent lowers its associative boundary, transitioning along external bridging links ($\mathcal{E}_{\text{ext}}$) to discover distant analogies, miasmatic relationships, and constitutional remedy cross-links.
 
 #### 2.4 Dasgupta Neural Novelty Detection
 Drawing from Dasgupta, Stevens, and Navlakha (*Science* 2018), neural systems like the fruit fly (*Drosophila*) olfactory mushroom body utilize sparse, high-dimensional random projections (Bloom-like sketches) to calculate novelty without dense matrix inversions. MPCS implements this principle in its d-left counting Bloom accelerator, enabling $O(k)$ novel pattern detection before activating expensive deliberative layers.
@@ -125,6 +125,25 @@ Clinical modalities represent directional causal modifications of symptoms. Loca
 - **`AMELIORATED_BY` ($M \xrightarrow{\text{amel}} O$):** Restorative interventions that relieve suffering (e.g., gentle motion, heat, wrapping head).
 
 Deterministic regex parsing in [`canonicalize_modality_factor()`](file:///d:/MyStuff/GitHub/MPCS/LocalKG/src/lkg/extract/affect.py#L350) maps over 80 natural language variations into standardized clinical factors, eliminating unrecoverable OCR noise fragments.
+
+#### 3.5 Comparative Evaluation of Extraction Paradigms: Heuristic vs. LLM vs. Hybrid
+
+To construct a robust clinical knowledge graph from 19th-century materia medica treatises, candidate extraction must balance syntactic fidelity against semantic comprehension without introducing ungrounded hallucinations or unhandled runtime exceptions. In the `Extraction_KRAG/` framework, three extraction paradigms were evaluated against curated clinical gold standard annotations (8 polychrests, 26 canonical keynotes):
+
+1. **Method 1: Rule-Based Heuristic Baseline (`rule_based_client.py`):** Deterministic regex grammar and punctuation-splitting executing fully offline (0 API cost). While guaranteeing 100% verbatim quote faithfulness, heuristic parsing suffers from high semantic noise (15% ~ 20% non-symptom artifacts) and severe section-header bias, achieving only 61.5% keynote recall (4.0% precision, 7.5% F1).
+2. **Method 2: Pure Zero-Shot LLM (`groq_client.py`):** Direct zero-shot prompting of an open-weights large language model (`openai/gpt-oss-120b` on Groq) constrained by strict Pydantic JSON schemas. While achieving high clinical comprehension (80.8% keynote recall, a +19.3% absolute increase over baseline), pure LLM extraction proved operationally brittle: 24 text chunks failed runtime schema validation (21.0% batch error rate) due to API timeouts, JSON delimiter truncations, and null modality types.
+3. **Method 3: Hybrid Neuro-Symbolic Pipeline (`hybrid_client.py`):** A two-stage architecture coupling deterministic candidate extraction with LLM-guided semantic auditing (`hybrid_audit_v1.md`). The symbolic stage grounds candidate tokens verbatim in the source chunk, while the LLM auditor performs noise pruning and semantic disambiguation. The hybrid pipeline matches the 80.8% keynote recall of pure LLMs while eliminating all runtime crashes (0 batch errors, 100% completion rate) and suppressing noise artifacts below 0.5%.
+
+| Extraction Pipeline | Keynote Recall | Precision | F1 Score | Noise Artifacts | Batch Errors |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **Rule-Based Baseline** | 61.5% | 4.0% | 7.5% | High (15–20%) | **0 errors** |
+| **Pure Groq LLM (120B)** | **80.8%** | 4.9% | 9.2% | Low (< 2.0%) | 24 (21.0%) |
+| **Hybrid Neuro-Symbolic ⭐** | **80.8%** | **5.4%** | **10.1%** | **Lowest (< 0.5%)** | **0 errors** |
+
+##### Qualitative Semantic Auditing Case Studies
+- **Abbreviation Truncation (*"St"* Orphan Node):** In *Ignatia amara* intro (*"St. Ignatius Bean..."*), heuristic period splitting truncated at the period, instantiating an isolated symptom node labeled `"St"`. The hybrid auditor identified *"St. Ignatius Bean"* as common botanical vernacular, mapping it to `intro.common_names` while suppressing symptom creation.
+- **Substance Name Entity Pollution:** In *Natrum muriaticum* (*"Common Salt. Malnutrition, emaciation..."*), baseline regex extracted *"Common Salt"* as an active physical pathology. The semantic auditor recognized the chemical identifier, transferring it to remedy metadata.
+- **Section-Bias Affective Disambiguation:** In historical treatises, mental distress frequently appears within introductory summaries rather than dedicated *Mind* sections. Heuristic rules bound to section headers misclassified *"Grief"* as a physical symptom; the semantic auditor resolved contextual clinical intent, correctly mapping the rubric to `kind="mental"` and binding it to the *Mood / Affect Regulation* cognitive domain.
 
 </div>
 
@@ -219,9 +238,9 @@ $$\text{Class}(v) = \begin{cases}
 \text{Pruned} (\mathcal{V}_{\text{pruned}}), & \text{if } A(v) < \theta_{\text{expl}}
 \end{cases}$$
 
-- **Confident Persona ($\theta_{\text{conf}} = \max(A) \cdot 0.45$, default absolute $= 0.70$):**
+- **Confident Persona ($\theta_{\text{conf}} = 0.70$):**
   Active vertices $\mathcal{V}_{\text{active}} = \mathcal{V}_{\text{core}}$. In acute shock (e.g., *Aconitum* panic, *Arnica* blunt trauma), the model suppresses all ambient noise, isolating only keynote symptoms that exceed the $45\%$ relative activation ceiling. In large graphs ($>1\,000$ nodes), this achieves $>99\%$ noise pruning.
-- **Exploratory Persona ($\theta_{\text{expl}} = \max(A) \cdot 0.18$, default absolute $= 0.35$):**
+- **Exploratory Persona ($\theta_{\text{expl}} = 0.35$):**
   Active vertices $\mathcal{V}_{\text{active}} = \mathcal{V}_{\text{core}} \cup \mathcal{V}_{\text{expl}}$. In complex constitutional assessment, the boundary is expanded to $18\%$ of peak activation, revealing secondary modalities, cross-remedy relationships, and subtle emotional concomitants.
 
 #### 5.2 Topological Edge Classification
