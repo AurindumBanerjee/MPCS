@@ -160,10 +160,10 @@ To construct a clinical knowledge graph from 19th-century materia medica treatis
 
 \begin{table}[h]
 \centering
-\small
 \caption{\textbf{Comparative Benchmark Evaluation of Extraction Paradigms (Gold Materia Medica Keynote Suite)}}
 \label{tab:extraction_benchmark}
-\begin{tabularx}{\columnwidth}{l r r r r r}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{} l r r r r r @{}}
 \toprule
 \textbf{Extraction Pipeline} & \textbf{Recall} & \textbf{Prec.} & \textbf{F1} & \textbf{Noise \%} & \textbf{Batch Fail.} \\
 \midrule
@@ -171,7 +171,8 @@ Rule-Based Baseline & 61.5\% & 4.0\% & 7.5\% & 15--20\% & \textbf{0 errors} \\
 Pure Groq LLM (120B) & \textbf{80.8\%} & 4.9\% & 9.2\% & < 2.0\% & 24 (21.0\%) \\
 \textbf{Hybrid Neuro-Symbolic} & \textbf{80.8\%} & \textbf{5.4\%} & \textbf{10.1\%} & \textbf{< 0.5\%} & \textbf{0 errors} \\
 \bottomrule
-\end{tabularx}
+\end{tabular}%
+}
 \end{table}
 
 \subsubsection{Qualitative Semantic Auditing Case Studies}
@@ -198,7 +199,7 @@ The first retrieval tier is an asymmetric, decoupled $d$-left Counting Bloom Fil
   \item \textbf{Structural Dimensions:} $d = 4$ subtables, each comprising $m = 1\,024$ buckets ($4\,096$ total buckets), with $16$-bit fingerprints ($f = 16$).
   \item \textbf{Hashing Pipeline:} BLAKE2b 256-bit cryptographically secure hashing generates deterministic subtable indices and fingerprints:
   \begin{align}
-    \text{digest} &= \operatorname{BLAKE2b}(\text{PerceptSummary}, \text{digest\_size}=32) \\
+    \text{digest} &= \operatorname{BLAKE2b}(P_{\text{summary}}, \text{size}=32) \\
     \text{fp} &= (\text{digest}[0:8] \pmod{2^{16}}) \lor 1 \\
     \text{bucket}_j &= \text{digest}[8 + 4j : 12 + 4j] \pmod{1\,024}
   \end{align}
@@ -214,7 +215,7 @@ HyST resolves this by bifurcating the feature space into \textbf{Hard (Safety-Cr
 \begin{enumerate}
   \item \textbf{Hard Predicate Gating:} Hard slots are derived directly from safety reflex conditions:
   \begin{equation}
-    \mathcal{S}_{\text{hard}} = \{\text{thermal}, \text{contact}, \text{odor\_type}, \text{sound\_type}, \text{texture}\}
+    \mathcal{S}_{\text{hard}} = \{\text{therm}, \text{contact}, \text{odor}, \text{sound}, \text{texture}\}
   \end{equation}
   Any memory disagreeing on an active hard slot is discarded ($O(1)$ exclusion):
   \begin{equation}
@@ -266,9 +267,9 @@ LocalKG's Dual-Persona Engine (\texttt{persona\_engine.py}) formalizes the opera
 Given normalized node activation scores $A(v) \in [0, 1]$ over graph vertices $\mathcal{V}$, vertices are partitioned into three disjoint sets:
 \begin{equation}
   \text{Class}(v) = \begin{cases}
-    \mathcal{V}_{\text{core}} \text{ (Confident Core)}, & A(v) \ge \theta_{\text{conf}} \\
-    \mathcal{V}_{\text{expl}} \text{ (Exploratory Expansion)}, & \theta_{\text{expl}} \le A(v) < \theta_{\text{conf}} \\
-    \mathcal{V}_{\text{pruned}} \text{ (Suppressed Noise)}, & A(v) < \theta_{\text{expl}}
+    \mathcal{V}_{\text{core}} \text{ (Confident)}, & A(v) \ge \theta_{\text{conf}} \\
+    \mathcal{V}_{\text{expl}} \text{ (Exploratory)}, & \theta_{\text{expl}} \le A(v) < \theta_{\text{conf}} \\
+    \mathcal{V}_{\text{pruned}} \text{ (Pruned)}, & A(v) < \theta_{\text{expl}}
   \end{cases}
 \end{equation}
 where thresholds are parameterized as:
@@ -309,10 +310,10 @@ Table~\ref{tab:master_benchmark} and Figure~\ref{fig:bench_plots} present the ma
 
 \begin{table*}[t]
 \centering
-\small
 \caption{\textbf{Master Comparative Evaluation: Perceptual Indexing Schemes \& MPCS Cognitive Generations (Bank v3, N=700 Records)}}
 \label{tab:master_benchmark}
-\begin{tabularx}{\textwidth}{l c r r r r r r r r r}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{} l c r r r r r r r r r @{}}
 \toprule
 \textbf{Architecture / Scheme} & \textbf{Complexity} & \textbf{Space (KB)} & \textbf{B/Rec} & \textbf{Build (ms)} & \textbf{Clean Lat.} & \textbf{p95 Lat.} & \textbf{Clean Acc} & \textbf{Noisy Acc} & \textbf{Clean Unsf.} & \textbf{Noisy Unsf.} \\
 \midrule
@@ -327,7 +328,8 @@ G6 HMGI (Modality Index) & $O(|M_Q| \cdot \bar{B}_m)$ & 610.6 & 893.2 & 12.60 & 
 \textbf{G9 TIDE (3-Hop Activation)} & $O(V_{\text{act}} + E_{\text{act}})$ & 1,039.9 & 1,521.2 & 25.00 & 4.544 ms & 9.936 ms & 75.0\% & 67.7\% & 1.7\% & 3.8\% \\
 \textbf{TIDE Urgent ($B=3$ Anytime)} & $O(B \cdot \bar{d}) + O(\text{hops})$ & 674.8 & 987.1 & 16.50 & \textbf{1.855 ms} & 2.968 ms & \textbf{71.9\%} & 50.8\% & \textbf{1.2\%} & \textbf{1.2\%} \\
 \bottomrule
-\end{tabularx}
+\end{tabular}%
+}
 \vspace{4pt}
 \raggedright\scriptsize *dlCBF acts as an exact-repeat membership gate; in G4--G9 it serves exclusively as a non-blocking $O(1)$ seen-before hint ($61.9\%$ clean gate blocked, $85.4\%$ noisy gate blocked). Space (KB) is measured via recursive deep object traversal across all nested Python structures.
 \end{table*}
@@ -351,10 +353,10 @@ G6 HMGI (Modality Index) & $O(|M_Q| \cdot \bar{B}_m)$ & 610.6 & 893.2 & 12.60 & 
 
 \begin{table}[h]
 \centering
-\small
 \caption{\textbf{TIDE Anytime Budget Curve \& Passive Net Evaluation}}
 \label{tab:tide_budgets}
-\begin{tabularx}{\columnwidth}{l r r r r r}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{} l r r r r r @{}}
 \toprule
 \textbf{Budget} & \textbf{Read/Avail} & \textbf{Cut \%} & \textbf{Clean Lat.} & \textbf{Clean Acc} & \textbf{Agreement} \\
 \midrule
@@ -365,7 +367,8 @@ $B=20$ & 9.2 / 25.4 & 30.2\% & 1.75 ms & 67.3\% & 75.9\% \\
 $B=50$ & 14.4 / 25.4 & 10.0\% & 1.98 ms & 65.4\% & 77.1\% \\
 Full & 25.4 / 25.4 & 0.0\% & 1.88 ms & 64.8\% & 100.0\% \\
 \bottomrule
-\end{tabularx}
+\end{tabular}%
+}
 \end{table}
 
 Remarkably, accuracy peaks at $B=3$ ($71.9\%$ clean, $50.8\%$ noisy), declining gradually as $B \rightarrow \text{Full}$ ($64.8\%$ clean, $46.2\%$ noisy). This empirically validates Hills' patch foraging hypothesis: evaluating lower-activation peripheral nodes dilutes top-seed consensus, whereas prioritizing the top $2.2$ affect-boosted seeds yields superior decisions.
@@ -434,7 +437,7 @@ Resolution was enforced across two tiers:
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
   \end{codeblock}
-  \item In file serializers (\texttt{benchmark\_indexing\_and\_tide.py} and \texttt{affect.py}), explicit \texttt{encoding="utf-8"} with \texttt{errors="replace"} was established, alongside regex elimination of unmapped replacement glyphs (\texttt{\textbackslash ufffd}).
+  \item In file serializers (\nolinkurl{benchmark_indexing_and_tide.py} and \texttt{affect.py}), explicit \texttt{encoding="utf-8"} with \texttt{errors="replace"} was established, alongside regex elimination of unmapped replacement glyphs (\texttt{\textbackslash ufffd}).
 \end{enumerate}
 
 \subsection{Single-Remedy Mandala Constraint Decoupling}
@@ -498,9 +501,9 @@ For verification and replication, the core source artifacts are indexed below:
   \item \textbf{Clinical Ontology \& Schema:} \texttt{LocalKG/src/lkg/schema/graph.py}, \texttt{LocalKG/src/lkg/schema/extraction.py}
   \item \textbf{VAD Affect \& Regression Weighting:} \texttt{LocalKG/src/lkg/extract/affect.py}
   \item \textbf{Dual-Persona Query Engine:} \texttt{LocalKG/src/lkg/query/persona\_engine.py}
-  \item \textbf{High-DPI Canvas Shader Visualizer:} \texttt{LocalKG/src/lkg/viz/graph\_viz.py}
-  \item \textbf{Master Benchmark Harness \& Data:} \texttt{LocalKG/experiments/benchmark\_indexing\_and\_tide.py}, \texttt{docs/benchmark\_indexing\_tide.json}, \texttt{docs/BENCHMARK\_INDEXING\_TIDE.md}
-  \item \textbf{Pure KG Showcases (*Arnica* \& *Belladonna*):} \texttt{LocalKG/experiments/build\_pure\_kg\_showcases.py}, \texttt{docs/kg\_arnica\_montana\_showcase.html}, \texttt{docs/kg\_belladonna\_showcase.html}
+  \item \textbf{High-DPI Canvas Shader Visualizer:} \nolinkurl{LocalKG/src/lkg/viz/graph_viz.py}
+  \item \textbf{Master Benchmark Harness \& Data:} \nolinkurl{LocalKG/experiments/benchmark_indexing_and_tide.py}, \nolinkurl{docs/benchmark_indexing_tide.json}, \nolinkurl{docs/BENCHMARK_INDEXING_TIDE.md}
+  \item \textbf{Pure KG Showcases (*Arnica* \& *Belladonna*):} \nolinkurl{LocalKG/experiments/build_pure_kg_showcases.py}, \nolinkurl{docs/kg_arnica_montana_showcase.html}, \nolinkurl{docs/kg_belladonna_showcase.html}
 \end{itemize}
 
 \end{document}
