@@ -298,7 +298,7 @@ Edges $e = (u, v) \in \mathcal{E}$ are dynamically classified:
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\textwidth]{figures/fig4_dual_persona_flowchart}
-  \caption{\textbf{Dual-Persona Query Routing \& Topological Subgraph Partitioning.} Influx query terms seed initial activation with lexical and somatic arousal weights. Spreading activation computes normalized node scores. The query engine branches according to persona mode: Confident Persona applies a strict $45\%$ relative cutoff for core isolation, while Exploratory Persona incorporates secondary associative nodes ($18\%$ cutoff). Edges are dynamically partitioned into internal green links vs. external dashed pink bridging links.}
+  \caption{\textbf{Dual-Persona Query Routing \& Topological Subgraph Partitioning.} Influx query terms seed initial activation with lexical and somatic arousal weights. Spreading activation computes normalized node scores. The query engine branches according to persona mode: Confident Persona applies a strict $\theta_{\text{conf}} = 0.70$ cutoff for core isolation, while Exploratory Persona incorporates secondary associative nodes ($\theta_{\text{expl}} = 0.35$ cutoff). Edges are dynamically partitioned into internal green links vs. external dashed pink bridging links.}
   \label{fig:dual_persona}
 \end{figure*}
 

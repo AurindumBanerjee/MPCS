@@ -236,6 +236,9 @@ class PersonaQueryEngine:
         exploratory_nodes: list[QueryNode] = []
 
         for nid, raw_sc in norm_scores.items():
+            if raw_sc < theta_expl:
+                continue  # Fast prune: avoid instantiating Pydantic QueryNode for pruned ambient nodes
+
             n = self.nodes.get(nid)
             if not n:
                 continue
@@ -259,7 +262,7 @@ class PersonaQueryEngine:
             if sc >= theta_conf:
                 qnode.classification = NodeClassification.CONFIDENT_CORE
                 confident_nodes.append(qnode)
-            elif sc >= theta_expl:
+            else:
                 qnode.classification = NodeClassification.EXPLORATORY
                 exploratory_nodes.append(qnode)
 
@@ -275,27 +278,30 @@ class PersonaQueryEngine:
 
         active_ids = {n.id for n in active_node_list}
 
-        # 5. Edge Partitioning: Internal Subgraph vs External Bridging Edges
+        # 5. Edge Partitioning: Fast Adjacency Lookup over active frontier
         subgraph_internal: list[QueryEdge] = []
         subgraph_external: list[QueryEdge] = []
+        seen_edges: set[tuple[str, str]] = set()
 
-        for l in self.links:
-            src, tgt = l["source"], l["target"]
-            in_src = src in active_ids
-            in_tgt = tgt in active_ids
+        for u in active_ids:
+            for v, w, lbl in self.adj[u]:
+                edge_key = (u, v) if u < v else (v, u)
+                if edge_key in seen_edges:
+                    continue
+                seen_edges.add(edge_key)
 
-            if in_src and in_tgt:
-                subgraph_internal.append(QueryEdge(
-                    source=src, target=tgt, label=l.get("label", "RELATED"),
-                    weight=round(float(l.get("weight", 1.0)), 2),
-                    classification=EdgeClassification.INTERNAL
-                ))
-            elif in_src or in_tgt:
-                subgraph_external.append(QueryEdge(
-                    source=src, target=tgt, label=l.get("label", "RELATED"),
-                    weight=round(float(l.get("weight", 1.0)), 2),
-                    classification=EdgeClassification.EXTERNAL
-                ))
+                if v in active_ids:
+                    subgraph_internal.append(QueryEdge(
+                        source=u, target=v, label=lbl,
+                        weight=round(w, 2),
+                        classification=EdgeClassification.INTERNAL
+                    ))
+                else:
+                    subgraph_external.append(QueryEdge(
+                        source=u, target=v, label=lbl,
+                        weight=round(w, 2),
+                        classification=EdgeClassification.EXTERNAL
+                    ))
 
         total_nodes = len(self.nodes)
         total_links = len(self.links)

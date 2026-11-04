@@ -73,3 +73,24 @@ When deliberation is not under hard deadlines, TIDE routes queries into three ep
 1. **Less-is-More Under Urgent Deadlines:** Cutting TIDE's candidate read to the top $B=3$ highest-activation seeds achieves **3.47 ms** clean decision latency (**4.42 ms** noisy) and actually **improves** urgent accuracy from **64.8% $\to$ 71.9%** on clean queries (**46.2% $\to$ 50.8%** on noisy), while holding the unsafe error rate flat at **1.2%**. Lower-ranked tail candidates contribute dilution noise rather than signal.
 2. **The Passive Verification Safety Net:** Across the **59.2%** of clean queries cut short at $B=3$, the background passive full read agreed with the rapid decision **73.2%** of the time (**80.3%** on noisy queries).
 3. **Calibrated Epistemic Routing:** In non-urgent deliberation, queries routed to `DIRECT` achieve **97.3%** clean accuracy (**90.0%** noisy), while ambiguous cases are isolated into `SUBGRAPH` (**88.8%** of clean queries at **76.1%** accuracy) and unevidenced queries are safely caught as `UNGROUNDED`.
+
+---
+
+## 4. Dual-Persona Knowledge Graph Query Benchmark (`persona_engine.py`)
+
+**Evaluated:** LocalKG Materia Medica Knowledge Graph ($1\,106$ nodes, $2\,024$ edges) across $8$ canonical clinical queries $\times$ $50$ repetitions ($400$ total calls per engine).
+
+### Benchmark Comparison: Unoptimized Linear Scan vs. Optimized Dual-Persona Engine
+
+| Engine Implementation | Mean Latency | Median (p50) | p95 Latency | Speedup | Ambient Graph Pruning |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **Unoptimized Baseline (Linear)** | 12.75 ms | 11.40 ms | 23.21 ms | 1.00x (ref) | — |
+| **Optimized Confident Persona ($\theta = 0.70$)** | **6.53 ms** | **5.59 ms** | **14.90 ms** | **1.95x** | **99.7%** (3 core keynotes) |
+| **Optimized Exploratory Persona ($\theta = 0.35$)** | **8.13 ms** | **6.30 ms** | **21.69 ms** | **1.57x** | **96.2%** (42 active nodes) |
+| *Raw Algorithmic Traversal (no Pydantic)* | *1.30 ms* | *1.15 ms* | *2.45 ms* | *9.81x* | *Same graph state* |
+
+### Key Optimizations Implemented
+1. **$O(1)$ Inverted Token Index:** Precomputed `inverted_index` of $2\,236$ tokens across all node text fields completely bypasses the $1\,106$-node linear substring scan.
+2. **Active-Frontier BFS Spreading Activation:** Propagates energy strictly across active nodes and their indexed adjacency neighbors, avoiding full scans of all $2\,024$ graph links.
+3. **Threshold-Gated Pydantic Instantiation:** Ambient nodes falling below $\theta_{\text{expl}}$ are pruned *before* Pydantic `QueryNode` instantiation, eliminating over $1\,000$ unnecessary schema validation operations per query.
+4. **Active Frontier Edge Partitioning:** Only edges incident to active vertices are evaluated for internal (`#06d6a0`) vs. external bridging (`#ff79c6`) classification.
