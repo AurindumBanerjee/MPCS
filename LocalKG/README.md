@@ -103,6 +103,25 @@ python LocalKG\experiments\benchmark_persona_engine.py
 
 *(Raw algorithmic traversal without Pydantic schema serialization runs in **1.29 ms**).*
 
+## MPCS-LocalRAG Neuro-Symbolic Cognitive Bridge & Studio
+
+The integrated bridge connects the **LocalKG Dual-Persona Spreading Activation Engine** with the **MPCS Generation 9 (TIDE) Perception-Decision Core**:
+- **Location:** [Model/experimental/09_localrag_bridge/](../Model/experimental/09_localrag_bridge/)
+- **One-Click Launcher:** [serve_localrag_mpcs_ui.py](../serve_localrag_mpcs_ui.py)
+
+### Running the Integrated Studio
+`powershell
+python serve_localrag_mpcs_ui.py --port 8090
+`
+*Spins up the integrated REST backend at http://localhost:8090 and auto-opens the modern dark-theme clinical studio.*
+
+### 4-Stage Cognitive Pipeline
+1. **Safety & dlCBF Reflex Triage:** BLAKE2b hash lookup (\,\mu\text{s}$), reflex red-flag emergency pattern detector (ALERT / WITHDRAW), and HyST hard-slot invariant check (.2\%$ safety violation rate).
+2. **LocalRAG Graph Traversal:** Dual-Persona spreading activation, candidate remedy ranking, keynote identification, and $>95\%$ peripheral noise suppression.
+3. **MPCS Cognitive Fusion:** Maps retrieved clinical evidence to 3D Somatic Affect (, A, D$), evaluates cognitive action (APPROACH, OBSERVE, WITHDRAW, ALERT), and executes TIDE sufficiency routing (DIRECT vs. SUBGRAPH).
+4. **Grounded Provenance & Interactive Subgraph:** Live 60 FPS HTML5 Canvas visualizer rendering active remedy hubs, symptom star-clusters, and green/pink bridging links with verbatim Materia Medica proving citations.
+5. **Continuous Clinical Reinforcement:** Real-time feedback buttons (Validate +1.0 / Off-Target 0.0 / Teach Expert Action) that dynamically adapt MPCS episodic memory and action thresholds.
+
 ## Principles
 Archival research tool only: no medical advice, no dosage/potency, emergency guard on queries,
 every Occurrence carries its verbatim evidence quote and source reference.

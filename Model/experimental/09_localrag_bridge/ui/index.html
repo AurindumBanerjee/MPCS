@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MPCS-LocalRAG — Neuro-Symbolic Cognitive Studio</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Top Navigation & System Status Bar -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="logo-badge">MPCS</div>
+      <div class="title-group">
+        <h1>Neuro-Symbolic Cognitive Studio</h1>
+        <span class="version-tag">LocalRAG + MPCS Gen 9 (TIDE) · v3.4.0</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="status-chip" title="d-left Counting Bloom Filter">
+        <span class="status-dot green"></span>
+        <span class="chip-label">dlCBF Gate:</span>
+        <span class="chip-val" id="dlcbf-status">17 µs Ready</span>
+      </div>
+      <div class="status-chip" title="Hysteresis Hard Safety Slots">
+        <span class="status-dot green"></span>
+        <span class="chip-label">HyST Safety:</span>
+        <span class="chip-val">1.2% Invariant</span>
+      </div>
+      <div class="status-chip" title="Local Knowledge Graph Size">
+        <span class="status-dot blue"></span>
+        <span class="chip-label">LocalKG:</span>
+        <span class="chip-val" id="kg-stats">1,106 Nodes · 2,024 Edges</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="app-container">
+    <!-- Persona & Scenario Controls -->
+    <section class="control-panel glass-card">
+      <div class="persona-row">
+        <div class="persona-switch-group">
+          <label class="control-label">Operating Cognitive Persona:</label>
+          <div class="persona-toggle-container">
+            <button type="button" class="persona-btn active" id="btn-persona-doctor" data-persona="doctor">
+              <span class="persona-icon">👨‍⚕️</span>
+              <div class="btn-text">
+                <span class="p-title">Doctor / Clinician</span>
+                <span class="p-desc">Exploratory (θ = 0.35) · Differential Diagnosis · 2-Hop Subgraph</span>
+              </div>
+            </button>
+            <button type="button" class="persona-btn" id="btn-persona-patient" data-persona="patient">
+              <span class="persona-icon">🧑‍🤝‍🧑</span>
+              <div class="btn-text">
+                <span class="p-title">Patient / End-User</span>
+                <span class="p-desc">Confident (θ = 0.70) · Acute Keynote Triage · Suppressed Noise</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <div class="sample-pills-group">
+          <label class="control-label">Quick Archetype Scenarios:</label>
+          <div class="pills-scroll" id="archetype-pills">
+            <!-- Dynamic pills loaded from /api/sample_queries -->
+            <button class="pill-btn loading-pill" disabled>Loading scenarios...</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Query Bar -->
+      <div class="query-row">
+        <div class="input-wrapper">
+          <textarea id="query-input" rows="2" placeholder="Enter clinical symptoms, modalities, or layman distress (e.g., 'violent throbbing headache with high fever, dilated pupils, flushed red face, restless anxiety after cold dry wind')..."></textarea>
+          <button id="run-btn" class="execute-btn">
+            <span class="btn-icon">⚡</span>
+            <span>Execute Cognitive Loop</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Modalities Selector -->
+      <div class="modality-chips-row">
+        <span class="modality-title">Sensory Modalities:</span>
+        <div class="chip-group" data-group="thermal">
+          <span class="group-label">Thermal:</span>
+          <button class="mod-chip active" data-val="">Auto</button>
+          <button class="mod-chip" data-val="cold">Cold</button>
+          <button class="mod-chip" data-val="neutral">Neutral</button>
+          <button class="mod-chip" data-val="warm">Warm</button>
+          <button class="mod-chip" data-val="hot">Hot</button>
+        </div>
+        <div class="chip-group" data-group="motion">
+          <span class="group-label">Motion:</span>
+          <button class="mod-chip active" data-val="">Auto</button>
+          <button class="mod-chip" data-val="static">Rest/Static</button>
+          <button class="mod-chip" data-val="fast">Motion/Restless</button>
+        </div>
+        <div class="chip-group" data-group="contact">
+          <span class="group-label">Contact:</span>
+          <button class="mod-chip active" data-val="">Auto</button>
+          <button class="mod-chip" data-val="light">Light Touch</button>
+          <button class="mod-chip" data-val="firm">Pressure</button>
+          <button class="mod-chip" data-val="sharp">Sharp/Stab</button>
+          <button class="mod-chip" data-val="impact">Bruised/Trauma</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Emergency Red-Flag Banner (Hidden by default) -->
+    <div id="emergency-banner" class="emergency-banner hidden">
+      <div class="alert-icon">🚨</div>
+      <div class="alert-body">
+        <h3 id="emergency-title">EMERGENCY CLINICAL RED-FLAG DETECTED</h3>
+        <p id="emergency-message"></p>
+        <span class="emergency-sub">Homeopathic deliberation halted. Please seek immediate professional clinical intervention or contact emergency services.</span>
+      </div>
+    </div>
+
+    <!-- 4-Stage Live Cognitive Pipeline View -->
+    <div class="pipeline-grid">
+      <!-- Stage 1: Safety & Reflex Triage -->
+      <div class="stage-card glass-card">
+        <div class="card-header">
+          <div class="card-step">01</div>
+          <div class="card-title">
+            <h3>Safety & Reflex Triage</h3>
+            <span>dlCBF Hash Gate & HyST Slots</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="metric-row">
+            <span class="metric-label">Triage Safety Status:</span>
+            <span class="badge badge-success" id="stage1-status">READY</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">dlCBF Membership:</span>
+            <span class="metric-val" id="stage1-dlcbf">—</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">dlCBF Gate Latency:</span>
+            <span class="metric-val mono" id="stage1-dlcbf-lat">—</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">HyST Safety Invariant:</span>
+            <span class="metric-val">1.2% Unsafe Rate</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Total Pipeline Latency:</span>
+            <span class="metric-val mono highlight" id="stage1-total-lat">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stage 2: LocalRAG Graph Traversal -->
+      <div class="stage-card glass-card">
+        <div class="card-header">
+          <div class="card-step">02</div>
+          <div class="card-title">
+            <h3>LocalRAG Traversal</h3>
+            <span>Spreading Activation & Keynotes</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="metric-row">
+            <span class="metric-label">Ambient Noise Pruned:</span>
+            <span class="metric-val mono" id="stage2-pruning">—</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Active Subgraph Nodes:</span>
+            <span class="metric-val mono" id="stage2-nodecount">—</span>
+          </div>
+          <div class="remedies-list" id="top-remedies-container">
+            <div class="empty-hint">Execute a query to retrieve grounded remedies...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stage 3: MPCS Cognitive Decision & Somatic Markers -->
+      <div class="stage-card glass-card">
+        <div class="card-header">
+          <div class="card-step">03</div>
+          <div class="card-title">
+            <h3>MPCS Cognitive Fusion</h3>
+            <span>VAD Somatics & TIDE Routing</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="decision-box">
+            <span class="decision-label">Cognitive Action:</span>
+            <div class="action-pill" id="action-pill">WAITING</div>
+            <div class="policy-sub" id="policy-sub">Policy: IDLE · Step: 0</div>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">TIDE Sufficiency Route:</span>
+            <span class="badge badge-route" id="tide-route-badge">—</span>
+          </div>
+          <!-- Somatic Marker VAD Gauges -->
+          <div class="vad-container">
+            <div class="vad-item">
+              <div class="vad-header">
+                <span>Valence (Pleasure vs Distress):</span>
+                <span class="vad-val" id="val-valence">0.50</span>
+              </div>
+              <div class="vad-bar-bg"><div class="vad-bar-fill" id="fill-valence" style="width: 50%;"></div></div>
+            </div>
+            <div class="vad-item">
+              <div class="vad-header">
+                <span>Arousal (Calm vs Agitation):</span>
+                <span class="vad-val" id="val-arousal">0.50</span>
+              </div>
+              <div class="vad-bar-bg"><div class="vad-bar-fill orange" id="fill-arousal" style="width: 50%;"></div></div>
+            </div>
+            <div class="vad-item">
+              <div class="vad-header">
+                <span>Dominance (Helpless vs In-Control):</span>
+                <span class="vad-val" id="val-dominance">0.50</span>
+              </div>
+              <div class="vad-bar-bg"><div class="vad-bar-fill purple" id="fill-dominance" style="width: 50%;"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stage 4: Grounded Clinical Output & Provenance -->
+      <div class="stage-card glass-card">
+        <div class="card-header">
+          <div class="card-step">04</div>
+          <div class="card-title">
+            <h3>Grounded Provenance</h3>
+            <span>Differential & Proving Texts</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="differential-box" id="diff-analysis">
+            <p class="diff-placeholder">Differential synthesis will appear here once query runs.</p>
+          </div>
+          <div class="evidence-box">
+            <h4 class="evidence-title">Materia Medica Proving Citations:</h4>
+            <div class="evidence-list" id="evidence-container">
+              <div class="empty-hint">No citations loaded yet.</div>
+            </div>
+          </div>
+          <div class="disclaimer-footer">
+            <strong>Mandatory Notice:</strong> Results represent historical Materia Medica archival texts. Homeopathy's clinical efficacy is not established by controlled evidence. Not medical advice.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interactive Subgraph Visualizer -->
+    <section class="visualizer-section glass-card">
+      <div class="viz-header">
+        <div class="viz-title-group">
+          <h3>Active Subgraph Visualizer</h3>
+          <span class="viz-subtitle">Interactive topological rendering of active remedies, symptoms, and bridging modalities</span>
+        </div>
+        <div class="viz-legend">
+          <span class="legend-item"><span class="dot blue"></span> Remedy/Medicine</span>
+          <span class="legend-item"><span class="dot pink"></span> Physical Symptom</span>
+          <span class="legend-item"><span class="dot purple"></span> Affective Symptom</span>
+          <span class="legend-item"><span class="dot yellow"></span> Modality</span>
+          <span class="legend-item"><span class="line green"></span> Internal Edge</span>
+          <span class="legend-item"><span class="line pink-dashed"></span> External Bridge</span>
+        </div>
+      </div>
+      <div class="canvas-wrapper">
+        <canvas id="subgraph-canvas" width="1200" height="520"></canvas>
+        <div id="node-tooltip" class="canvas-tooltip hidden"></div>
+      </div>
+    </section>
+
+    <!-- Clinical Feedback & Reinforcement Bar -->
+    <footer class="feedback-panel glass-card">
+      <div class="feedback-info">
+        <span class="feedback-title">🧠 Clinical Reinforcement Learning Loop</span>
+        <span class="feedback-sub">Submit feedback to adapt MPCS episodic memory weights and action threshold for future encounters</span>
+      </div>
+      <div class="feedback-actions">
+        <button id="btn-validate" class="feedback-btn btn-agree">
+          <span>✓ Validate (Reward +1.0)</span>
+        </button>
+        <button id="btn-penalize" class="feedback-btn btn-disagree">
+          <span>✗ Off-Target (Reward 0.0)</span>
+        </button>
+        <div class="teach-group">
+          <select id="expert-action-select">
+            <option value="">Teach Expert Action...</option>
+            <option value="approach">APPROACH (Indicated)</option>
+            <option value="observe">OBSERVE (Gather Modalities)</option>
+            <option value="withdraw">WITHDRAW (Contraindicated)</option>
+            <option value="alert">ALERT (Clinical Escalation)</option>
+          </select>
+          <button id="btn-teach" class="feedback-btn btn-teach">Teach</button>
+        </div>
+      </div>
+    </footer>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
+

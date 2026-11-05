@@ -81,6 +81,7 @@ Antonio Damasio demonstrated that rational decision-making is inextricably tied 
   \end{equation}
   where $\beta_{\text{salience}} = 0.80$ in \texttt{TideConfig}.
   \item \textbf{Dominance ($D$):} Somatic autonomy vs. helplessness ($0.0 = \text{paralysis/collapse}$, $1.0 = \text{combative}$).
+  \item \textbf{LocalRAG-MPCS Cognitive Bridge \& Studio:} \nolinkurl{Model/experimental/09_localrag_bridge/}, \nolinkurl{serve_localrag_mpcs_ui.py}
 \end{itemize}
 
 \subsection{Hills Optimal Foraging in Semantic Memory}
@@ -126,6 +127,7 @@ Typographical emphasis reflects prover concordance. LocalKG models Kent's hierar
   \item \textbf{Grade 1 (Plain Roman, $G=1$):} Isolated proving symptom ($W \approx 1.0$).
   \item \textbf{Grade 2 (Italics, $G=2$):} Confirmed across multiple independent provers ($W \approx 2.0$).
   \item \textbf{Grade 3 (Bold Caps, $G=3$):} Keynote indicator verified across provers and clinical cures ($W \approx 3.0$).
+  \item \textbf{LocalRAG-MPCS Cognitive Bridge \& Studio:} \nolinkurl{Model/experimental/09_localrag_bridge/}, \nolinkurl{serve_localrag_mpcs_ui.py}
 \end{itemize}
 
 \subsection{Continuous Linear Regression Weighting}
@@ -147,6 +149,7 @@ Clinical modalities represent directional causal modifications. LocalKG partitio
 \begin{itemize}
   \item \textbf{\texttt{AGGRAVATED\_BY}} ($M \xrightarrow{\text{agg}} O$): Stressors that exacerbate symptoms (e.g., cold wind, movement, midnight).
   \item \textbf{\texttt{AMELIORATED\_BY}} ($M \xrightarrow{\text{amel}} O$): Interventions that relieve distress (e.g., warmth, slow walking, rest).
+  \item \textbf{LocalRAG-MPCS Cognitive Bridge \& Studio:} \nolinkurl{Model/experimental/09_localrag_bridge/}, \nolinkurl{serve_localrag_mpcs_ui.py}
 \end{itemize}
 Deterministic regex rules normalize over 80 natural language variations into canonical modality factors.
 
@@ -181,6 +184,7 @@ The necessity of neuro-symbolic arbitration is highlighted by three representati
   \item \textbf{Abbreviation Truncation (\textit{``St''} Orphan Node):} In \textit{Ignatia amara} introductory text (``\textit{St. Ignatius Bean...}''), heuristic period splitting truncated at the period, instantiating an isolated symptom node labeled \texttt{"St"}. The hybrid auditor identified ``\textit{St. Ignatius Bean}'' as the common botanical vernacular, mapping it to \texttt{intro.common\_names} while suppressing symptom creation.
   \item \textbf{Substance Name Entity Pollution:} In \textit{Natrum muriaticum} (``\textit{Common Salt. Malnutrition, emaciation...}''), baseline regex extracted ``\textit{Common Salt}'' as an active physical pathology. The semantic auditor recognized the chemical identifier, transferring it to remedy metadata.
   \item \textbf{Section-Bias Affective Disambiguation:} In historical treatises, mental distress frequently appears within introductory summaries rather than dedicated \textit{Mind} sections. Heuristic rules bound to section headers misclassified ``\textit{Grief}'' as a physical symptom; the semantic auditor resolved contextual clinical intent, correctly mapping the rubric to \texttt{kind="mental"} and binding it to the \textit{Mood / Affect Regulation} cognitive domain.
+  \item \textbf{LocalRAG-MPCS Cognitive Bridge \& Studio:} \nolinkurl{Model/experimental/09_localrag_bridge/}, \nolinkurl{serve_localrag_mpcs_ui.py}
 \end{itemize}
 
 \begin{figure*}[t]
@@ -206,6 +210,7 @@ The first retrieval tier is an asymmetric, decoupled $d$-left Counting Bloom Fil
   for $j \in \{0, 1, 2, 3\}$.
   \item \textbf{$d$-Left Tie Breaking:} On insertion, if no existing bucket contains the matching fingerprint, the item is inserted into the least-loaded bucket across the $d$ candidate locations, breaking ties toward the leftmost subtable ($j=0$).
   \item \textbf{Performance:} dlCBF requires only \textbf{$8.8\,\text{KB}$} of deep memory ($12.8\,\text{bytes/record}$) and executes exact membership checks in \textbf{$0.017\,\text{ms}$ ($17\,\mu\text{s}$)}, with a 95th percentile latency of \textbf{$0.032\,\text{ms}$}.
+  \item \textbf{LocalRAG-MPCS Cognitive Bridge \& Studio:} \nolinkurl{Model/experimental/09_localrag_bridge/}, \nolinkurl{serve_localrag_mpcs_ui.py}
 \end{itemize}
 
 \subsection{Layer 2: Hysteresis Slot Memory (HyST)}
@@ -230,6 +235,7 @@ HyST resolves this by bifurcating the feature space into \textbf{Hard (Safety-Cr
   \begin{itemize}
     \item \texttt{urgent=True}: Hard constraints are absolute; retrieval collapses to the single nearest neighbor ($k=1$), ensuring immediate convergence.
     \item \texttt{divergent=True}: Hard exclusions are relaxed into continuous penalty discounts ($\text{discount} = 0.60$ per mismatch) to support creative analogical reasoning.
+  \item \textbf{LocalRAG-MPCS Cognitive Bridge \& Studio:} \nolinkurl{Model/experimental/09_localrag_bridge/}, \nolinkurl{serve_localrag_mpcs_ui.py}
   \end{itemize}
 \end{enumerate}
 
@@ -278,6 +284,7 @@ where thresholds are parameterized as:
   Active set $\mathcal{V}_{\text{active}} = \mathcal{V}_{\text{core}}$. In acute shock (e.g., *Aconitum* panic, *Arnica* blunt injury), the engine suppresses $>99\%$ of ambient nodes, isolating only keynote symptoms that exceed $0.70$ normalized activation energy.
   \item \textbf{Exploratory Persona ($\theta_{\text{expl}} = 0.35$):}
   Active set $\mathcal{V}_{\text{active}} = \mathcal{V}_{\text{core}} \cup \mathcal{V}_{\text{expl}}$. In complex constitutional inquiries, the boundary expands down to $0.35$ normalized energy, revealing secondary modalities and remedy cross-links.
+  \item \textbf{LocalRAG-MPCS Cognitive Bridge \& Studio:} \nolinkurl{Model/experimental/09_localrag_bridge/}, \nolinkurl{serve_localrag_mpcs_ui.py}
 \end{itemize}
 
 \subsection{Topological Edge Classification}
@@ -294,6 +301,7 @@ Edges $e = (u, v) \in \mathcal{E}$ are dynamically classified:
     &(u \notin \mathcal{V}_{\text{active}} \land v \in \mathcal{V}_{\text{active}}) \}
   \end{align}
   Rendered on Canvas as dashed Electric Pink (\texttt{\#ff79c6}, $[5, 3]$ dash, $\alpha = 0.92$, labeled \texttt{[EXTERNAL]}).
+  \item \textbf{LocalRAG-MPCS Cognitive Bridge \& Studio:} \nolinkurl{Model/experimental/09_localrag_bridge/}, \nolinkurl{serve_localrag_mpcs_ui.py}
 \end{itemize}
 
 \begin{figure*}[t]
@@ -379,6 +387,7 @@ Under unconstrained deliberation (\texttt{urgent=False}), TIDE routes queries ba
   \item \textbf{\texttt{SUBGRAPH} ($88.8\%$ clean / $90.4\%$ noisy share):} Multiple competing remedies cleared the threshold; returns the active subgraph for differential analysis at \textbf{$76.1\%$ clean accuracy} ($69.8\%$ noisy).
   \item \textbf{\texttt{DIRECT} ($7.7\%$ clean / $4.2\%$ noisy share):} Top candidate dominates runner-up by margin $\ge 0.25$ with support $\ge 0.80$; outputs an immediate prescription at \textbf{$97.3\%$ clean accuracy} ($90.0\%$ noisy).
   \item \textbf{\texttt{UNGROUNDED} ($3.5\%$ clean / $5.4\%$ noisy share):} No candidates cleared threshold; flags missing evidence, preventing ungrounded guesswork.
+  \item \textbf{LocalRAG-MPCS Cognitive Bridge \& Studio:} \nolinkurl{Model/experimental/09_localrag_bridge/}, \nolinkurl{serve_localrag_mpcs_ui.py}
 \end{itemize}
 
 \section{Interactive Visual Analytics \& Shader Engine}
@@ -415,6 +424,7 @@ To guarantee non-overlapping readability in dense clusters, the visualizer execu
     \mathbf{c} = \frac{\mathbf{a} + \mathbf{b}}{2} + \text{bend} \cdot \hat{\mathbf{n}}
   \end{equation}
   \item \textbf{Neon Glow Shader:} Active edges execute a dual-pass Bloom halo: Pass~1 renders with $\text{lineWidth} = 2.8 \times \text{strokeWidth}$ and $\alpha = 0.32 \times \text{strokeAlpha}$, followed by Pass~2 rendering the sharp vector core.
+  \item \textbf{LocalRAG-MPCS Cognitive Bridge \& Studio:} \nolinkurl{Model/experimental/09_localrag_bridge/}, \nolinkurl{serve_localrag_mpcs_ui.py}
 \end{itemize}
 
 \subsection{Hover Filtering Modes}
@@ -423,6 +433,7 @@ The visualizer provides three toggleable modes:
   \item \texttt{subgraph\_all}: Shows internal active links in solid Emerald Green and external bridging links in dashed Electric Pink.
   \item \texttt{subgraph\_only}: Suppresses external bridging edges to $\alpha = 0.04$ (\texttt{\#252c40}), isolating the internal active subgraph.
   \item \texttt{all\_unified}: Classic unified cyan focus highlighting.
+  \item \textbf{LocalRAG-MPCS Cognitive Bridge \& Studio:} \nolinkurl{Model/experimental/09_localrag_bridge/}, \nolinkurl{serve_localrag_mpcs_ui.py}
 \end{itemize}
 
 \section{Resolved Engineering Nuances}
@@ -471,6 +482,7 @@ Unlike transformer models requiring clusters of GPUs, MPCS is uniquely suited fo
   \item \textbf{dlCBF L1 Footprint:} $8.3\,\text{KB}$ RAM fits entirely within L1 CPU cache ($32\,\text{KB}$), enabling zero cache-miss lookups.
   \item \textbf{HyST L2 Footprint:} $45.0\,\text{KB}$ RAM allows complete in-memory deployment on microcontrollers with $\ge 64\,\text{KB}$ SRAM.
   \item \textbf{TIDE L3 Graph Traversal:} At $B=3 \sim 10$, TIDE executes in $1.34\,\text{ms}$ on a standard CPU core, consuming $<2.5\,\text{W}$ of power. This makes MPCS viable for battery-operated medical implants, wearable triage telemetry, and disaster-relief handheld devices.
+  \item \textbf{LocalRAG-MPCS Cognitive Bridge \& Studio:} \nolinkurl{Model/experimental/09_localrag_bridge/}, \nolinkurl{serve_localrag_mpcs_ui.py}
 \end{itemize}
 
 \subsection{Scaling to UMLS, MeSH, and SNOMED-CT}
@@ -479,6 +491,7 @@ The 9-node ontology and Pydantic extraction engine are natively schema-compatibl
   \item \textbf{UMLS:} CUI mapping can replace local remedy and symptom slugs.
   \item \textbf{SNOMED-CT:} \texttt{BodyRegion} maps directly to SNOMED anatomical concepts, while \texttt{ClinicalCondition} aligns with SNOMED clinical findings.
   \item \textbf{Biomedical Tri-Channel Scaling:} Expanding ChromaDB to include 200,000 MeSH terms will allow MPCS to arbitrate modern pharmaceutical adverse drug reactions (ADRs) with the same $1.2\%$ safety guarantees demonstrated on Bank~v3.
+  \item \textbf{LocalRAG-MPCS Cognitive Bridge \& Studio:} \nolinkurl{Model/experimental/09_localrag_bridge/}, \nolinkurl{serve_localrag_mpcs_ui.py}
 \end{itemize}
 
 \subsection{Local Quantized SLM Neuro-Symbolic Coprocessors}
@@ -504,6 +517,7 @@ For verification and replication, the core source artifacts are indexed below:
   \item \textbf{High-DPI Canvas Shader Visualizer:} \nolinkurl{LocalKG/src/lkg/viz/graph_viz.py}
   \item \textbf{Master Benchmark Harness \& Data:} \nolinkurl{LocalKG/experiments/benchmark_indexing_and_tide.py}, \nolinkurl{docs/benchmark_indexing_tide.json}, \nolinkurl{docs/BENCHMARK_INDEXING_TIDE.md}
   \item \textbf{Pure KG Showcases (*Arnica* \& *Belladonna*):} \nolinkurl{LocalKG/experiments/build_pure_kg_showcases.py}, \nolinkurl{docs/kg_arnica_montana_showcase.html}, \nolinkurl{docs/kg_belladonna_showcase.html}
+  \item \textbf{LocalRAG-MPCS Cognitive Bridge \& Studio:} \nolinkurl{Model/experimental/09_localrag_bridge/}, \nolinkurl{serve_localrag_mpcs_ui.py}
 \end{itemize}
 
 \end{document}

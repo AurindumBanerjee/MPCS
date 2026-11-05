@@ -570,5 +570,6 @@ For peer verification and replication, the core source artifacts cited throughou
 - **High-DPI Canvas Shader Visualizer:** [`LocalKG/src/lkg/viz/graph_viz.py`](file:///d:/MyStuff/GitHub/MPCS/LocalKG/src/lkg/viz/graph_viz.py)
 - **Master Benchmark Harness &amp; Data:** [`LocalKG/experiments/benchmark_indexing_and_tide.py`](file:///d:/MyStuff/GitHub/MPCS/LocalKG/experiments/benchmark_indexing_and_tide.py), [`docs/benchmark_indexing_tide.json`](file:///d:/MyStuff/GitHub/MPCS/docs/benchmark_indexing_tide.json), [`docs/BENCHMARK_INDEXING_TIDE.md`](file:///d:/MyStuff/GitHub/MPCS/docs/BENCHMARK_INDEXING_TIDE.md)
 - **Pure KG Showcases (*Arnica* &amp; *Belladonna*):** [`LocalKG/experiments/build_pure_kg_showcases.py`](file:///d:/MyStuff/GitHub/MPCS/LocalKG/experiments/build_pure_kg_showcases.py), [`docs/kg_arnica_montana_showcase.html`](file:///d:/MyStuff/GitHub/MPCS/docs/kg_arnica_montana_showcase.html), [`docs/kg_belladonna_showcase.html`](file:///d:/MyStuff/GitHub/MPCS/docs/kg_belladonna_showcase.html)
+- **MPCS-LocalRAG Cognitive Bridge &amp; Unified Studio:** [Model/experimental/09_localrag_bridge/](file:///d:/MyStuff/GitHub/MPCS/Model/experimental/09_localrag_bridge/), [serve_localrag_mpcs_ui.py](file:///d:/MyStuff/GitHub/MPCS/serve_localrag_mpcs_ui.py)
 
 </div>
