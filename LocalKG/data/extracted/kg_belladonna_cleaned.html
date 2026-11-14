@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Atropa Belladonna Knowledge Graph</title>
+<style>
+  :root {
+    --bg: #07090e;
+    --panel: #10141f;
+    --panel-alt: #161b2a;
+    --border: #22293d;
+    --text: #eef2f9;
+    --muted: #8b95ab;
+    --blue: #58b8ff;
+    --pink: #f48fb1;
+    --purple: #c5b3f8;
+    --gold: #ffd166;
+    --green: #06d6a0;
+    --cyan: #4dd0e1;
+    --coral: #ff8a65;
+    --orange: #ffb74d;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+  body { background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+  header {
+    padding: 12px 22px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    background: #0b0e17;
+  }
+  .title-block h1 { font-size: 19px; font-weight: 600; letter-spacing: -0.02em; color: #fff; }
+  .title-block p { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  .badge {
+    background: var(--panel-alt); border: 1px solid var(--border);
+    padding: 5px 13px; border-radius: 999px; font-size: 12.5px; color: var(--text); font-weight: 500;
+  }
+  .toolbar {
+    padding: 8px 20px; background: var(--panel); border-bottom: 1px solid var(--border);
+    display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: space-between;
+  }
+  .legend { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; font-size: 12px; }
+  .legend-item {
+    display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none;
+    padding: 4px 9px; border-radius: 6px; background: var(--panel-alt); border: 1px solid transparent;
+    transition: all 0.15s;
+  }
+  .legend-item:hover { border-color: var(--border); }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; box-shadow: 0 0 6px currentColor; }
+  .controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  input[type="text"], select, button {
+    background: var(--panel-alt); color: var(--text); border: 1px solid var(--border);
+    padding: 6px 11px; border-radius: 6px; font-size: 12.5px; outline: none;
+  }
+  input[type="text"]:focus, select:focus { border-color: var(--blue); }
+  button { cursor: pointer; transition: all 0.15s; font-weight: 500; }
+  button:hover { background: #232b42; border-color: #364263; }
+  button.primary { background: #1d568f; border-color: #327bc2; color: #fff; }
+  button.primary:hover { background: #2568ab; }
+  button.active-toggle { background: #14493c; border-color: var(--green); color: #fff; }
+  main { flex: 1; display: flex; position: relative; overflow: hidden; }
+
+  /* Left Remedy & Concept Directory Sidebar */
+  #left-sidebar {
+    width: 255px; background: var(--panel); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .sidebar-header {
+    padding: 12px 14px; border-bottom: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .sidebar-header h3 { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+  #remedy-list { flex: 1; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 4px; }
+  .rem-item {
+    padding: 7px 10px; border-radius: 6px; cursor: pointer; font-size: 12.5px;
+    display: flex; align-items: center; justify-content: space-between;
+    color: #cbd5e8; transition: background 0.12s;
+  }
+  .rem-item:hover { background: var(--panel-alt); color: #fff; }
+  .rem-item.selected { background: #1c3a5e; color: #fff; border-left: 3px solid var(--blue); font-weight: 600; }
+  .rem-count { font-size: 11px; color: var(--muted); background: #0c0f17; padding: 2px 7px; border-radius: 99px; }
+
+  /* Center High-DPI Interactive Canvas */
+  #canvas-wrap { flex: 1; position: relative; background: radial-gradient(circle at center, #0e1320 0%, #06080d 100%); overflow: hidden; }
+  canvas { width: 100%; height: 100%; display: block; cursor: grab; }
+  canvas:active { cursor: grabbing; }
+  .canvas-overlay {
+    position: absolute; bottom: 16px; left: 16px; display: flex; gap: 8px; align-items: center;
+    background: rgba(16, 20, 31, 0.88); backdrop-filter: blur(8px);
+    padding: 7px 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 12px;
+  }
+  .hover-tooltip {
+    position: absolute; pointer-events: none; display: none;
+    background: rgba(14, 18, 28, 0.96); border: 1px solid #394566;
+    padding: 9px 12px; border-radius: 8px; font-size: 12.5px; color: #fff;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.65); max-width: 310px; z-index: 20;
+  }
+
+  /* Right Inspector & TIDE Panel */
+  aside {
+    width: 350px; background: var(--panel); border-left: 1px solid var(--border);
+    padding: 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px;
+  }
+  .card { background: var(--panel-alt); border: 1px solid var(--border); border-radius: 8px; padding: 13px; }
+  .card h3 { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 9px; }
+  .stat-row { display: flex; justify-content: space-between; font-size: 12.5px; padding: 5px 0; border-bottom: 1px solid #1f263a; }
+  .stat-row:last-child { border-bottom: none; }
+  .quote-box {
+    font-size: 12.5px; color: #d5def0; font-style: italic; line-height: 1.48;
+    margin-top: 8px; padding: 9px 11px; background: #0c0f18; border-left: 3px solid var(--blue); border-radius: 5px;
+  }
+  .bar-bg { height: 6px; background: #232a3e; border-radius: 3px; overflow: hidden; margin-top: 4px; }
+  .bar-fill { height: 100%; background: var(--green); }
+  .neighbor-chip {
+    display: inline-block; padding: 3px 8px; margin: 3px 4px 0 0; border-radius: 5px;
+    font-size: 11.5px; background: #101420; border: 1px solid var(--border); cursor: pointer;
+  }
+  .neighbor-chip:hover { border-color: var(--blue); color: var(--blue); }
+</style>
+</head>
+<body>
+<header>
+  <div class="title-block">
+    <h1 id="graph-title">Atropa Belladonna Knowledge Graph</h1>
+    <p>Interactive Homeopathic Materia Medica, Modality &amp; Cognitive-Affective Knowledge Graph (MPCS LocalKG v2)</p>
+  </div>
+  <div class="header-right">
+    <div class="badge" id="stats-badge">0 Nodes • 0 Links</div>
+  </div>
+</header>
+<div class="toolbar">
+  <div class="legend" id="legend"></div>
+  <div class="controls">
+    <button id="layout-btn" class="active-toggle" onclick="toggleLayoutMode()">Layout: Galaxy Clusters</button>
+    <button id="persona-btn" class="active-toggle" onclick="togglePersonaMode()">Persona: Exploratory</button>
+    <button id="hover-mode-btn" onclick="toggleHoverEdgeMode()">Hover: Subgraph + Outside</button>
+    <button id="edge-style-btn" onclick="toggleEdgeStyle()">Edge: Straight</button>
+    <button id="labels-btn" onclick="toggleAllLabels()">Labels: Smart Auto</button>
+    <input id="query-input" type="text" placeholder="TIDE Spreading Activation (e.g. fear of death, delirium, midnight, bruising)..." style="width: 270px;" onkeydown="if(event.key==='Enter')runSpreadingActivation()"/>
+    <button class="primary" onclick="runSpreadingActivation()">Activate &amp; Prune (TIDE)</button>
+    <button onclick="resetActivation()">Reset</button>
+  </div>
+</div>
+<main>
+  <div id="left-sidebar">
+    <div class="sidebar-header">
+      <h3>Remedy Explorer (<span id="rem-total-count">0</span>)</h3>
+      <input id="rem-search" type="text" placeholder="Filter remedies or nodes..." oninput="filterRemedySidebar()"/>
+    </div>
+    <div id="remedy-list"></div>
+  </div>
+  <div id="canvas-wrap">
+    <canvas id="graph-canvas"></canvas>
+    <div id="tooltip" class="hover-tooltip"></div>
+    <div class="canvas-overlay">
+      <button onclick="fitToScreen()">Fit All to Screen</button>
+      <button onclick="zoomBy(1.28)">Zoom +</button>
+      <button onclick="zoomBy(0.78)">Zoom −</button>
+      <span style="color:var(--muted);margin-left:6px;">Min Weight: <strong id="weight-val">1.0</strong></span>
+      <input id="weight-slider" type="range" min="1.0" max="2.6" step="0.1" value="1.0" style="width:90px" oninput="updateWeightFilter(this.value)"/>
+    </div>
+  </div>
+  <aside>
+    <div class="card">
+      <h3>MPCS Spreading Activation &amp; Pruning</h3>
+      <div class="stat-row"><span>Mode</span><strong id="act-mode">Full Graph</strong></div>
+      <div class="stat-row"><span>Query Persona</span><strong id="act-persona" style="color:var(--cyan)">Exploratory (Broad)</strong></div>
+      <div class="stat-row"><span>Hover Highlight</span><strong id="act-hover-mode" style="color:var(--blue)">Subgraph + Outside</strong></div>
+      <div class="stat-row"><span>Edge Style</span><strong id="act-edge-style" style="color:var(--gold)">Straight Lines</strong></div>
+      <div class="stat-row"><span>Visible Nodes</span><strong id="act-total">0</strong></div>
+      <div class="stat-row"><span>Seeded Nodes</span><strong id="act-seeded">0</strong></div>
+      <div class="stat-row"><span>Kept (Active Subgraph)</span><strong id="act-kept" style="color:var(--green)">0</strong></div>
+      <div class="stat-row"><span>Pruned Nodes</span><strong id="act-pruned" style="color:var(--pink)">0</strong></div>
+      <div class="stat-row"><span>Pruning Ratio</span><strong id="act-ratio">0%</strong></div>
+      <div class="stat-row"><span>Subgraph Internal Edges</span><strong id="act-internal-edges" style="color:var(--green)">0</strong></div>
+      <div class="stat-row"><span>External Bridge Edges</span><strong id="act-external-edges" style="color:var(--pink)">0</strong></div>
+      <div style="margin-top:10px;font-size:11px;color:var(--muted);display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);padding-top:6px;">
+        <span style="color:#06d6a0;">● Subgraph Link</span>
+        <span style="color:#ff79c6;">┄ External Bridge</span>
+      </div>
+    </div>
+    <div class="card" id="inspector">
+      <h3>Node Inspector</h3>
+      <p style="font-size:12.5px;color:var(--muted);line-height:1.45;">Click any node on the canvas or select a medicine on the left to inspect its VAD affect profile, severity weight, verbatim book quote, and connected neighbors.</p>
+    </div>
+  </aside>
+</main>
+<script>
+const GRAPH_DATA = {"nodes": [{"id": "remedy:belladonna", "label": "Belladonna", "type": "Medicine", "weight": 3.0, "occurrences": 11, "sources": [], "kingdom": "plant", "latin_name": "Belladonna"}, {"id": "symptom:hallucinations", "label": "Hallucinations", "type": "Affective Symptom", "weight": 1.642, "occurrences": 1, "sources": ["source:boericke_pocket_manual p.123"], "grade": 1, "section": "Mind", "raw_example": "Hallucinations; sees monsters, hideous faces", "quote": "Hallucinations; sees monsters, hideous faces", "valence": 0.18, "arousal": 0.82, "dominance": 0.18}, {"id": "domain:cognitive_delirium", "label": "Cognitive / Delirium", "type": "Cognitive Domain", "weight": 2.4, "occurrences": 1, "sources": []}, {"id": "symptom:desire_to_escape", "label": "Desire to Escape", "type": "Affective Symptom", "weight": 1.45, "occurrences": 1, "sources": ["source:boericke_pocket_manual p.123"], "grade": 1, "section": "Mind", "raw_example": "Desire to escape", "quote": "Desire to escape", "valence": 0.45, "arousal": 0.5, "dominance": 0.45}, {"id": "domain:hyperarousal_anxiety", "label": "Hyperarousal / Anxiety", "type": "Cognitive Domain", "weight": 2.4, "occurrences": 3, "sources": []}, {"id": "symptom:perversity", "label": "Perversity", "type": "Affective Symptom", "weight": 1.45, "occurrences": 1, "sources": ["source:boericke_pocket_manual p.123"], "grade": 1, "section": "Mind", "raw_example": "Perversity, with tears", "quote": "Perversity, with tears", "valence": 0.45, "arousal": 0.5, "dominance": 0.45}, {"id": "modality:better_sipping_cold_water", "label": "Better: Sipping cold water", "type": "Modality", "weight": 1.6, "occurrences": 1, "sources": ["source:boericke_pocket_manual p.123"], "factor_type": "temperature"}, {"id": "modality:worse_lights_noise", "label": "Worse: Lights noise", "type": "Modality", "weight": 1.6, "occurrences": 1, "sources": ["source:boericke_pocket_manual p.123"], "factor_type": "other"}, {"id": "modality:worse_jar", "label": "Worse: Jar", "type": "Modality", "weight": 1.6, "occurrences": 2, "sources": ["source:boericke_pocket_manual p.123", "source:boericke_pocket_manual p.124"], "factor_type": "other"}, {"id": "modality:worse_lying_down", "label": "Worse: Lying down", "type": "Modality", "weight": 1.6, "occurrences": 2, "sources": ["source:boericke_pocket_manual p.123", "source:boericke_pocket_manual p.127"], "factor_type": "position"}, {"id": "modality:worse_afternoon", "label": "Worse: Afternoon", "type": "Modality", "weight": 1.6, "occurrences": 1, "sources": ["source:boericke_pocket_manual p.123"], "factor_type": "time"}, {"id": "modality:better_pressure", "label": "Better: Pressure", "type": "Modality", "weight": 1.6, "occurrences": 1, "sources": ["source:boericke_pocket_manual p.123"], "factor_type": "touch_pressure"}, {"id": "modality:better_semi_erect_posture", "label": "Better: Semi-erect posture", "type": "Modality", "weight": 1.6, "occurrences": 1, "sources": ["source:boericke_pocket_manual p.123"], "factor_type": "other"}, {"id": "modality:better_boring_of_head_into_pillow", "label": "Better: Boring of head into pillow", "type": "Modality", "weight": 1.6, "occurrences": 1, "sources": ["source:boericke_pocket_manual p.123"], "factor_type": "other"}, {"id": "modality:worse_right_side", "label": "Worse: Right side", "type": "Modality", "weight": 1.6, "occurrences": 2, "sources": ["source:boericke_pocket_manual p.123", "source:boericke_pocket_manual p.124"], "factor_type": "other"}, {"id": "symptom:red_hot_swollen_shining", "label": "Red Hot Swollen Shining", "type": "Physical Symptom", "weight": 1.45, "occurrences": 1, "sources": ["source:boericke_pocket_manual p.124"], "grade": 1, "section": "Face", "raw_example": "Red, hot, swollen, shining", "quote": "Red, hot, swollen, shining; convulsive motion of muscles of face", "valence": 0.45, "arousal": 0.5, "dominance": 0.45}, {"id": "region:face", "label": "Face", "type": "Body Region", "weight": 1.4, "occurrences": 8, "sources": []}, {"id": "symptom:convulsive_motion", "label": "Convulsive Motion", "type": "Physical Symptom", "weight": 1.45, "occurrences": 1, "sources": ["source:boericke_pocket_manual p.124"], "grade": 1, "section": "Face", "raw_example": "convulsive motion of muscles of face", "quote": "Red, hot, swollen, shining; convulsive motion of muscles of face", "valence": 0.45, "arousal": 0.5, "dominance": 0.45}, {"id": "symptom:upper_lip_swelling", "label": "Upper Lip Swelling", "type": "Physical Symptom", "weight": 1.45, "occurrences": 1, "sources": ["source:boericke_pocket_manual p.124"], "grade": 1, "section": "Face", "raw_example": "Swelling of upper lip", "quote": "Swelling of upper lip", "valence": 0.45, "arousal": 0.5, "dominance": 0.45}, {"id": "symptom:pupils_dilated", "label": "Pupils Dilated", "type": "Physical Symptom", "weight": 1.45, "occurrences": 1, "sources": ["source:boericke_pocket_manual p.124"], "grade": 1, "section": "Face", "raw_example": "Pupils dilated", "quote": "Pupils dilated", "valence": 0.45, "arousal": 0.5, "dominance": 0.45}, {"id": "symptom:diplopia_squinting_spasms_of_lids", "label": "Diplopia Squinting Spasms Of Lids", "type": "Physical Symptom", "weight": 1.45, "occurrences": 1, "sources": ["source:boericke_pocket_manual p.124"], "grade": 1, "section": "Face", "raw_example": "Diplopia squinting, spasms of lids", "quote": "Diplopia squinting, spasms of lids", "valence": 0.45, "arousal": 0.5, "dominance": 0.45}, {"id": "symptom:tearing_pain", "label": "Tearing Pain", "type": "Physical Symptom", "weight": 1.834, "occurrences": 1, "sources": ["source:boericke_pocket_manual p.124"], "grade": 1, "section": "Face", "raw_example": "Tearing pain", "quote": "Tearing pain", "valence": 0.15, "arousal": 0.75, "dominance": 0.22}, {"id": "symptom:imaginary_odors", "label": "Imaginary Odors", "type": "Physical Symptom", "weight": 1.45, "occurrences": 1, "sources": ["source:boericke_pocket_manual p.124"], "grade": 1, "section": "Face", "raw_example": "Imaginary odors", "quote": "Imaginary odors", "valence": 0.45, "arousal": 0.5, "dominance": 0.45}, {"id": "symptom:dry_throbbing_pain_in_teeth_gum_boil_tongue", "label": "Dry Throbbing Pain In Teeth Gum Boil Tongue", "type": "Physical Symptom", "weight": 1.816, "occurrences": 1, "sources": ["source:boericke_pocket_manual p.124"], "grade": 1, "section": "Face", "raw_example": "Dry. Throbbing pain in teeth. Gum-boil. Tongue red on edges. Strawberry tongue. Grinding of teeth. Tongue swollen and painful. Stammering", "quote": "Dry. Throbbing pain in teeth. Gum- boil. Tongue red on edges. Strawberry tongue. Grinding of teeth. Tongue swollen and painful. Stammering", "valence": 0.15, "arousal": 0.75, "dominance": 0.22}, {"id": "modality:worse_liquids", "label": "Worse: Liquids", "type": "Modality", "weight": 1.6, "occurrences": 1, "sources": ["source:boericke_pocket_manual p.124"], "factor_type": "other"}, {"id": "modality:worse_pressure", "label": "Worse: Pressure", "type": "Modality", "weight": 1.6, "occurrences": 1, "sources": ["source:boericke_pocket_manual p.124"], "factor_type": "touch_pressure"}, {"id": "symptom:sensation_of_worm_like_motion_in_bladder", "label": "Sensation of Worm-like Motion in Bladder", "type": "Physical Symptom", "weight": 1.45, "occurrences": 1, "sources": ["source:boericke_pocket_manual p.126"], "grade": 1, "section": "Urine", "raw_example": "Sensation of motion in bladder as of a worm", "quote": "Sensation of motion in bladder as of a worm", "valence": 0.45, "arousal": 0.5, "dominance": 0.45}, {"id": "region:urine", "label": "Urine", "type": "Body Region", "weight": 1.4, "occurrences": 2, "sources": []}, {"id": "symptom:incontinencence_and_continuous_dropping_of_urine", "label": "Incontinencence and Continuous Dropping of Urine", "type": "Physical Symptom", "weight": 1.45, "occurrences": 1, "sources": ["source:boericke_pocket_manual p.126"], "grade": 1, "section": "Urine", "raw_example": "incontinencence, continuous dropping", "quote": "incontinencence, continuous dropping", "valence": 0.45, "arousal": 0.5, "dominance": 0.45}, {"id": "modality:worse_night", "label": "Worse: Night", "type": "Modality", "weight": 1.6, "occurrences": 2, "sources": ["PMID:28723690 (Pan African Medical Journal, 2017)", "source:boericke_pocket_manual p.126"], "factor_type": "time"}, {"id": "symptom:crying_out", "label": "Crying Out", "type": "Physical Symptom", "weight": 1.45, "occurrences": 1, "sources": ["source:boericke_pocket_manual p.127"], "grade": 1, "section": "Sleep", "raw_example": "Rest less J crying out, gritting of teeth", "quote": "Rest less J crying out, gritting of teeth", "valence": 0.45, "arousal": 0.5, "dominance": 0.45}, {"id": "region:sleep", "label": "Sleep", "type": "Body Region", "weight": 1.4, "occurrences": 4, "sources": []}, {"id": "symptom:awake_due_to_blood_vessel_pulsations", "label": "Awake Due to Blood Vessel Pulsations", "type": "Physical Symptom", "weight": 1.45, "occurrences": 1, "sources": ["source:boericke_pocket_manual p.127"], "grade": 1, "section": "Sleep", "raw_example": "Kept awake by pulsation of blood-vessels", "quote": "Kept awake by pulsation of blood-vessels", "valence": 0.45, "arousal": 0.5, "dominance": 0.45}, {"id": "symptom:screaming_during_sleep", "label": "Screaming During Sleep", "type": "Physical Symptom", "weight": 1.45, "occurrences": 1, "sources": ["source:boericke_pocket_manual p.127"], "grade": 1, "section": "Sleep", "raw_example": "Screams out in sleep", "quote": "Screams out in sleep", "valence": 0.45, "arousal": 0.5, "dominance": 0.45}, {"id": "symptom:sleeping_with_hands_under_head", "label": "Sleeping with Hands Under Head", "type": "Physical Symptom", "weight": 1.45, "occurrences": 1, "sources": ["source:boericke_pocket_manual p.127"], "grade": 1, "section": "Sleep", "raw_example": "Sleeps w ith hands under head", "quote": "Sleeps w ith hands under head", "valence": 0.45, "arousal": 0.5, "dominance": 0.45}, {"id": "modality:worse_touch_jar_noise_or_draft", "label": "Worse: Touch, jar, noise, or draft", "type": "Modality", "weight": 1.5, "occurrences": 1, "sources": ["source:boericke_pocket_manual p.127"], "factor_type": "other"}, {"id": "modality:better_semi_erect", "label": "Better: Semi-erect", "type": "Modality", "weight": 1.5, "occurrences": 1, "sources": ["source:boericke_pocket_manual p.127"], "factor_type": "other"}, {"id": "symptom:pinching_in_the_bowels", "label": "Pinching in the bowels", "type": "Physical Symptom", "weight": 1.45, "occurrences": 1, "sources": ["source:hahnemann_materia_medica_pura p.245"], "grade": 1, "section": "Ears", "raw_example": "Pinching in the bowels", "quote": "Pinching in the bowels", "valence": 0.45, "arousal": 0.5, "dominance": 0.45}, {"id": "region:ears", "label": "Ears", "type": "Body Region", "weight": 1.4, "occurrences": 3, "sources": []}, {"id": "symptom:great_stitches_in_the_inguinal_glands", "label": "Great stitches in the inguinal glands", "type": "Physical Symptom", "weight": 1.72, "occurrences": 1, "sources": ["source:hahnemann_materia_medica_pura p.245"], "grade": 1, "section": "Ears", "raw_example": "Great stitches in the inguinal glands", "quote": "Great stitches in the inguinal glands", "valence": 0.45, "arousal": 0.5, "dominance": 0.45}, {"id": "symptom:stitches_in_the_right_side_of_the_abdomen", "label": "Stitches in the right side of the abdomen", "type": "Physical Symptom", "weight": 1.45, "occurrences": 1, "sources": ["source:hahnemann_materia_medica_pura p.245"], "grade": 1, "section": "Ears", "raw_example": "Stitches in the right side of the abdomen at the last ribs", "quote": "Stitches in the right side of the abdomen at the last ribs", "valence": 0.45, "arousal": 0.5, "dominance": 0.45}, {"id": "modality:worse_turning_to_left_side", "label": "Worse: Turning to left side", "type": "Modality", "weight": 1.6, "occurrences": 1, "sources": ["source:hahnemann_materia_medica_pura p.245"], "factor_type": "other"}, {"id": "symptom:acute_delirium_with_hallucinations", "label": "Acute Delirium with Hallucinations", "type": "Affective Symptom", "weight": 2.95, "occurrences": 1, "sources": ["PMID:28723690 (Pan African Medical Journal, 2017)"], "grade": 3, "section": "Clinical Literature (PubMed)", "raw_example": "Severe psychomotor agitation, confusion, visual and auditory hallucinations, delirium, and fear/anxiety", "quote": "Centrally, the intoxication precipitates severe psychomotor agitation, confusion, visual and auditory hallucinations, delirium, and fear/anxiety", "valence": 0.168, "arousal": 0.88, "dominance": 0.197}, {"id": "condition:anticholinergic_syndrome", "label": "Anticholinergic Syndrome", "type": "Clinical Condition", "weight": 2.0, "occurrences": 1, "sources": ["PMID:28723690 (Pan African Medical Journal, 2017)"]}, {"id": "condition:acute_delirium", "label": "Acute Delirium", "type": "Clinical Condition", "weight": 2.0, "occurrences": 1, "sources": ["PMID:28723690 (Pan African Medical Journal, 2017)"]}, {"id": "symptom:mydriasis_flushed_red_face_and_high_fever", "label": "Mydriasis, Flushed Red Face, and High Fever", "type": "Physical Symptom", "weight": 2.85, "occurrences": 1, "sources": ["PMID:28723690 (Pan African Medical Journal, 2017)"], "grade": 3, "section": "Clinical Literature (PubMed)", "raw_example": "Marked mydriasis with photophobia, flushed dry skin, and hyperthermia", "quote": "Peripherally, patients exhibit marked mydriasis, photophobia, dry mucous membranes, cutaneous erythema (flushed dry skin), hyperthermia", "valence": 0.45, "arousal": 0.5, "dominance": 0.45}, {"id": "symptom:violent_vascular_congestion_with_throbbing", "label": "Violent Vascular Congestion with Throbbing", "type": "Physical Symptom", "weight": 2.8, "occurrences": 1, "sources": ["PMID:31899146 (Molecules, 2019)"], "grade": 3, "section": "Clinical Literature (PubMed)", "raw_example": "Abrupt, violent vascular congestion with rapid bounding pulse and intense sensorial sensitivity", "quote": "Acute Belladonna intoxication produces abrupt, violent vascular congestion with rapid bounding pulse and intense sensorial sensitivity (photophobia, hyperacusis", "valence": 0.45, "arousal": 0.5, "dominance": 0.45}], "links": [{"source": "remedy:belladonna", "target": "symptom:hallucinations", "label": "HAS AFFECTIVE SYMPTOM", "weight": 1.642, "support": 1, "grade": 1, "quote": "Hallucinations; sees monsters, hideous faces"}, {"source": "symptom:hallucinations", "target": "domain:cognitive_delirium", "label": "MAPS TO", "weight": 1.642, "support": 1}, {"source": "remedy:belladonna", "target": "symptom:desire_to_escape", "label": "HAS AFFECTIVE SYMPTOM", "weight": 1.45, "support": 1, "grade": 1, "quote": "Desire to escape"}, {"source": "symptom:desire_to_escape", "target": "domain:hyperarousal_anxiety", "label": "MAPS TO", "weight": 1.45, "support": 1}, {"source": "remedy:belladonna", "target": "symptom:perversity", "label": "HAS AFFECTIVE SYMPTOM", "weight": 1.45, "support": 1, "grade": 1, "quote": "Perversity, with tears"}, {"source": "symptom:perversity", "target": "domain:hyperarousal_anxiety", "label": "MAPS TO", "weight": 1.45, "support": 1}, {"source": "symptom:perversity", "target": "modality:better_sipping_cold_water", "label": "AMELIORATED BY", "weight": 1.45, "support": 1, "quote": "Perversity, with tears"}, {"source": "symptom:perversity", "target": "modality:worse_lights_noise", "label": "AGGRAVATED BY", "weight": 1.45, "support": 1, "quote": "Perversity, with tears"}, {"source": "symptom:perversity", "target": "modality:worse_jar", "label": "AGGRAVATED BY", "weight": 1.45, "support": 1, "quote": "Perversity, with tears"}, {"source": "symptom:perversity", "target": "modality:worse_lying_down", "label": "AGGRAVATED BY", "weight": 1.45, "support": 1, "quote": "Perversity, with tears"}, {"source": "symptom:perversity", "target": "modality:worse_afternoon", "label": "AGGRAVATED BY", "weight": 1.45, "support": 1, "quote": "Perversity, with tears"}, {"source": "symptom:perversity", "target": "modality:better_pressure", "label": "AMELIORATED BY", "weight": 1.45, "support": 1, "quote": "Perversity, with tears"}, {"source": "symptom:perversity", "target": "modality:better_semi_erect_posture", "label": "AMELIORATED BY", "weight": 1.45, "support": 1, "quote": "Perversity, with tears"}, {"source": "symptom:perversity", "target": "modality:better_boring_of_head_into_pillow", "label": "AMELIORATED BY", "weight": 1.45, "support": 1, "quote": "Perversity, with tears"}, {"source": "symptom:perversity", "target": "modality:worse_right_side", "label": "AGGRAVATED BY", "weight": 1.45, "support": 1, "quote": "Perversity, with tears"}, {"source": "remedy:belladonna", "target": "symptom:red_hot_swollen_shining", "label": "HAS PHYSICAL SYMPTOM", "weight": 1.45, "support": 1, "grade": 1, "quote": "Red, hot, swollen, shining; convulsive motion of muscles of face"}, {"source": "symptom:red_hot_swollen_shining", "target": "region:face", "label": "LOCATED IN", "weight": 1.0, "support": 1}, {"source": "remedy:belladonna", "target": "symptom:convulsive_motion", "label": "HAS PHYSICAL SYMPTOM", "weight": 1.45, "support": 1, "grade": 1, "quote": "Red, hot, swollen, shining; convulsive motion of muscles of face"}, {"source": "symptom:convulsive_motion", "target": "region:face", "label": "LOCATED IN", "weight": 1.0, "support": 1}, {"source": "remedy:belladonna", "target": "symptom:upper_lip_swelling", "label": "HAS PHYSICAL SYMPTOM", "weight": 1.45, "support": 1, "grade": 1, "quote": "Swelling of upper lip"}, {"source": "symptom:upper_lip_swelling", "target": "region:face", "label": "LOCATED IN", "weight": 1.0, "support": 1}, {"source": "remedy:belladonna", "target": "symptom:pupils_dilated", "label": "HAS PHYSICAL SYMPTOM", "weight": 1.45, "support": 1, "grade": 1, "quote": "Pupils dilated"}, {"source": "symptom:pupils_dilated", "target": "region:face", "label": "LOCATED IN", "weight": 1.0, "support": 1}, {"source": "remedy:belladonna", "target": "symptom:diplopia_squinting_spasms_of_lids", "label": "HAS PHYSICAL SYMPTOM", "weight": 1.45, "support": 1, "grade": 1, "quote": "Diplopia squinting, spasms of lids"}, {"source": "symptom:diplopia_squinting_spasms_of_lids", "target": "region:face", "label": "LOCATED IN", "weight": 1.0, "support": 1}, {"source": "remedy:belladonna", "target": "symptom:tearing_pain", "label": "HAS PHYSICAL SYMPTOM", "weight": 1.834, "support": 1, "grade": 1, "quote": "Tearing pain"}, {"source": "symptom:tearing_pain", "target": "region:face", "label": "LOCATED IN", "weight": 1.0, "support": 1}, {"source": "remedy:belladonna", "target": "symptom:imaginary_odors", "label": "HAS PHYSICAL SYMPTOM", "weight": 1.45, "support": 1, "grade": 1, "quote": "Imaginary odors"}, {"source": "symptom:imaginary_odors", "target": "region:face", "label": "LOCATED IN", "weight": 1.0, "support": 1}, {"source": "remedy:belladonna", "target": "symptom:dry_throbbing_pain_in_teeth_gum_boil_tongue", "label": "HAS PHYSICAL SYMPTOM", "weight": 1.816, "support": 1, "grade": 1, "quote": "Dry. Throbbing pain in teeth. Gum- boil. Tongue red on edges. Strawberry tongue. Grinding of teeth. Tongue swollen and painful. Stammering"}, {"source": "symptom:dry_throbbing_pain_in_teeth_gum_boil_tongue", "target": "modality:worse_right_side", "label": "AGGRAVATED BY", "weight": 1.816, "support": 1, "quote": "Dry. Throbbing pain in teeth. Gum- boil. Tongue red on edges. Strawberry tongue. Grinding of teeth. Tongue swollen and painful. Stammering"}, {"source": "symptom:dry_throbbing_pain_in_teeth_gum_boil_tongue", "target": "modality:worse_liquids", "label": "AGGRAVATED BY", "weight": 1.816, "support": 1, "quote": "Dry. Throbbing pain in teeth. Gum- boil. Tongue red on edges. Strawberry tongue. Grinding of teeth. Tongue swollen and painful. Stammering"}, {"source": "symptom:dry_throbbing_pain_in_teeth_gum_boil_tongue", "target": "modality:worse_jar", "label": "AGGRAVATED BY", "weight": 1.816, "support": 1, "quote": "Dry. Throbbing pain in teeth. Gum- boil. Tongue red on edges. Strawberry tongue. Grinding of teeth. Tongue swollen and painful. Stammering"}, {"source": "symptom:dry_throbbing_pain_in_teeth_gum_boil_tongue", "target": "modality:worse_pressure", "label": "AGGRAVATED BY", "weight": 1.816, "support": 1, "quote": "Dry. Throbbing pain in teeth. Gum- boil. Tongue red on edges. Strawberry tongue. Grinding of teeth. Tongue swollen and painful. Stammering"}, {"source": "symptom:dry_throbbing_pain_in_teeth_gum_boil_tongue", "target": "region:face", "label": "LOCATED IN", "weight": 1.0, "support": 1}, {"source": "remedy:belladonna", "target": "symptom:sensation_of_worm_like_motion_in_bladder", "label": "HAS PHYSICAL SYMPTOM", "weight": 1.45, "support": 1, "grade": 1, "quote": "Sensation of motion in bladder as of a worm"}, {"source": "symptom:sensation_of_worm_like_motion_in_bladder", "target": "region:urine", "label": "LOCATED IN", "weight": 1.0, "support": 1}, {"source": "remedy:belladonna", "target": "symptom:incontinencence_and_continuous_dropping_of_urine", "label": "HAS PHYSICAL SYMPTOM", "weight": 1.45, "support": 1, "grade": 1, "quote": "incontinencence, continuous dropping"}, {"source": "symptom:incontinencence_and_continuous_dropping_of_urine", "target": "modality:worse_night", "label": "AGGRAVATED BY", "weight": 1.45, "support": 1, "quote": "incontinencence, continuous dropping"}, {"source": "symptom:incontinencence_and_continuous_dropping_of_urine", "target": "region:urine", "label": "LOCATED IN", "weight": 1.0, "support": 1}, {"source": "remedy:belladonna", "target": "symptom:crying_out", "label": "HAS PHYSICAL SYMPTOM", "weight": 1.45, "support": 1, "grade": 1, "quote": "Rest less J crying out, gritting of teeth"}, {"source": "symptom:crying_out", "target": "region:sleep", "label": "LOCATED IN", "weight": 1.0, "support": 1}, {"source": "remedy:belladonna", "target": "symptom:awake_due_to_blood_vessel_pulsations", "label": "HAS PHYSICAL SYMPTOM", "weight": 1.45, "support": 1, "grade": 1, "quote": "Kept awake by pulsation of blood-vessels"}, {"source": "symptom:awake_due_to_blood_vessel_pulsations", "target": "region:sleep", "label": "LOCATED IN", "weight": 1.0, "support": 1}, {"source": "remedy:belladonna", "target": "symptom:screaming_during_sleep", "label": "HAS PHYSICAL SYMPTOM", "weight": 1.45, "support": 1, "grade": 1, "quote": "Screams out in sleep"}, {"source": "symptom:screaming_during_sleep", "target": "region:sleep", "label": "LOCATED IN", "weight": 1.0, "support": 1}, {"source": "remedy:belladonna", "target": "symptom:sleeping_with_hands_under_head", "label": "HAS PHYSICAL SYMPTOM", "weight": 1.45, "support": 1, "grade": 1, "quote": "Sleeps w ith hands under head"}, {"source": "symptom:sleeping_with_hands_under_head", "target": "region:sleep", "label": "LOCATED IN", "weight": 1.0, "support": 1}, {"source": "remedy:belladonna", "target": "modality:worse_touch_jar_noise_or_draft", "label": "AGGRAVATED BY", "weight": 1.5, "support": 1, "quote": "Worse touch, jar, noise, draught afternoon, lying down"}, {"source": "remedy:belladonna", "target": "modality:better_semi_erect", "label": "AMELIORATED BY", "weight": 1.5, "support": 1, "quote": "Worse touch, jar, noise, draught afternoon, lying down. Better semi-erect"}, {"source": "remedy:belladonna", "target": "modality:worse_lying_down", "label": "AGGRAVATED BY", "weight": 1.5, "support": 1, "quote": "Worse touch, jar, noise, draught afternoon, lying down"}, {"source": "remedy:belladonna", "target": "symptom:pinching_in_the_bowels", "label": "HAS PHYSICAL SYMPTOM", "weight": 1.45, "support": 1, "grade": 1, "quote": "Pinching in the bowels"}, {"source": "symptom:pinching_in_the_bowels", "target": "region:ears", "label": "LOCATED IN", "weight": 1.0, "support": 1}, {"source": "remedy:belladonna", "target": "symptom:great_stitches_in_the_inguinal_glands", "label": "HAS PHYSICAL SYMPTOM", "weight": 1.72, "support": 1, "grade": 1, "quote": "Great stitches in the inguinal glands"}, {"source": "symptom:great_stitches_in_the_inguinal_glands", "target": "region:ears", "label": "LOCATED IN", "weight": 1.0, "support": 1}, {"source": "remedy:belladonna", "target": "symptom:stitches_in_the_right_side_of_the_abdomen", "label": "HAS PHYSICAL SYMPTOM", "weight": 1.45, "support": 1, "grade": 1, "quote": "Stitches in the right side of the abdomen at the last ribs"}, {"source": "symptom:stitches_in_the_right_side_of_the_abdomen", "target": "modality:worse_turning_to_left_side", "label": "AGGRAVATED BY", "weight": 1.45, "support": 1, "quote": "Stitches in the right side of the abdomen at the last ribs"}, {"source": "symptom:stitches_in_the_right_side_of_the_abdomen", "target": "region:ears", "label": "LOCATED IN", "weight": 1.0, "support": 1}, {"source": "remedy:belladonna", "target": "symptom:acute_delirium_with_hallucinations", "label": "HAS AFFECTIVE SYMPTOM", "weight": 2.95, "support": 1, "grade": 3, "quote": "Centrally, the intoxication precipitates severe psychomotor agitation, confusion, visual and auditory hallucinations, delirium, and fear/anxiety"}, {"source": "symptom:acute_delirium_with_hallucinations", "target": "domain:hyperarousal_anxiety", "label": "MAPS TO", "weight": 2.95, "support": 1}, {"source": "remedy:belladonna", "target": "condition:anticholinergic_syndrome", "label": "INDICATED FOR (SIMILIA)", "weight": 2.95, "support": 1, "provenance": "derived"}, {"source": "symptom:acute_delirium_with_hallucinations", "target": "condition:anticholinergic_syndrome", "label": "ASSOCIATED CONDITION", "weight": 1.2, "support": 1}, {"source": "remedy:belladonna", "target": "condition:acute_delirium", "label": "INDICATED FOR (SIMILIA)", "weight": 2.95, "support": 1, "provenance": "derived"}, {"source": "symptom:acute_delirium_with_hallucinations", "target": "condition:acute_delirium", "label": "ASSOCIATED CONDITION", "weight": 1.2, "support": 1}, {"source": "remedy:belladonna", "target": "symptom:mydriasis_flushed_red_face_and_high_fever", "label": "HAS PHYSICAL SYMPTOM", "weight": 2.85, "support": 1, "grade": 3, "quote": "Peripherally, patients exhibit marked mydriasis, photophobia, dry mucous membranes, cutaneous erythema (flushed dry skin), hyperthermia"}, {"source": "symptom:mydriasis_flushed_red_face_and_high_fever", "target": "modality:worse_night", "label": "AGGRAVATED BY", "weight": 2.85, "support": 1, "quote": "Peripherally, patients exhibit marked mydriasis, photophobia, dry mucous membranes, cutaneous erythema (flushed dry skin), hyperthermia"}, {"source": "remedy:belladonna", "target": "symptom:violent_vascular_congestion_with_throbbing", "label": "HAS PHYSICAL SYMPTOM", "weight": 2.8, "support": 1, "grade": 3, "quote": "Acute Belladonna intoxication produces abrupt, violent vascular congestion with rapid bounding pulse and intense sensorial sensitivity (photophobia, hyperacusis"}]};
+
+const COLORS = {
+  "Medicine": "#58b8ff",
+  "Affective Symptom": "#c5b3f8",
+  "Cognitive Domain": "#06d6a0",
+  "Physical Symptom": "#f48fb1",
+  "Modality": "#ffd166",
+  "Clinical Condition": "#4dd0e1",
+  "Body Region": "#ff8a65",
+  "Sensation": "#ffb74d",
+  "Etiology": "#ff8a80"
+};
+
+const hiddenTypes = new Set();
+let activeNodes = new Map(); // id -> activation score
+let selectedRemedy = "ALL";
+let inspectedNode = null;
+let hoveredNode = null;
+let minWeight = 1.0;
+let layoutMode = "galaxy"; // "galaxy" | "force"
+let labelMode = "smart";   // "smart" | "all" | "hubs"
+let personaMode = "exploratory"; // "confident" | "exploratory"
+let hoverEdgeMode = "subgraph_all"; // "subgraph_all" | "subgraph_only" | "all_unified"
+let edgeStyle = "straight"; // "straight" | "curved" | "glow"
+
+function toggleHoverEdgeMode() {
+  const modes = ["subgraph_all", "subgraph_only", "all_unified"];
+  hoverEdgeMode = modes[(modes.indexOf(hoverEdgeMode) + 1) % modes.length];
+  const btn = document.getElementById("hover-mode-btn");
+  const titles = {
+    subgraph_all: "Hover: Subgraph + Outside",
+    subgraph_only: "Hover: Subgraph Only",
+    all_unified: "Hover: Classic Focus"
+  };
+  btn.textContent = titles[hoverEdgeMode];
+  btn.classList.toggle("active-toggle", hoverEdgeMode !== "all_unified");
+  const el = document.getElementById("act-hover-mode");
+  if (el) {
+    const desc = {
+      subgraph_all: "Subgraph + Outside",
+      subgraph_only: "Subgraph Only (Strict)",
+      all_unified: "Classic Unified"
+    };
+    el.textContent = desc[hoverEdgeMode];
+    el.style.color = hoverEdgeMode === "subgraph_only" ? "var(--green)" : (hoverEdgeMode === "subgraph_all" ? "var(--blue)" : "var(--muted)");
+  }
+  drawCanvas();
+}
+
+function toggleEdgeStyle() {
+  const styles = ["straight", "curved", "glow"];
+  edgeStyle = styles[(styles.indexOf(edgeStyle) + 1) % styles.length];
+  const btn = document.getElementById("edge-style-btn");
+  const titles = {
+    straight: "Edge: Straight",
+    curved: "Edge: Curved Arcs",
+    glow: "Edge: Neon Glow"
+  };
+  btn.textContent = titles[edgeStyle];
+  btn.classList.toggle("active-toggle", edgeStyle !== "straight");
+  const el = document.getElementById("act-edge-style");
+  if (el) {
+    const desc = {
+      straight: "Straight Vectors",
+      curved: "Curved Arcs",
+      glow: "Neon Glow (Bloom)"
+    };
+    el.textContent = desc[edgeStyle];
+    el.style.color = edgeStyle === "glow" ? "var(--gold)" : (edgeStyle === "curved" ? "var(--cyan)" : "var(--muted)");
+  }
+  drawCanvas();
+}
+
+function togglePersonaMode() {
+  personaMode = personaMode === "exploratory" ? "confident" : "exploratory";
+  const btn = document.getElementById("persona-btn");
+  btn.textContent = personaMode === "confident" ? "Persona: Confident (Core)" : "Persona: Exploratory (Core+Assoc)";
+  btn.classList.toggle("active-toggle", personaMode === "exploratory");
+  const el = document.getElementById("act-persona");
+  if (el) el.textContent = personaMode === "confident" ? "Confident (Strict Core)" : "Exploratory (Broad Assoc)";
+  if (document.getElementById("query-input").value.trim()) {
+    runSpreadingActivation();
+  }
+}
+
+// Build adjacency lookup for fast neighborhood inspection
+const neighborsMap = new Map();
+const nodeDegree = new Map();
+GRAPH_DATA.nodes.forEach(n => { neighborsMap.set(n.id, []); nodeDegree.set(n.id, 0); });
+GRAPH_DATA.links.forEach(l => {
+  if (neighborsMap.has(l.source) && neighborsMap.has(l.target)) {
+    neighborsMap.get(l.source).push({ id: l.target, rel: l.label });
+    neighborsMap.get(l.target).push({ id: l.source, rel: l.label });
+    nodeDegree.set(l.source, (nodeDegree.get(l.source) || 0) + 1);
+    nodeDegree.set(l.target, (nodeDegree.get(l.target) || 0) + 1);
+  }
+});
+
+// Populate interactive legend with counts
+const legendEl = document.getElementById("legend");
+const typeCounts = {};
+GRAPH_DATA.nodes.forEach(n => { typeCounts[n.type] = (typeCounts[n.type] || 0) + 1; });
+Object.entries(COLORS).forEach(([type, color]) => {
+  if (!typeCounts[type]) return;
+  const item = document.createElement("div");
+  item.className = "legend-item";
+  item.innerHTML = `<span class="dot" style="background:${color};color:${color}"></span><span>${type} (${typeCounts[type]})</span>`;
+  item.onclick = () => {
+    if (hiddenTypes.has(type)) { hiddenTypes.delete(type); item.style.opacity = "1"; }
+    else { hiddenTypes.add(type); item.style.opacity = "0.35"; }
+    rebuildGraphLayout();
+  };
+  legendEl.appendChild(item);
+});
+
+// Populate Left Remedy Explorer Sidebar
+const medicines = GRAPH_DATA.nodes
+  .filter(n => n.type === "Medicine")
+  .sort((a, b) => (nodeDegree.get(b.id) || 0) - (nodeDegree.get(a.id) || 0));
+document.getElementById("rem-total-count").textContent = medicines.length;
+
+function renderRemedySidebar(filterText = "") {
+  const listEl = document.getElementById("remedy-list");
+  const q = filterText.trim().toLowerCase();
+  let html = `<div class="rem-item ${selectedRemedy === 'ALL' ? 'selected' : ''}" onclick="selectRemedy('ALL')">
+    <span>🌐 All Remedies (Full Graph)</span>
+    <span class="rem-count">${GRAPH_DATA.nodes.length}</span>
+  </div>`;
+  medicines.forEach(m => {
+    if (q && !m.label.toLowerCase().includes(q)) return;
+    const deg = nodeDegree.get(m.id) || 0;
+    const sel = selectedRemedy === m.id ? "selected" : "";
+    html += `<div class="rem-item ${sel}" onclick="selectRemedy('${m.id.replace(/'/g, "\'")}')">
+      <span>${m.label}</span>
+      <span class="rem-count">${deg}</span>
+    </div>`;
+  });
+  listEl.innerHTML = html;
+}
+renderRemedySidebar();
+
+function filterRemedySidebar() {
+  const q = document.getElementById("rem-search").value;
+  renderRemedySidebar(q);
+}
+
+function selectRemedy(remId) {
+  selectedRemedy = remId;
+  renderRemedySidebar(document.getElementById("rem-search").value);
+  rebuildGraphLayout();
+  if (remId !== "ALL") {
+    const found = simNodes.find(n => n.id === remId);
+    if (found) {
+      inspectNode(found);
+      // Picked Subgraph: tag visible ego-network nodes as active subgraph
+      activeNodes.clear();
+      simNodes.forEach(n => activeNodes.set(n.id, 1.0));
+      let internalCount = 0, externalCount = 0;
+      simLinks.forEach(l => {
+        const inA = activeNodes.has(l.source);
+        const inB = activeNodes.has(l.target);
+        if (inA && inB) internalCount++;
+        else if (inA || inB) externalCount++;
+      });
+      const elInt = document.getElementById("act-internal-edges");
+      if (elInt) elInt.textContent = internalCount;
+      const elExt = document.getElementById("act-external-edges");
+      if (elExt) elExt.textContent = externalCount;
+      document.getElementById("act-mode").textContent = `Subgraph: ${found.label}`;
+      document.getElementById("act-kept").textContent = simNodes.length;
+      const pruned = Math.max(0, GRAPH_DATA.nodes.length - simNodes.length);
+      document.getElementById("act-pruned").textContent = pruned;
+      document.getElementById("act-ratio").textContent = `${Math.round((pruned / GRAPH_DATA.nodes.length) * 100)}%`;
+      drawCanvas();
+    }
+  } else {
+    resetActivation();
+  }
+}
+
+function updateWeightFilter(val) {
+  minWeight = parseFloat(val);
+  document.getElementById("weight-val").textContent = minWeight.toFixed(1);
+  rebuildGraphLayout();
+}
+
+function toggleLayoutMode() {
+  layoutMode = layoutMode === "galaxy" ? "force" : "galaxy";
+  const btn = document.getElementById("layout-btn");
+  btn.textContent = layoutMode === "galaxy" ? "Layout: Galaxy Clusters" : "Layout: Concentric Rings";
+  btn.classList.toggle("active-toggle", layoutMode === "galaxy");
+  rebuildGraphLayout();
+}
+
+function toggleAllLabels() {
+  const order = ["smart", "all", "hubs"];
+  labelMode = order[(order.indexOf(labelMode) + 1) % order.length];
+  const labels = { smart: "Labels: Smart Auto", all: "Labels: Always Show All", hubs: "Labels: Hubs Only" };
+  document.getElementById("labels-btn").textContent = labels[labelMode];
+  drawCanvas();
+}
+
+// High-DPI HTML5 Canvas Setup
+const canvas = document.getElementById("graph-canvas");
+const ctx = canvas.getContext("2d");
+const tooltip = document.getElementById("tooltip");
+let width = 960, height = 680, dpr = window.devicePixelRatio || 1;
+let panX = 0, panY = 0, scale = 1.0;
+let isPanning = false, startX = 0, startY = 0, draggedNode = null;
+let simNodes = [], simLinks = [];
+
+function resizeCanvas() {
+  const rect = canvas.parentElement.getBoundingClientRect();
+  width = rect.width || 960;
+  height = rect.height || 680;
+  dpr = window.devicePixelRatio || 1;
+  canvas.width = width * dpr;
+  canvas.height = height * dpr;
+}
+
+// Deterministic hash for stable angular placement
+function hashStr(str) {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0) / 4294967295;
+}
+
+function rebuildGraphLayout() {
+  resizeCanvas();
+
+  // 1. Determine allowed nodes based on selected remedy & weight slider
+  let allowedIds = new Set();
+  if (selectedRemedy === "ALL") {
+    GRAPH_DATA.nodes.forEach(n => {
+      if (n.type === "Medicine" || n.type === "Cognitive Domain" || (n.weight || 1.0) >= minWeight) {
+        allowedIds.add(n.id);
+      }
+    });
+  } else {
+    allowedIds.add(selectedRemedy);
+    // 2-hop ego-network around the chosen remedy
+    GRAPH_DATA.links.forEach(l => {
+      if (l.source === selectedRemedy) allowedIds.add(l.target);
+      if (l.target === selectedRemedy) allowedIds.add(l.source);
+    });
+    const firstHop = new Set(allowedIds);
+    GRAPH_DATA.links.forEach(l => {
+      if (firstHop.has(l.source)) {
+        const tgt = GRAPH_DATA.nodes.find(x => x.id === l.target);
+        if (tgt && tgt.type !== "Medicine") allowedIds.add(l.target);
+      }
+      if (firstHop.has(l.target)) {
+        const src = GRAPH_DATA.nodes.find(x => x.id === l.source);
+        if (src && src.type !== "Medicine") allowedIds.add(l.source);
+      }
+    });
+  }
+
+  simNodes = GRAPH_DATA.nodes
+    .filter(n => allowedIds.has(n.id) && !hiddenTypes.has(n.type))
+    .map(n => ({ ...n, x: 0, y: 0, vx: 0, vy: 0 }));
+
+  const nodeMap = new Map(simNodes.map(n => [n.id, n]));
+  simLinks = GRAPH_DATA.links
+    .filter(l => nodeMap.has(l.source) && nodeMap.has(l.target))
+    .map(l => ({ ...l, sourceNode: nodeMap.get(l.source), targetNode: nodeMap.get(l.target) }));
+
+  // 2. Compute clean, non-overlapping structured coordinates
+  const meds = simNodes.filter(n => n.type === "Medicine");
+  const domains = simNodes.filter(n => n.type === "Cognitive Domain");
+  const regions = simNodes.filter(n => n.type === "Body Region" || n.type === "Clinical Condition");
+  const others = simNodes.filter(n => !["Medicine", "Cognitive Domain", "Body Region", "Clinical Condition"].includes(n.type));
+
+  const isSingleRemedy = (selectedRemedy !== "ALL" || meds.length <= 2);
+
+  if (layoutMode === "galaxy") {
+    if (isSingleRemedy) {
+      // Single-Remedy Galaxy Clusters Layout:
+      const centerRem = simNodes.find(n => n.id === selectedRemedy) || meds[0];
+      if (centerRem) { centerRem.x = 0; centerRem.y = 0; centerRem.pinned = true; }
+
+      const hubList = [...domains, ...regions];
+      hubList.forEach((h, idx) => {
+        const ang = (2 * Math.PI * idx) / Math.max(1, hubList.length);
+        const r = h.type === "Cognitive Domain" ? 360 : 540;
+        h.x = r * Math.cos(ang);
+        h.y = r * Math.sin(ang);
+      });
+
+      // Cluster symptoms & modalities around their connected hubs like star systems
+      others.forEach((n, idx) => {
+        const connectedHubs = [];
+        const nbrs = neighborsMap.get(n.id) || [];
+        nbrs.forEach(nb => {
+          const target = nodeMap.get(nb.id);
+          if (target && target !== centerRem && (target.type === "Cognitive Domain" || target.type === "Body Region" || target.type === "Clinical Condition")) {
+            connectedHubs.push(target);
+          }
+        });
+
+        let cx = 0, cy = 0;
+        if (connectedHubs.length > 0) {
+          connectedHubs.forEach(h => { cx += h.x; cy += h.y; });
+          cx /= connectedHubs.length;
+          cy /= connectedHubs.length;
+        } else {
+          const ang = (2 * Math.PI * idx) / Math.max(1, others.length);
+          cx = 450 * Math.cos(ang);
+          cy = 450 * Math.sin(ang);
+        }
+
+        const orbitRadius = 85 + (idx % 4) * 35;
+        const orbitAngle = 2 * Math.PI * hashStr(n.id + ":" + idx);
+        n.x = cx + orbitRadius * Math.cos(orbitAngle);
+        n.y = cy + orbitRadius * Math.sin(orbitAngle);
+      });
+    } else {
+      // Multi-Remedy Galaxy Layout:
+      // - Cognitive Domains in inner ring (R = 320)
+      // - Major Remedies on Golden-Angle Phyllotaxis / Constellation Rings (R = 750..1850)
+      // - Symptoms, Modalities & Conditions orbiting their parent Remedy/Domain hubs!
+      domains.forEach((d, idx) => {
+        const ang = (2 * Math.PI * idx) / Math.max(1, domains.length);
+        d.x = 340 * Math.cos(ang);
+        d.y = 340 * Math.sin(ang);
+      });
+
+      regions.forEach((r, idx) => {
+        const ang = (2 * Math.PI * idx) / Math.max(1, regions.length);
+        r.x = 640 * Math.cos(ang);
+        r.y = 640 * Math.sin(ang);
+      });
+
+      const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+      meds.forEach((m, idx) => {
+        const r = 950 + 260 * Math.sqrt(idx + 1);
+        const theta = idx * goldenAngle;
+        m.x = r * Math.cos(theta);
+        m.y = r * Math.sin(theta);
+      });
+
+      // Place each symptom/modality near the centroid of its connected hubs + orbital offset
+      others.forEach((n, idx) => {
+        const connectedHubs = [];
+        const nbrs = neighborsMap.get(n.id) || [];
+        nbrs.forEach(nb => {
+          const target = nodeMap.get(nb.id);
+          if (target && (target.type === "Medicine" || target.type === "Cognitive Domain" || target.type === "Body Region")) {
+            connectedHubs.push(target);
+          }
+        });
+
+        let cx = 0, cy = 0;
+        if (connectedHubs.length > 0) {
+          connectedHubs.forEach(h => { cx += h.x; cy += h.y; });
+          cx /= connectedHubs.length;
+          cy /= connectedHubs.length;
+        } else {
+          const ang = 2 * Math.PI * hashStr(n.id);
+          cx = 1600 * Math.cos(ang);
+          cy = 1600 * Math.sin(ang);
+        }
+
+        const orbitRadius = 115 + (idx % 5) * 42;
+        const orbitAngle = 2 * Math.PI * hashStr(n.id + ":" + idx);
+        n.x = cx + orbitRadius * Math.cos(orbitAngle);
+        n.y = cy + orbitRadius * Math.sin(orbitAngle);
+      });
+    }
+  } else {
+    // Concentric Semantic Rings Layout
+    if (isSingleRemedy) {
+      const centerRem = simNodes.find(n => n.id === selectedRemedy) || meds[0];
+      if (centerRem) { centerRem.x = 0; centerRem.y = 0; centerRem.pinned = true; }
+
+      const rings = [
+        { list: domains, r: 240 },
+        { list: regions, r: 420 },
+        { list: others.filter(n => n.type === "Affective Symptom"), r: 640 },
+        { list: others.filter(n => n.type === "Modality"), r: 840 },
+        { list: others.filter(n => n.type !== "Affective Symptom" && n.type !== "Modality"), r: 1040 }
+      ];
+
+      rings.forEach(rg => {
+        rg.list.forEach((n, i) => {
+          const ang = (2 * Math.PI * i) / Math.max(1, rg.list.length);
+          const jitter = (i % 2 === 0 ? 1 : -1) * 30;
+          n.x = (rg.r + jitter) * Math.cos(ang);
+          n.y = (rg.r + jitter) * Math.sin(ang);
+        });
+      });
+    } else {
+      const groups = [
+        { list: domains, r: 280 },
+        { list: meds, r: 720 },
+        { list: regions, r: 1120 },
+        { list: others.filter(n => n.type === "Affective Symptom"), r: 1520 },
+        { list: others.filter(n => n.type === "Modality"), r: 1920 },
+        { list: others.filter(n => n.type !== "Affective Symptom" && n.type !== "Modality"), r: 2400 }
+      ];
+      groups.forEach(g => {
+        g.list.forEach((n, i) => {
+          const ang = (2 * Math.PI * i) / Math.max(1, g.list.length);
+          const jitter = (i % 2 === 0 ? 1 : -1) * 45;
+          n.x = (g.r + jitter) * Math.cos(ang);
+          n.y = (g.r + jitter) * Math.sin(ang);
+        });
+      });
+    }
+  }
+
+  // 3. Fast Spatial-Grid Collision Relaxation (guarantees zero overlapping nodes in <40ms!)
+  resolveNodeCollisions(simNodes, 6);
+
+  document.getElementById("stats-badge").textContent = `${simNodes.length} Nodes • ${simLinks.length} Links`;
+  document.getElementById("act-total").textContent = simNodes.length;
+  if (activeNodes.size === 0) {
+    document.getElementById("act-kept").textContent = simNodes.length;
+  }
+
+  fitToScreen();
+}
+
+function resolveNodeCollisions(nodes, iterations = 6) {
+  const minSep = 54; // minimum pixel separation in world space
+  const cellSize = minSep * 1.5;
+
+  for (let iter = 0; iter < iterations; iter++) {
+    const grid = new Map();
+    nodes.forEach((n, idx) => {
+      const gx = Math.floor(n.x / cellSize);
+      const gy = Math.floor(n.y / cellSize);
+      const key = `${gx},${gy}`;
+      if (!grid.has(key)) grid.set(key, []);
+      grid.get(key).push(idx);
+    });
+
+    nodes.forEach((a, i) => {
+      if (a.pinned) return;
+      const gx = Math.floor(a.x / cellSize);
+      const gy = Math.floor(a.y / cellSize);
+      for (let dx = -1; dx <= 1; dx++) {
+        for (let dy = -1; dy <= 1; dy++) {
+          const cell = grid.get(`${gx + dx},${gy + dy}`);
+          if (!cell) continue;
+          for (let k = 0; k < cell.length; k++) {
+            const j = cell[k];
+            if (j <= i) continue;
+            const b = nodes[j];
+            let vx = b.x - a.x;
+            let vy = b.y - a.y;
+            let distSq = vx * vx + vy * vy;
+            const reqDist = (a.type === "Medicine" || b.type === "Medicine") ? minSep * 1.45 : minSep;
+            if (distSq < reqDist * reqDist) {
+              let dist = Math.sqrt(distSq) || 0.1;
+              let overlap = (reqDist - dist) * 0.5;
+              let nx = vx / dist, ny = vy / dist;
+              a.x -= nx * overlap;
+              a.y -= ny * overlap;
+              if (!b.pinned) {
+                b.x += nx * overlap;
+                b.y += ny * overlap;
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+}
+
+function fitToScreen() {
+  if (simNodes.length === 0) { drawCanvas(); return; }
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  const targetNodes = activeNodes.size > 0
+    ? simNodes.filter(n => activeNodes.has(n.id))
+    : simNodes;
+  const list = targetNodes.length > 0 ? targetNodes : simNodes;
+
+  list.forEach(n => {
+    if (n.x < minX) minX = n.x;
+    if (n.x > maxX) maxX = n.x;
+    if (n.y < minY) minY = n.y;
+    if (n.y > maxY) maxY = n.y;
+  });
+
+  const pad = 140;
+  const spanX = Math.max(300, (maxX - minX) + pad * 2);
+  const spanY = Math.max(300, (maxY - minY) + pad * 2);
+  scale = Math.min(2.2, Math.max(0.12, Math.min(width / spanX, height / spanY)));
+  const cx = (minX + maxX) / 2;
+  const cy = (minY + maxY) / 2;
+  panX = width / 2 - cx * scale;
+  panY = height / 2 - cy * scale;
+  drawCanvas();
+}
+
+function zoomBy(factor) {
+  const newScale = Math.min(4.5, Math.max(0.1, scale * factor));
+  panX = width / 2 - (width / 2 - panX) * (newScale / scale);
+  panY = height / 2 - (height / 2 - panY) * (newScale / scale);
+  scale = newScale;
+  drawCanvas();
+}
+
+function nodeRadius(n) {
+  if (n.type === "Medicine") return 20;
+  if (n.type === "Cognitive Domain") return 17;
+  if (n.type === "Clinical Condition" || n.type === "Body Region") return 13;
+  return Math.min(14, 7 + (n.weight || 1.0) * 2.1);
+}
+
+function drawCanvas() {
+  ctx.save();
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, width, height);
+
+  ctx.translate(panX, panY);
+  ctx.scale(scale, scale);
+
+  const hasActivation = activeNodes.size > 0;
+  const hoveredNbrs = new Set();
+  if (hoveredNode) {
+    hoveredNbrs.add(hoveredNode.id);
+    (neighborsMap.get(hoveredNode.id) || []).forEach(nb => hoveredNbrs.add(nb.id));
+  } else if (inspectedNode) {
+    hoveredNbrs.add(inspectedNode.id);
+    (neighborsMap.get(inspectedNode.id) || []).forEach(nb => hoveredNbrs.add(nb.id));
+  }
+
+  // 1. Draw Links
+  ctx.lineWidth = 1.2 / Math.max(0.5, Math.sqrt(scale));
+  simLinks.forEach(l => {
+    const a = l.sourceNode, b = l.targetNode;
+    const isIncident = (hoveredNode && (a.id === hoveredNode.id || b.id === hoveredNode.id))
+                    || (!hoveredNode && inspectedNode && (a.id === inspectedNode.id || b.id === inspectedNode.id));
+    const bothActive = !hasActivation || (activeNodes.has(a.id) && activeNodes.has(b.id));
+
+    ctx.setLineDash([]);
+    let isGlowing = false;
+    let strokeColor = "#333e5c";
+    let strokeAlpha = simNodes.length > 400 ? 0.28 : 0.48;
+    let strokeWidth = 1.1 / Math.max(0.6, Math.sqrt(scale));
+    let showLabel = false;
+    let labelColor = "#98a6c4";
+    let labelPrefix = "";
+
+    if (hasActivation && isIncident) {
+      if (bothActive) {
+        // [COLOR 1: Subgraph Internal Link] - Both endpoints in active subgraph
+        strokeColor = "#06d6a0"; // Intense Emerald Green
+        strokeAlpha = 0.96;
+        strokeWidth = 2.6 / Math.max(0.6, Math.sqrt(scale));
+        showLabel = true;
+        labelColor = "#06d6a0";
+        if (edgeStyle === "glow") isGlowing = true;
+      } else {
+        // Incident link connecting from subgraph outward
+        if (hoverEdgeMode === "subgraph_only") {
+          // Suppress external bridging edges in subgraph-only mode
+          strokeColor = "#252c40";
+          strokeAlpha = 0.04;
+          strokeWidth = 1.0 / Math.max(0.6, Math.sqrt(scale));
+          showLabel = false;
+        } else if (hoverEdgeMode === "all_unified") {
+          // Unified focus highlight
+          strokeColor = "#58b8ff";
+          strokeAlpha = 0.90;
+          strokeWidth = 2.0 / Math.max(0.6, Math.sqrt(scale));
+          showLabel = true;
+          labelColor = "#58b8ff";
+          if (edgeStyle === "glow") isGlowing = true;
+        } else {
+          // Subgraph + Outside: [COLOR 2: Subgraph External Bridging Link]
+          strokeColor = "#ff79c6"; // Electric Fuchsia / Pink
+          strokeAlpha = 0.92;
+          strokeWidth = 2.2 / Math.max(0.6, Math.sqrt(scale));
+          ctx.setLineDash([5, 3]);
+          showLabel = true;
+          labelColor = "#ff79c6";
+          labelPrefix = "[EXTERNAL] ";
+          if (edgeStyle === "glow") isGlowing = true;
+        }
+      }
+    } else if (isIncident) {
+      // Normal hover focus when no subgraph is active
+      strokeColor = "#58b8ff"; // Electric Cyan
+      strokeAlpha = 0.88;
+      strokeWidth = 2.0 / Math.max(0.6, Math.sqrt(scale));
+      showLabel = true;
+      labelColor = "#58b8ff";
+      if (edgeStyle === "glow") isGlowing = true;
+    } else if (hasActivation && bothActive) {
+      strokeColor = "#06d6a0";
+      strokeAlpha = 0.65;
+      strokeWidth = 1.6 / Math.max(0.6, Math.sqrt(scale));
+      if (edgeStyle === "glow") isGlowing = true;
+    } else if (hasActivation && !bothActive) {
+      strokeColor = "#252c40";
+      strokeAlpha = 0.06;
+      strokeWidth = 1.0 / Math.max(0.6, Math.sqrt(scale));
+    } else {
+      strokeColor = "#333e5c";
+      strokeAlpha = simNodes.length > 400 ? 0.28 : 0.48;
+      strokeWidth = 1.1 / Math.max(0.6, Math.sqrt(scale));
+    }
+
+    ctx.strokeStyle = strokeColor;
+    ctx.globalAlpha = strokeAlpha;
+    ctx.lineWidth = strokeWidth;
+
+    let midX = (a.x + b.x) / 2, midY = (a.y + b.y) / 2;
+
+    if (edgeStyle === "curved") {
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const dist = Math.hypot(dx, dy) || 1;
+      const nx = -dy / dist, ny = dx / dist;
+      const bend = Math.min(50, Math.max(16, dist * 0.12)) * (hashStr(a.id + b.id) > 0.5 ? 1 : -1);
+      const cx = midX + nx * bend, cy = midY + ny * bend;
+      midX = (midX + cx) / 2;
+      midY = (midY + cy) / 2;
+
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.quadraticCurveTo(cx, cy, b.x, b.y);
+      ctx.stroke();
+    } else {
+      if (isGlowing) {
+        ctx.save();
+        ctx.lineWidth = strokeWidth * 2.8;
+        ctx.globalAlpha = strokeAlpha * 0.32;
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+        ctx.restore();
+      }
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    if (showLabel && scale > 0.4) {
+      ctx.fillStyle = labelColor;
+      ctx.globalAlpha = 0.95;
+      ctx.font = `${Math.max(9, Math.round(10 / Math.sqrt(scale)))}px Inter, sans-serif`;
+      ctx.textAlign = "center";
+      const edgeText = labelPrefix ? `${labelPrefix}${l.label}` : l.label;
+      ctx.fillText(edgeText, midX, midY - 4);
+    }
+  });
+
+  // 2. Draw Nodes & Crisp Pill Labels
+  simNodes.forEach(n => {
+    const isAct = !hasActivation || activeNodes.has(n.id);
+    const isFocus = hoveredNbrs.size === 0 || hoveredNbrs.has(n.id);
+    const r = nodeRadius(n) + (activeNodes.has(n.id) ? activeNodes.get(n.id) * 4 : 0);
+    const color = COLORS[n.type] || "#90a4ae";
+
+    ctx.globalAlpha = !isAct ? 0.12 : (hoveredNbrs.size > 0 && !isFocus ? 0.28 : 1.0);
+
+    // Outer glow for Medicines, Cognitive Domains, or Active seeds
+    if ((n.type === "Medicine" || n.type === "Cognitive Domain" || activeNodes.has(n.id)) && isAct) {
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, r + 5, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.globalAlpha *= 0.22;
+      ctx.fill();
+      ctx.globalAlpha = !isAct ? 0.12 : (hoveredNbrs.size > 0 && !isFocus ? 0.28 : 1.0);
+    }
+
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+
+    ctx.lineWidth = (n === hoveredNode || n === inspectedNode || activeNodes.has(n.id)) ? 2.6 : 1.4;
+    ctx.strokeStyle = (n === hoveredNode || n === inspectedNode || activeNodes.has(n.id)) ? "#ffffff" : "#07090e";
+    ctx.stroke();
+
+    // Label visibility rules
+    const isHub = n.type === "Medicine" || n.type === "Cognitive Domain" || n.type === "Clinical Condition";
+    let showLabel = false;
+    if (labelMode === "all") showLabel = true;
+    else if (labelMode === "hubs") showLabel = isHub || n === hoveredNode || n === inspectedNode;
+    else {
+      // Smart Auto: always show hubs, active TIDE nodes, hovered/inspected neighborhood, or when zoomed in
+      showLabel = isHub
+        || (hasActivation && isAct)
+        || (hoveredNbrs.size > 0 && isFocus)
+        || simNodes.length <= 120
+        || scale >= 0.65
+        || (scale >= 0.38 && (n.weight || 1) >= 2.2);
+    }
+
+    if (showLabel && isAct) {
+      const fontSize = isHub ? Math.max(11, Math.round(13 / Math.pow(scale, 0.35))) : Math.max(9.5, Math.round(11 / Math.pow(scale, 0.35)));
+      ctx.font = `${isHub ? 600 : 500} ${fontSize}px Inter, sans-serif`;
+      ctx.textAlign = "center";
+      const label = n.label.length > 34 && scale < 0.8 ? n.label.slice(0, 32) + "…" : n.label;
+      const textWidth = ctx.measureText(label).width;
+      const pillX = n.x - textWidth / 2 - 5;
+      const pillY = n.y + r + 4;
+      const pillH = fontSize + 5;
+
+      ctx.fillStyle = "rgba(10, 13, 22, 0.82)";
+      ctx.fillRect(pillX, pillY, textWidth + 10, pillH);
+
+      ctx.fillStyle = isHub ? "#ffffff" : "#dce3f2";
+      ctx.fillText(label, n.x, pillY + fontSize);
+    }
+  });
+
+  ctx.restore();
+}
+
+function screenToWorld(sx, sy) {
+  return {
+    x: (sx - panX) / scale,
+    y: (sy - panY) / scale
+  };
+}
+
+function findNodeAt(sx, sy) {
+  const pt = screenToWorld(sx, sy);
+  for (let i = simNodes.length - 1; i >= 0; i--) {
+    const n = simNodes[i];
+    const r = nodeRadius(n) + 4 / scale;
+    const dx = pt.x - n.x, dy = pt.y - n.y;
+    if (dx * dx + dy * dy <= r * r) return n;
+  }
+  return null;
+}
+
+function inspectNode(n) {
+  inspectedNode = n;
+  const act = activeNodes.get(n.id);
+  const v = n.valence !== undefined ? Math.round(n.valence * 100) : null;
+  const a = n.arousal !== undefined ? Math.round(n.arousal * 100) : null;
+  const d = n.dominance !== undefined ? Math.round(n.dominance * 100) : null;
+  const nbrs = neighborsMap.get(n.id) || [];
+
+  let html = `<h3>${n.type}</h3>
+    <div style="font-size:16px;font-weight:600;margin-bottom:8px;color:${COLORS[n.type]}">${n.label}</div>
+    <div class="stat-row"><span>Composite Weight</span><strong>${(n.weight || 1).toFixed(2)} / 3.00</strong></div>
+    <div class="stat-row"><span>Typography Grade</span><strong>${n.grade || "-"}</strong></div>
+    <div class="stat-row"><span>Section</span><strong>${n.section || "-"}</strong></div>
+    <div class="stat-row"><span>Connected Links</span><strong>${nbrs.length}</strong></div>`;
+
+  if (act !== undefined) {
+    html += `<div class="stat-row"><span>TIDE Activation</span><strong style="color:var(--green)">${act.toFixed(3)}</strong></div>`;
+  }
+  if (v !== null) {
+    html += `<div style="margin-top:8px;font-size:12px;color:var(--muted)">VAD Affect Profile (V:${v}% A:${a}% D:${d}%)</div>
+      <div class="bar-bg"><div class="bar-fill" style="width:${a}%;background:var(--purple)"></div></div>`;
+  }
+  if (n.quote) {
+    html += `<div class="quote-box">"${n.quote}"</div>`;
+  }
+  if (n.sources && n.sources.length) {
+    html += `<div style="margin-top:7px;font-size:11px;color:var(--muted)">Sources: ${n.sources.join(", ")}</div>`;
+  }
+
+  if (nbrs.length > 0) {
+    html += `<div style="margin-top:10px;font-size:11.5px;color:var(--muted);text-transform:uppercase">Connected Concepts (${nbrs.length})</div><div style="margin-top:4px;max-height:150px;overflow-y:auto;">`;
+    nbrs.slice(0, 35).forEach(nb => {
+      const target = GRAPH_DATA.nodes.find(x => x.id === nb.id);
+      if (target) {
+        html += `<span class="neighbor-chip" onclick="focusNodeById('${target.id.replace(/'/g, "\'")}')"><span style="color:${COLORS[target.type]}">●</span> ${target.label}</span>`;
+      }
+    });
+    html += `</div>`;
+  }
+
+  document.getElementById("inspector").innerHTML = html;
+  drawCanvas();
+}
+
+function focusNodeById(id) {
+  const n = simNodes.find(x => x.id === id);
+  if (!n) return;
+  inspectNode(n);
+  scale = Math.max(scale, 0.85);
+  panX = width / 2 - n.x * scale;
+  panY = height / 2 - n.y * scale;
+  drawCanvas();
+}
+
+// MPCS TIDE Spreading Activation + Pruning
+function runSpreadingActivation() {
+  const q = document.getElementById("query-input").value.trim().toLowerCase();
+  if (!q) { resetActivation(); return; }
+  const terms = q.split(/[,;\s]+/).filter(t => t.length >= 2);
+  activeNodes.clear();
+
+  let seeds = 0;
+  simNodes.forEach(n => {
+    const hay = `${n.label} ${n.raw_example || ""} ${n.quote || ""} ${n.section || ""}`.toLowerCase();
+    let hits = terms.filter(t => hay.includes(t)).length;
+    if (hits > 0) {
+      const arousal = n.arousal !== undefined ? n.arousal : 0.5;
+      const score = (hits / terms.length) * (1.0 + 0.8 * arousal) * ((n.weight || 1.0) / 2.0);
+      activeNodes.set(n.id, score);
+      seeds++;
+    }
+  });
+
+  const hopDecay = 0.58;
+  for (let hop = 0; hop < 2; hop++) {
+    const nextScores = new Map(activeNodes);
+    simLinks.forEach(l => {
+      const sA = activeNodes.get(l.source) || 0;
+      const sB = activeNodes.get(l.target) || 0;
+      if (sA > 0) nextScores.set(l.target, Math.max(nextScores.get(l.target) || 0, sA * hopDecay));
+      if (sB > 0) nextScores.set(l.source, Math.max(nextScores.get(l.source) || 0, sB * hopDecay));
+    });
+    activeNodes = nextScores;
+  }
+
+  const maxScore = Math.max(...Array.from(activeNodes.values()), 0.001);
+  const cutoff = personaMode === "confident" ? maxScore * 0.45 : maxScore * 0.18;
+  for (const [id, sc] of Array.from(activeNodes.entries())) {
+    if (sc < cutoff) activeNodes.delete(id);
+  }
+
+  // Count internal vs external edges
+  let internalCount = 0, externalCount = 0;
+  simLinks.forEach(l => {
+    const inA = activeNodes.has(l.source);
+    const inB = activeNodes.has(l.target);
+    if (inA && inB) internalCount++;
+    else if (inA || inB) externalCount++;
+  });
+  const elInt = document.getElementById("act-internal-edges");
+  if (elInt) elInt.textContent = internalCount;
+  const elExt = document.getElementById("act-external-edges");
+  if (elExt) elExt.textContent = externalCount;
+
+  const total = simNodes.length;
+  const kept = activeNodes.size;
+  const pruned = Math.max(0, total - kept);
+  document.getElementById("act-mode").textContent = kept > 0 ? (personaMode === "confident" ? "Confident Core Subgraph" : "Exploratory Subgraph") : "UNGROUNDED";
+  document.getElementById("act-seeded").textContent = seeds;
+  document.getElementById("act-kept").textContent = kept;
+  document.getElementById("act-pruned").textContent = pruned;
+  document.getElementById("act-ratio").textContent = total ? `${Math.round((pruned / total) * 100)}%` : "0%";
+  fitToScreen();
+}
+
+function resetActivation() {
+  activeNodes.clear();
+  inspectedNode = null;
+  document.getElementById("query-input").value = "";
+  document.getElementById("act-mode").textContent = "Full Graph";
+  document.getElementById("act-seeded").textContent = "0";
+  document.getElementById("act-kept").textContent = simNodes.length;
+  document.getElementById("act-pruned").textContent = "0";
+  document.getElementById("act-ratio").textContent = "0%";
+  const elInt = document.getElementById("act-internal-edges");
+  if (elInt) elInt.textContent = "0";
+  const elExt = document.getElementById("act-external-edges");
+  if (elExt) elExt.textContent = "0";
+  fitToScreen();
+}
+
+// Mouse & Wheel Interactions
+canvas.addEventListener("mousedown", e => {
+  const rect = canvas.getBoundingClientRect();
+  const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+  const hit = findNodeAt(sx, sy);
+  if (hit) {
+    draggedNode = hit;
+    inspectNode(hit);
+  } else {
+    isPanning = true;
+    startX = e.clientX - panX;
+    startY = e.clientY - panY;
+  }
+});
+
+window.addEventListener("mousemove", e => {
+  const rect = canvas.getBoundingClientRect();
+  const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+
+  if (draggedNode) {
+    const pt = screenToWorld(sx, sy);
+    draggedNode.x = pt.x;
+    draggedNode.y = pt.y;
+    drawCanvas();
+    return;
+  }
+  if (isPanning) {
+    panX = e.clientX - startX;
+    panY = e.clientY - startY;
+    drawCanvas();
+    return;
+  }
+
+  // Hover detection inside canvas
+  if (sx >= 0 && sx <= width && sy >= 0 && sy <= height) {
+    const hit = findNodeAt(sx, sy);
+    if (hit !== hoveredNode) {
+      hoveredNode = hit;
+      canvas.style.cursor = hit ? "pointer" : "grab";
+      if (hit) {
+        tooltip.style.display = "block";
+        tooltip.innerHTML = `<div style="color:${COLORS[hit.type]};font-weight:600">${hit.type}: ${hit.label}</div>
+          <div style="color:var(--muted);font-size:11.5px;margin-top:3px">Weight: ${(hit.weight || 1).toFixed(2)} • Grade: ${hit.grade || 1} • Section: ${hit.section || 'General'}</div>
+          ${hit.quote ? `<div style="margin-top:4px;font-style:italic;color:#cbd5e8">"${hit.quote.slice(0, 120)}${hit.quote.length > 120 ? '…' : ''}"</div>` : ''}`;
+      } else {
+        tooltip.style.display = "none";
+      }
+      drawCanvas();
+    }
+    if (hit) {
+      tooltip.style.left = Math.min(width - 320, sx + 16) + "px";
+      tooltip.style.top = Math.max(12, sy - 16) + "px";
+    }
+  }
+});
+
+window.addEventListener("mouseup", () => { isPanning = false; draggedNode = null; });
+
+canvas.addEventListener("wheel", e => {
+  e.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+  const factor = e.deltaY < 0 ? 1.14 : 0.88;
+  const newScale = Math.min(4.5, Math.max(0.1, scale * factor));
+  panX = sx - (sx - panX) * (newScale / scale);
+  panY = sy - (sy - panY) * (newScale / scale);
+  scale = newScale;
+  drawCanvas();
+}, { passive: false });
+
+window.onload = rebuildGraphLayout;
+window.onresize = rebuildGraphLayout;
+</script>
+</body>
+</html>
