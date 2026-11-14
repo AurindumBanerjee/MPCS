@@ -143,6 +143,7 @@ On a 700-record episode bank, hard-slot filtering cuts unsafe actions from 31.2\
 \vspace{0.5em}
 \noindent\textbf{Keywords:} cognitive architecture, episodic memory, counting Bloom filter, spreading activation, knowledge graph, information extraction, reinforcement from feedback, safety constraints.
 
+\clearpage
 \chapter*{Acknowledgements}
 \addcontentsline{toc}{chapter}{Acknowledgements}
 We are deeply grateful to our project supervisor, Dr.\ Romi Banerjee, for her guidance, encouragement and critical feedback throughout this project. Her questions shaped both the direction of the work and the way we evaluated it.
@@ -181,6 +182,10 @@ BM25 & Okapi Best Match 25 ranking function\\
 
 \clearpage
 \pagenumbering{arabic}
+\makeatletter
+\renewcommand\chapter{\par\addvspace{1.6\baselineskip}\thispagestyle{fancy}\global\@topnum\z@\@afterindentfalse\secdef\@chapter\@schapter}
+\makeatother
+\titlespacing*{\chapter}{0pt}{0pt}{14pt}
 
 % ==================================================================
 \chapter{Introduction}
@@ -893,6 +898,7 @@ Future work includes:
 \end{enumerate}
 
 % ==================================================================
+\clearpage
 \begin{thebibliography}{99}
 \addcontentsline{toc}{chapter}{References}
 \small
