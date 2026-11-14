@@ -1,10 +1,10 @@
-# Neuro-Symbolic Cognitive Architectures for Grounded Clinical and Affective Decision Support: The MPCS-LocalKG Monograph
+# Neuro-Symbolic Cognitive Architectures for Grounded Clinical and Affective Decision Support: MPCS and LocalKG
 
 <div style="text-align: center; margin-bottom: 24px;">
-  <strong>Antigravity Research Consortium &amp; Cognitive Systems Group</strong><br/>
-  <em>Technical Monograph Series — Publication-Grade Repository Architecture Audit</em><br/>
-  <strong>Repository Core:</strong> <code>MPCS (Memory-Perceptual Cognitive System)</code> &amp; <code>LocalKG (Local Knowledge Graph)</code><br/>
-  <strong>Date:</strong> October 2026 | <strong>Version:</strong> 3.4.0-Production
+  <strong>Aurindum Banerjee (B23CS1006) &amp; Lokesh Motwani (B23CS1033)</strong><br/>
+  <em>B.Tech Project Report - Department of Computer Science &amp; Engineering</em><br/>
+  <strong>Core Systems:</strong> <code>MPCS (Memory-Perceptual Cognitive System)</code> &amp; <code>LocalKG (Local Knowledge Graph)</code><br/>
+  <strong>Date:</strong> November 2026 | <strong>Version:</strong> 3.4.0
 </div>
 
 ---

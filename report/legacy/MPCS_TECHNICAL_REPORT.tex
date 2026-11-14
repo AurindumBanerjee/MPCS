@@ -10,8 +10,8 @@
 \usepackage{xcolor}
 \usepackage{cite}
 \usepackage{enumitem}
-\usepackage{fancyvrb}
-\DefineVerbatimEnvironment{codeblock}{Verbatim}{fontsize=\scriptsize,frame=single}
+\usepackage{listings}
+\lstnewenvironment{codeblock}{\lstset{basicstyle=\ttfamily\scriptsize,frame=single,breaklines=true}}{}
 \usepackage{titlesec}
 \usepackage[hyphens]{url}
 \usepackage[colorlinks=true,linkcolor=blue!70!black,citecolor=blue!70!black,urlcolor=blue!70!black]{hyperref}
@@ -25,13 +25,13 @@
 
 
 
-\title{\LARGE\bfseries Neuro-Symbolic Cognitive Architectures for Grounded Clinical and Affective Decision Support: The MPCS-LocalKG Monograph}
+\title{\LARGE\bfseries Neuro-Symbolic Cognitive Architectures for Grounded Clinical and Affective Decision Support: MPCS and LocalKG}
 
 \author{
-  \textbf{Antigravity Research Consortium \& Cognitive Systems Group}\\
-  \textit{Technical Monograph Series --- Publication-Grade Repository Architecture Audit}\\
-  Repository Core: \texttt{MPCS} (Memory-Perceptual Cognitive System) \& \texttt{LocalKG} (Local Knowledge Graph)\\
-  \normalsize Version 3.4.0-Production \quad | \quad Date: November 2026
+  \textbf{Aurindum Banerjee (B23CS1006) \quad \& \quad Lokesh Motwani (B23CS1033)}\\
+  \textit{B.Tech Project Report - Department of Computer Science \& Engineering}\\
+  Core Systems: \texttt{MPCS} (Memory-Perceptual Cognitive System) \& \texttt{LocalKG} (Local Knowledge Graph)\\
+  \normalsize Version 3.4.0 \quad | \quad November 2026
 }
 
 \date{}
@@ -435,6 +435,9 @@ The visualizer provides three toggleable modes:
   \item \texttt{all\_unified}: Classic unified cyan focus highlighting.
   \item \textbf{LocalRAG-MPCS Cognitive Bridge \& Studio:} \nolinkurl{Model/experimental/09_localrag_bridge/}, \nolinkurl{serve_localrag_mpcs_ui.py}
 \end{itemize}
+
+\subsection{LocalRAG Cognitive Studio UI}
+To provide an interactive, real-time interface for clinical query evaluation, a 4-stage Cognitive Studio web application (\nolinkurl{Model/experimental/09_localrag_bridge/}) was implemented and served via \nolinkurl{serve_localrag_mpcs_ui.py}. The bridge engine (\texttt{bridge\_engine.py}) connects the MPCS cognitive pipeline with LocalKG, exposing persona selection, real-time query execution, and stage-by-stage visualization of afferent binding, System~1 gating, Damasio VAD salience, and System~2 TIDE spreading activation.
 
 \section{Resolved Engineering Nuances}
 Four critical engineering hurdles were diagnosed and resolved in the codebase:
