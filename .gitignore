@@ -209,3 +209,10 @@ __marimo__/
 # PDFs (papers, books, built reports) are kept locally, not in git
 *.pdf
 *.PDF
+
+# Except PDFs in report/
+!report/**/
+!report/*.pdf
+!report/*.PDF
+!report/**/*.pdf
+!report/**/*.PDF

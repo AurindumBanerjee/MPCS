@@ -1,0 +1,226 @@
+{
+  "timestamp": "2026-11-15 22:41:26",
+  "study_a_extended_indexing": {
+    "Exact KNN (Cosine)": {
+      "complexity": "$O(N \\cdot D)$",
+      "build_ms": 6.08,
+      "space_kb": 319.6,
+      "scanned_clean": 700,
+      "latency_mean_ms": 6.815,
+      "latency_p95_ms": 9.588,
+      "clean_acc": 94.8,
+      "clean_r3": 99.8,
+      "clean_unsafe": 0.0,
+      "noisy_acc": 87.9,
+      "noisy_unsafe": 3.8
+    },
+    "BM25 Inverted Index": {
+      "complexity": "$O(|Q| \\cdot \\overline{DF})$",
+      "build_ms": 6.16,
+      "space_kb": 420.2,
+      "scanned_clean": 510.0,
+      "latency_mean_ms": 1.337,
+      "latency_p95_ms": 2.256,
+      "clean_acc": 94.4,
+      "clean_r3": 99.8,
+      "clean_unsafe": 0.0,
+      "noisy_acc": 88.1,
+      "noisy_unsafe": 0.4
+    },
+    "dlCBF Gate": {
+      "complexity": "$O(d)$ hash",
+      "build_ms": 10.03,
+      "space_kb": 8.8,
+      "scanned_clean": 1.7,
+      "latency_mean_ms": 0.017,
+      "latency_p95_ms": 0.029,
+      "clean_acc": 50.2,
+      "clean_r3": 67.7,
+      "clean_unsafe": 1.2,
+      "noisy_acc": 29.4,
+      "noisy_unsafe": 0.4
+    },
+    "Cuckoo Filter Gate": {
+      "complexity": "$O(1)$ 2-choice",
+      "build_ms": 14.71,
+      "space_kb": 35.7,
+      "scanned_clean": 1.7,
+      "latency_mean_ms": 0.02,
+      "latency_p95_ms": 0.033,
+      "clean_acc": 50.2,
+      "clean_r3": 67.7,
+      "clean_unsafe": 1.2,
+      "noisy_acc": 29.4,
+      "noisy_unsafe": 0.4
+    },
+    "SimHash LSH (64-bit)": {
+      "complexity": "$O(N)$ XOR popcnt",
+      "build_ms": 26.77,
+      "space_kb": 87.3,
+      "scanned_clean": 700,
+      "latency_mean_ms": 0.51,
+      "latency_p95_ms": 0.712,
+      "clean_acc": 85.4,
+      "clean_r3": 96.9,
+      "clean_unsafe": 2.9,
+      "noisy_acc": 80.0,
+      "noisy_unsafe": 8.3
+    },
+    "Slot Inverted Bitset": {
+      "complexity": "$O(|Q| \\cdot \\text{hits})$",
+      "build_ms": 3.91,
+      "space_kb": 38.5,
+      "scanned_clean": 510.0,
+      "latency_mean_ms": 0.802,
+      "latency_p95_ms": 1.285,
+      "clean_acc": 90.6,
+      "clean_r3": 99.6,
+      "clean_unsafe": 0.4,
+      "noisy_acc": 82.3,
+      "noisy_unsafe": 2.1
+    },
+    "NSW Proximity Graph": {
+      "complexity": "$O(\\text{ef} \\cdot M \\log N)$",
+      "build_ms": 944.38,
+      "space_kb": 444.4,
+      "scanned_clean": 160.8,
+      "latency_mean_ms": 1.731,
+      "latency_p95_ms": 2.283,
+      "clean_acc": 94.8,
+      "clean_r3": 99.8,
+      "clean_unsafe": 0.0,
+      "noisy_acc": 87.3,
+      "noisy_unsafe": 3.8
+    }
+  },
+  "study_b_mpcs_tide_ablation": [
+    {
+      "variant": "Full G9 TIDE (Urgent=False)",
+      "clean_acc": 75.0,
+      "clean_unsafe": 1.7,
+      "clean_lat_ms": 5.33,
+      "noisy_acc": 67.5,
+      "noisy_unsafe": 3.8,
+      "noisy_lat_ms": 6.84
+    },
+    {
+      "variant": "w/o TIDE Spread (hops=0, w_g=0)",
+      "clean_acc": 75.0,
+      "clean_unsafe": 1.7,
+      "clean_lat_ms": 4.94,
+      "noisy_acc": 67.7,
+      "noisy_unsafe": 3.8,
+      "noisy_lat_ms": 6.74
+    },
+    {
+      "variant": "w/o VAD Affect & Salience",
+      "clean_acc": 75.0,
+      "clean_unsafe": 1.7,
+      "clean_lat_ms": 5.09,
+      "noisy_acc": 67.5,
+      "noisy_unsafe": 3.8,
+      "noisy_lat_ms": 7.01
+    },
+    {
+      "variant": "w/o KERL Near-Miss Guard",
+      "clean_acc": 76.2,
+      "clean_unsafe": 2.1,
+      "clean_lat_ms": 5.15,
+      "noisy_acc": 67.7,
+      "noisy_unsafe": 3.8,
+      "noisy_lat_ms": 6.86
+    },
+    {
+      "variant": "w/o SHMF Auto-Relaxation",
+      "clean_acc": 64.6,
+      "clean_unsafe": 1.2,
+      "clean_lat_ms": 3.56,
+      "noisy_acc": 46.9,
+      "noisy_unsafe": 1.2,
+      "noisy_lat_ms": 3.31
+    },
+    {
+      "variant": "w/o HyST Hard Slots (Soft Only)",
+      "clean_acc": 21.0,
+      "clean_unsafe": 13.3,
+      "clean_lat_ms": 20.96,
+      "noisy_acc": 21.0,
+      "noisy_unsafe": 10.8,
+      "noisy_lat_ms": 21.85
+    },
+    {
+      "variant": "w/o Expert Boost (boost=1.0)",
+      "clean_acc": 75.0,
+      "clean_unsafe": 1.7,
+      "clean_lat_ms": 5.37,
+      "noisy_acc": 67.7,
+      "noisy_unsafe": 3.8,
+      "noisy_lat_ms": 7.32
+    },
+    {
+      "variant": "w/o Full-Read (Urgent B=3)",
+      "clean_acc": 71.9,
+      "clean_unsafe": 1.2,
+      "clean_lat_ms": 3.83,
+      "noisy_acc": 50.8,
+      "noisy_unsafe": 1.2,
+      "noisy_lat_ms": 3.52
+    }
+  ],
+  "study_c_personakg_ablation": [
+    {
+      "variant": "Full Exploratory (theta=0.35)",
+      "mean_kept_nodes": 36.6,
+      "mean_pruned_pct": 96.7,
+      "mean_internal_edges": 38.4,
+      "remedy_top1_hits": "4/8",
+      "remedy_top3_hits": "6/8",
+      "mean_lat_ms": 7.0
+    },
+    {
+      "variant": "Full Confident (theta=0.70)",
+      "mean_kept_nodes": 2.5,
+      "mean_pruned_pct": 99.8,
+      "mean_internal_edges": 0,
+      "remedy_top1_hits": "0/8",
+      "remedy_top3_hits": "0/8",
+      "mean_lat_ms": 3.07
+    },
+    {
+      "variant": "w/o 2-Hop Spread (hops=0)",
+      "mean_kept_nodes": 23,
+      "mean_pruned_pct": 97.9,
+      "mean_internal_edges": 0.1,
+      "remedy_top1_hits": "0/8",
+      "remedy_top3_hits": "0/8",
+      "mean_lat_ms": 1.51
+    },
+    {
+      "variant": "w/o VAD Arousal & Severity",
+      "mean_kept_nodes": 94.4,
+      "mean_pruned_pct": 91.5,
+      "mean_internal_edges": 113,
+      "remedy_top1_hits": "3/8",
+      "remedy_top3_hits": "6/8",
+      "mean_lat_ms": 12.92
+    },
+    {
+      "variant": "w/o Clinical Synonyms",
+      "mean_kept_nodes": 35.4,
+      "mean_pruned_pct": 96.8,
+      "mean_internal_edges": 33.8,
+      "remedy_top1_hits": "3/8",
+      "remedy_top3_hits": "6/8",
+      "mean_lat_ms": 6.96
+    },
+    {
+      "variant": "w/o Inverted Index (Linear Scan)",
+      "mean_kept_nodes": 58.8,
+      "mean_pruned_pct": 94.7,
+      "mean_internal_edges": "-",
+      "remedy_top1_hits": "-",
+      "remedy_top3_hits": "-",
+      "mean_lat_ms": 6.49
+    }
+  ]
+}
