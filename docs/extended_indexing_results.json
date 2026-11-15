@@ -1,0 +1,32 @@
+{
+  "simhash_lsh": {
+    "name": "SimHash LSH (64-bit)",
+    "space_kb": 27.5,
+    "build_ms": 15.79,
+    "clean": {
+      "acc": 96.25,
+      "unsafe": 1.25,
+      "lat_ms": 0.11693687501974637
+    },
+    "noisy": {
+      "acc": 91.66666666666667,
+      "unsafe": 1.6666666666666667,
+      "lat_ms": 0.1394718750513372
+    }
+  },
+  "inverted_bitset": {
+    "name": "Slot Inverted Bitset",
+    "space_kb": 7.5,
+    "build_ms": 1.11,
+    "clean": {
+      "acc": 66.25,
+      "unsafe": 4.375,
+      "lat_ms": 0.2761466665712457
+    },
+    "noisy": {
+      "acc": 66.25,
+      "unsafe": 4.791666666666667,
+      "lat_ms": 0.20946979169972715
+    }
+  }
+}

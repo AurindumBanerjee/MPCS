@@ -182,10 +182,6 @@ BM25 & Okapi Best Match 25 ranking function\\
 
 \clearpage
 \pagenumbering{arabic}
-\makeatletter
-\renewcommand\chapter{\par\addvspace{1.6\baselineskip}\thispagestyle{fancy}\global\@topnum\z@\@afterindentfalse\secdef\@chapter\@schapter}
-\makeatother
-\titlespacing*{\chapter}{0pt}{0pt}{14pt}
 
 % ==================================================================
 \chapter{Introduction}
@@ -220,6 +216,8 @@ The goal is to build an agent that (i) perceives structured multimodal input, (i
   \item \textbf{A bridge module} that couples the graph with the decision loop, including an emergency red-flag guard and clinician feedback (Chapter~\ref{ch:bridge}).
   \item \textbf{A unified benchmark} comparing classical indexes (exact KNN, BM25) with all MPCS generations on the same data (Chapter~\ref{ch:results}).
 \end{itemize}
+
+The source files for every component are listed in Appendix~\ref{app:repo}.
 
 \section{Scope and Disclaimer}
 The knowledge source used for LocalKG is Hahnemann's \emph{Materia Medica Pura}, a historical homeopathic text. It was chosen because it is long, public domain, highly structured (remedy, body region, symptom, modifying condition) and typographically graded, which makes it a demanding test of information extraction. The clinical efficacy of homeopathy is not established by controlled evidence. Nothing in this report is a claim of therapeutic value, and the system is a research prototype rather than a medical device.
@@ -327,11 +325,17 @@ Smell & odour type (none, food, chemical, smoke, organic), intensity (faint, mod
 \end{tabularx}
 \end{table}
 
-Each feature is stored as a Z-number style pair $(v, c)$ where $c$ is the confidence of its channel. The \emph{summary} of a percept is the tuple of all such pairs, ordered by modality. Similarity between a query summary $Q$ and a stored summary $M$ is key-aligned:
+Each feature is stored as a Z-number style pair $(v, c)$, where $v$ is the categorical value and $c \in [0,1]$ is the confidence of the channel that produced it. The \emph{summary} of a percept is the tuple of all such pairs, ordered by modality. The similarity between a query summary $Q$ and a stored summary $M$ is given by Equation~\eqref{eq:sim}:
 \begin{equation}
-  \mathrm{sim}(Q, M) = \frac{\sum_{k \in Q \cap M} \mathbb{I}[Q_k = M_k]\,\min(c^Q_k, c^M_k)}{\sum_{k \in Q} c^Q_k}.
+  \mathrm{sim}(Q, M) = \frac{\sum_{k \in Q \cap M} \mathbb{I}[Q_k = M_k]\,\min(c^Q_k, c^M_k)}{\sum_{k \in Q} c^Q_k},
+  \label{eq:sim}
 \end{equation}
-The minimum, rather than the product, of the two confidences is used so that an exact repeat scores exactly 1. Novelty is $\nu = 1 - \max_i \mathrm{sim}(Q, M_i)$ over the memory.
+where $k$ ranges over feature keys, $Q_k$ and $M_k$ are the values of feature $k$ in the two summaries, $c^Q_k$ and $c^M_k$ their confidences, $Q \cap M$ the set of keys present in both, and $\mathbb{I}[\cdot]$ the indicator function (1 if the condition holds, 0 otherwise). The minimum, rather than the product, of the two confidences is used so that an exact repeat scores exactly 1. The novelty of a query is then
+\begin{equation}
+  \nu = 1 - \max_{i}\, \mathrm{sim}(Q, M_i),
+  \label{eq:novelty}
+\end{equation}
+where $M_i$ ranges over all stored summaries (Equation~\eqref{eq:novelty}); $\nu = 1$ for an empty memory.
 
 \section{Reflex Rules}
 Seven ordered rules handle inputs that should never wait for deliberation. The first matching rule wins:
@@ -346,31 +350,39 @@ motion = fast & $\to$ observe & &\\
 The features referenced by these rules also define the default set of \emph{hard slots} used by HyST (Section~\ref{sec:hyst}).
 
 \section{Deliberation}
-When no reflex fires, every action $a$ is scored from the $k=5$ most similar memories that took $a$. Each memory $m$ contributes with weight
+When no reflex fires, every action $a$ is scored from the $k=5$ stored memories most similar to the query among those that took $a$. Each such memory $m$, with summary $M_m$ stored at step $t_m$, contributes with the weight in Equation~\eqref{eq:weight}:
 \begin{equation}
   w_m = \mathrm{sim}(Q, M_m)\cdot \lambda^{\,t - t_m}\cdot b_m,
+  \label{eq:weight}
 \end{equation}
-where $\lambda = 0.99$ is a per-step decay and $b_m$ is a boost of $3.0$ for expert-taught memories (and $2.0$ for reflex-origin memories on the reflex path). The score of $a$ is the weighted mean reward $\bar r_a$ and its \emph{support} is $\sum w_m$. Only actions with non-zero support are eligible; with no evidence the engine falls back to \code{observe}.
+where $t$ is the current step, $\lambda = 0.99$ is the per-step decay, and $b_m$ is a boost equal to $3.0$ for expert-taught memories, $2.0$ for reflex-origin memories on the reflex path and $1$ otherwise. With $r_m$ the stored reward of memory $m$, the score of action $a$ is the weighted mean $\bar r_a = \sum_m w_m r_m / \sum_m w_m$, and its \emph{support} is $\Sigma_a = \sum_m w_m$. Only actions with non-zero support are eligible; with no evidence the engine falls back to \code{observe}.
 
-Exploration uses an $\varepsilon$-greedy policy whose rate grows with novelty:
+Exploration uses an $\varepsilon$-greedy policy whose rate grows with novelty, as in Equation~\eqref{eq:eps}:
 \begin{equation}
   \varepsilon = \mathrm{clip}_{[0,1]}\big(\rho\,(0.6 + 0.4\,\nu)\big),
+  \label{eq:eps}
 \end{equation}
-where $\rho$ is the risk bias of the active profile (0.20 cautious, 0.50 balanced, 0.82 exploratory). If the exploited action scores below the current action threshold $\tau$, the engine \emph{hesitates} and takes \code{observe} instead.
+where $\varepsilon$ is the probability of choosing a random action, $\nu$ is the novelty from Equation~\eqref{eq:novelty}, $\rho$ is the risk bias of the active profile (0.20 cautious, 0.50 balanced, 0.82 exploratory), and $\mathrm{clip}_{[0,1]}(x) = \min(1, \max(0, x))$. If the exploited action scores below the current action threshold $\tau$, the engine \emph{hesitates} and takes \code{observe} instead.
 
 \section{Reward and Learning}
-\paragraph{Reward from memory.} The reward for an action is drawn around the mean of relevant past rewards, $r \sim \mathcal{N}(\bar r_a, 0.08^2)$, clipped to $[0,1]$. With no relevant memory a weak neutral prior $\mathcal{U}(0.4, 0.6)$ is used and the response is labelled as cold-start.
+\paragraph{Reward from memory.} The reward $r$ for the chosen action $a$ is drawn around the mean of relevant past rewards, $r \sim \mathcal{N}(\bar r_a, \sigma^2)$ with $\sigma = 0.08$, and clipped to $[0,1]$. With no relevant memory, a weak neutral prior $r \sim \mathcal{U}(0.4, 0.6)$ is used and the response is labelled as cold-start.
 
-\paragraph{Off-recommendation penalty.} If the action taken differs from the best-evidenced action $a^*$, the reward is reduced in proportion to how much better $a^*$ looked and how well supported it was:
+\paragraph{Off-recommendation penalty.} If the action taken, $a$, differs from the best-evidenced action $a^*$, the reward is reduced in proportion to how much better $a^*$ looked and how well supported it was (Equation~\eqref{eq:penalty}):
 \begin{equation}
-  p = \mathrm{clip}\Big((\bar r_{a^*} - \bar r_a)\cdot \min\big(1, \tfrac{S_{a^*}}{2.0}\big)\Big), \qquad r' = \max\big(0.10,\; r(1-p)\big).
+  p = \mathrm{clip}_{[0,1]}\Big((\bar r_{a^*} - \bar r_a)\cdot \min\big(1, \tfrac{\Sigma_{a^*}}{\Sigma_{\text{sat}}}\big)\Big), \qquad r' = \max\big(r_{\min},\; r(1-p)\big),
+  \label{eq:penalty}
 \end{equation}
-A marginally worse choice is barely penalised; overriding a strong, well-supported recommendation is.
+where $p$ is the penalty, $\bar r_{a^*}$ and $\bar r_a$ are the action scores, $\Sigma_{a^*}$ is the support of $a^*$, $\Sigma_{\text{sat}} = 2.0$ is the support at which a recommendation counts as fully evidenced, $r$ is the unpenalised reward, $r'$ the penalised reward and $r_{\min} = 0.10$ a floor.
 
-\paragraph{Threshold adaptation.} After each step the action threshold moves with the reward, and moves further in novel situations:
+By Equation~\eqref{eq:penalty}, a marginally worse choice is barely penalised, while overriding a strong, well-supported recommendation is penalised heavily.
+
+\paragraph{Threshold adaptation.} After each step the action threshold $\tau$ moves with the reward, and moves further in novel situations, according to Equation~\eqref{eq:tau}:
 \begin{equation}
-  \tau \leftarrow \mathrm{clip}_{[0,1]}\big(\tau + \eta\,(0.5 + \nu)(r - 0.5)\big), \qquad \eta = 0.01.
+  \tau \leftarrow \mathrm{clip}_{[0,1]}\big(\tau + \eta\,(0.5 + \nu)(r - 0.5)\big),
+  \label{eq:tau}
 \end{equation}
+where $\eta = 0.01$ is the learning rate, $\nu$ the novelty of the step and $r$ its (possibly penalised) reward; a reward above 0.5 raises the threshold and a reward below 0.5 lowers it.
+
 Users can also correct a decision: \code{apply\_reward} overwrites the stored reward, and \code{teach\_expert} stores the correct action as an expert memory with reward $0.95$ and boost $3.0$.
 
 \begin{figure}[H]
@@ -392,6 +404,8 @@ Users can also correct a decision: \code{apply\_reward} overwrites the stored re
 \caption{One cognitive step of the MPCS engine. A reflex bypasses deliberation but its outcome is still rewarded and stored.}
 \label{fig:step}
 \end{figure}
+
+Figure~\ref{fig:step} summarises one complete cognitive step, from percept to stored episode.
 
 \section{Memory Banks}
 Three preset banks are used. Bank~v2 contains 70 hand-designed experiences and is used for interactive work and the bridge. Bank~v3 contains 700 canonical records generated from archetype scenes, and is used with 480 clean archetype queries and 480 perturbed (noisy) queries for all benchmarks in Chapter~\ref{ch:results}.
@@ -428,15 +442,19 @@ The filter has $d = 4$ subtables of $1{,}024$ buckets each and stores 16-bit fin
 On Bank~v3 the filter occupies 8.8\,KB (12.8 bytes per record) and answers a query in 0.017\ms{} on average. Because it only recognises exact repeats, it rejects 61.9\% of clean and 85.4\% of noisy queries. It is therefore used as a constant-time ``seen before'' hint rather than a gate that blocks retrieval.
 
 \section{Layer 2: HyST Hard/Soft Slot Filter}\label{sec:hyst}
-HyST (\code{04\_hyst/hyst\_layer.py}) splits features into hard and soft slots through a \code{SlotPolicy} object. The default hard slots are the features used by the reflex rules (thermal, contact, texture, sound type, odour type, odour intensity and motion). A memory survives only if it agrees with the query on every hard slot the query specifies:
+HyST (\code{04\_hyst/hyst\_layer.py}) splits features into hard and soft slots through a \code{SlotPolicy} object. The default set of hard slots, $\mathcal{H}$, contains the features used by the reflex rules (thermal, contact, texture, sound type, odour type, odour intensity and motion). A memory with summary $M$ is admitted only if it agrees with the query $Q$ on every hard slot the query specifies, as expressed by Equation~\eqref{eq:admit}:
 \begin{equation}
-  \mathrm{admit}(M, Q) = \prod_{k \in H \cap \mathrm{dom}(Q)} \mathbb{I}\left[M_k = Q_k\right].
+  \mathrm{admit}(M, Q) = \prod_{k \in \mathcal{H} \cap \mathrm{dom}(Q)} \mathbb{I}\left[M_k = Q_k\right],
+  \label{eq:admit}
 \end{equation}
-Survivors are ranked by a soft kernel. For ordinal features (for example thermal or intensity), partial credit is given by distance on the scale:
+where $\mathrm{dom}(Q)$ is the set of feature keys present in the query and $\mathbb{I}[\cdot]$ is the indicator function. The product is 1 only if every relevant hard slot matches.
+
+Survivors are ranked by a soft kernel. For ordinal features (for example thermal or intensity), partial credit is given by distance on the scale, as in Equation~\eqref{eq:kernel}:
 \begin{equation}
   K(v_a, v_b) = \max\Big(0,\; 1 - \frac{|\mathrm{idx}(v_a) - \mathrm{idx}(v_b)|}{L - 1}\Big),
+  \label{eq:kernel}
 \end{equation}
-where $L$ is the number of levels. Two run-time modes change the behaviour: \code{urgent} keeps hard constraints absolute and returns only the nearest neighbour, while \code{divergent} turns each hard mismatch into a multiplicative discount of $0.6$ instead of an exclusion, allowing analogical retrieval.
+where $v_a$ and $v_b$ are the query and memory values of the feature, $\mathrm{idx}(\cdot)$ is the position of a value on its ordered scale (for thermal: cold~0, neutral~1, warm~2, hot~3), and $L$ is the number of levels on that scale. Two run-time modes change the behaviour: \code{urgent} keeps hard constraints absolute and returns only the nearest neighbour, while \code{divergent} turns each hard mismatch into a multiplicative discount of $0.6$ instead of an exclusion, allowing analogical retrieval.
 
 \section{Layer 3: HMGI Modality-Partitioned Index}
 HMGI (\code{05\_hmgi}) gives every stored episode a relational facet: typed edges to the previous episode and to episodes sharing the same action or object. It also buckets records by their set of active modalities, so a query scans only partitions that share at least one modality with it. On its own, HMGI changes scan scope but not ranking, so its accuracy equals that of the base engine (Table~\ref{tab:master}).
@@ -445,26 +463,31 @@ HMGI (\code{05\_hmgi}) gives every stored episode a relational facet: typed edge
 SHMF (\code{06\_shmf}) runs HMGI first and HyST on the reduced set. This order is exact rather than approximate: a record dropped by HMGI shares no modality with the query, so HyST would have given it no hard-slot evidence and a zero soft score. The module includes a check that verifies this equivalence on a live bank. When the strict filter leaves no candidates (18.3\% of clean queries under HyST alone), SHMF repeats the search with relaxed constraints instead of returning nothing.
 
 \section{Layer 5: KERL Guard and Fused Relevance}
-KERL (\code{07\_kerl}) adapts the retrieve, guard and read structure of Mohbat and Zaki~\cite{mohbat2025}. A \emph{near-miss guard} admits a relaxed candidate only if its recorded modalities cover the channels of the query's hard slots, which prevents, for example, an audio-only memory from deciding a thermal case. Each admitted candidate gets a fused relevance
+KERL (\code{07\_kerl}) adapts the retrieve, guard and read structure of Mohbat and Zaki~\cite{mohbat2025}. A \emph{near-miss guard} admits a relaxed candidate only if its recorded modalities cover the channels of the query's hard slots, which prevents, for example, an audio-only memory from deciding a thermal case. Each admitted candidate memory $m$ gets the fused relevance of Equation~\eqref{eq:fused}:
 \begin{equation}
-  R(m) = w_s\,\mathrm{sim}_{\text{sem}} + w_e\,\mathrm{sim}_{\text{aff}} + w_g\,g(m), \qquad (w_s, w_e, w_g) = (0.7, 0.15, 0.3),
+  R(m) = w_s\,\mathrm{sim}_{\text{sem}}(m) + w_e\,\mathrm{sim}_{\text{aff}}(m) + w_g\,g(m),
+  \label{eq:fused}
 \end{equation}
-where $g(m)$ is a two-hop graph term over episode edges and the affect weight $w_e$ is active only when affect is enabled. Three heads read the candidate set: action values with support, an affect estimate, and a plain-language explanation. When nothing is admissible the step is labelled \code{UNGROUNDED} and falls back to \code{observe}.
+where $\mathrm{sim}_{\text{sem}}(m)$ is the SHMF similarity of $m$ to the query, $\mathrm{sim}_{\text{aff}}(m)$ is the similarity of their affect (valence and arousal) estimates, $g(m) \in [0,1]$ is a two-hop graph term measuring how strongly the episodes linked to $m$ (previous step, same action, same object) were themselves retrieved, and $(w_s, w_e, w_g) = (0.7, 0.15, 0.3)$ are mixing weights. The affect weight $w_e$ is set to zero unless affect is enabled.
+
+Three heads read the candidate set: action values with support, an affect estimate, and a plain-language explanation. When nothing is admissible the step is labelled \code{UNGROUNDED} and falls back to \code{observe}.
 
 \section{Layer 6: TIDE Time-Bounded Spreading Activation}\label{sec:tide}
 TIDE (\code{08\_tide/tide\_layer.py}) keeps KERL's retrieval and changes how the retrieved structure is read.
 
-\paragraph{Seeding.} Each admitted candidate $i$ receives initial activation
+\paragraph{Seeding.} Each admitted candidate $i$ receives the initial activation of Equation~\eqref{eq:seed}:
 \begin{equation}
-  A_i^{(0)} = \mathrm{sim}(Q, M_i)\,(1 + \beta\,a_i)\,b_i, \qquad \beta = 0.8,
+  A_i^{(0)} = \mathrm{sim}(Q, M_i)\,(1 + \beta\,a_i)\,b_i,
+  \label{eq:seed}
 \end{equation}
-where $a_i$ is the arousal of the remembered episode and $b_i$ the expert or reflex boost. Seeds below $5\%$ of the strongest seed are pruned.
+where $\mathrm{sim}(Q, M_i)$ is given by Equation~\eqref{eq:sim}, $a_i \in [0,1]$ is the arousal of the remembered episode, $\beta = 0.8$ is the salience gain and $b_i$ is the expert or reflex boost defined for Equation~\eqref{eq:weight}. Seeds below $5\%$ of the strongest seed are pruned.
 
-\paragraph{Propagation.} Activation spreads for $H = 3$ hops over typed edges with weights $w_{\text{object}} = w_{\text{place}} = 1.0$, $w_{\text{action}} = 0.7$, $w_{\text{prev}} = 0.5$:
+\paragraph{Propagation.} Activation spreads for $n_h = 3$ hops over the typed episode edges, following Equation~\eqref{eq:spread}:
 \begin{equation}
-  A_j^{(h+1)} = A_j^{(h)} + \sum_{i \in \mathcal{N}(j)} \frac{\gamma\, A_i^{(h)}}{|\mathcal{N}(i)|}\, w_{\tau(i,j)}\,(1 + \Delta t_j)^{-0.2},
+  A_j^{(h+1)} = A_j^{(h)} + \sum_{i \in \mathcal{N}(j)} \frac{\gamma\, A_i^{(h)}}{|\mathcal{N}(i)|}\, w_{\phi(i,j)}\,(1 + \Delta t_j)^{-d},
+  \label{eq:spread}
 \end{equation}
-with hop decay $\gamma = 0.5$, out-degree normalisation and an ACT-R style recency factor~\cite{anderson2004}. At most 80 nodes remain active. Percepts may also carry a place (for example \code{kitchen/stove}); episodes at the same place are linked and receive a relevance bonus proportional to the shared path prefix.
+where $A_j^{(h)}$ is the activation of node $j$ after hop $h$, $\mathcal{N}(j)$ is the set of neighbours of $j$ and $|\mathcal{N}(i)|$ the number of neighbours of $i$ (out-degree normalisation), $\gamma = 0.5$ is the hop decay, $\phi(i,j)$ is the type of the edge between $i$ and $j$ with weights $w_{\text{object}} = w_{\text{place}} = 1.0$, $w_{\text{action}} = 0.7$ and $w_{\text{prev}} = 0.5$, $\Delta t_j$ is the number of steps since episode $j$ was stored, and $d = 0.2$ is the exponent of an ACT-R style recency decay~\cite{anderson2004}. At most 80 nodes remain active. Percepts may also carry a place (for example \code{kitchen/stove}); episodes at the same place are linked and receive a relevance bonus proportional to the shared path prefix.
 
 \paragraph{Sufficiency routing.} If the best action leads the runner-up by at least $0.25$ with support of at least $0.8$, the output is \code{DIRECT} (action and a one-line reason). Otherwise it is \code{SUBGRAPH}, and the activated structure is returned for inspection. With no evidence it is \code{UNGROUNDED}.
 
@@ -529,7 +552,7 @@ Figure~\ref{fig:extract} shows the pipeline. Pages are parsed into remedy and se
 \end{figure}
 
 \section{Comparison of Extraction Methods}\label{sec:extraction}
-Three extractors were implemented in \code{Extraction\_KRAG/homeopathy-kg} and evaluated against a gold set of 26 keynote symptoms over 8 remedies:
+Three extractors, compared in Table~\ref{tab:extract}, were implemented in \code{Extraction\_KRAG/homeopathy-kg} and evaluated against a gold set of 26 keynote symptoms over 8 remedies:
 \begin{enumerate}
   \item \textbf{Rule-based.} Regular expressions and punctuation splitting. Fully offline and always faithful to the text, but it produces many non-symptom fragments and depends heavily on section headings.
   \item \textbf{Model-only.} An open-weights 120B-parameter language model (\code{gpt-oss-120b}) prompted to emit JSON matching the schema. It understands archaic phrasing well but 24 chunks (21\%) failed schema validation because of truncated output, timeouts or null fields.
@@ -558,11 +581,19 @@ Precision is low for every method because the gold set lists only keynotes, whil
 Each affective symptom is placed in VAD space, $(V, A, D) \in [0,1]^3$, using a lexicon of cue words (for example ``terror'' maps to $(0.05, 0.96, 0.10)$ and ``restless'' to $(0.20, 0.86, 0.25)$). Affective symptoms are also linked to one of six cognitive domains (anxiety and threat, hyperarousal, mood, impulse control, cognitive processing, social cognition) through keyword lists.
 
 \section{Symptom Weighting}
-Classical texts mark the reliability of a symptom typographically, which is captured as a grade $G \in \{1,2,3\}$ (plain, italic, bold). The weight of a symptom combines the grade with adjective severity $S$, peak arousal $A$ and extraction confidence $C$:
+Classical texts mark the reliability of a symptom typographically, which is captured as a grade $G \in \{1,2,3\}$ (plain, italic, bold). The weight $W$ of a symptom combines the grade with adjective severity $S \in [0,1]$, peak arousal $A_{\text{pk}} \in [0,1]$ and extraction confidence $C \in [0,1]$, as shown in Equation~\eqref{eq:symweight}:
 \begin{equation}
-  W = 3\cdot \mathrm{clip}_{[0,1]}\Big(0.40\,\tfrac{G}{3} + 0.30\,S + 0.20\,A + 0.10\,C\Big) \in [0, 3].
+  W = 3\cdot \mathrm{clip}_{[0,1]}\Big(0.40\,\tfrac{G}{3} + 0.30\,S + 0.20\,A_{\text{pk}} + 0.10\,C\Big) \in [0, 3],
+  \label{eq:symweight}
 \end{equation}
-Severity comes from a lexicon of 45 adjectives (for example ``intolerable'' 1.00, ``violent'' 0.95, ``mild'' 0.30). When several appear, $S = \min\big(1,\,0.75 \max_t s_t + 0.25\,\overline{s}\big)$, so the strongest term dominates.
+where the four coefficients sum to one, so that a bold, maximally severe, high-arousal symptom extracted with full confidence receives the maximum weight of 3.
+
+Severity comes from a lexicon of 45 adjectives, each with a score $s_t \in [0.2, 1]$ (for example ``intolerable'' 1.00, ``violent'' 0.95, ``mild'' 0.30). When the set $T$ of adjectives found in a symptom contains more than one term, the severity is combined by Equation~\eqref{eq:severity}:
+\begin{equation}
+  S = \min\Big(1,\; 0.75 \max_{t \in T} s_t + 0.25\,\tfrac{1}{|T|}\textstyle\sum_{t \in T} s_t\Big),
+  \label{eq:severity}
+\end{equation}
+so that the strongest term dominates while the others still contribute.
 
 \section{Modalities}
 A modality describes what makes a symptom worse or better. Lines beginning with ``Worse'', ``$<$'' or ``agg.'' produce \code{AGGRAVATED\_BY} edges and lines beginning with ``Better'', ``$>$'' or ``amel.'' produce \code{AMELIORATED\_BY} edges. A rule table normalises varied phrasings into canonical factors (``after midnight'', ``warmth'', ``motion'').
@@ -612,24 +643,33 @@ The graph can be explored through an interactive viewer generated by \code{Local
 The query engine (\code{LocalKG/src/lkg/query/persona\_engine.py}) answers a free-text query with a ranked subgraph. Its single most important parameter is the activation threshold that decides which nodes are returned. Two settings, called \emph{personas}, are provided.
 
 \section{Seeding}
-At load time the engine builds an inverted index from tokens in node labels and text fields (2{,}236 distinct tokens) and an adjacency list. It also precomputes a salience multiplier per node,
+At load time the engine builds an inverted index from tokens in node labels and text fields (2{,}236 distinct tokens) and an adjacency list. It also precomputes a salience multiplier $\mu_v$ for every node $v$, given by Equation~\eqref{eq:mu}:
 \begin{equation}
   \mu_v = (1 + 0.85\,a_v)\,\frac{W_v}{2.2},
+  \label{eq:mu}
 \end{equation}
-so that high-arousal, high-weight symptoms receive more initial energy. Query terms are expanded with a clinical synonym table (synonyms count 0.75, original terms 1.0). A node's seed energy is its lexical match ratio multiplied by $\mu_v$.
+where $a_v \in [0,1]$ is the arousal annotated on node $v$ (0.5 when absent), $W_v$ is its weight from Equation~\eqref{eq:symweight}, and $2.2$ is a normalising constant close to the mean weight. High-arousal, high-weight symptoms therefore receive more initial energy. Query terms are expanded with a clinical synonym table (synonyms count 0.75, original terms 1.0). A node's seed energy is its lexical match ratio, the weighted number of query terms it contains divided by the number of query terms, multiplied by $\mu_v$.
 
 \section{Frontier-Limited Spreading Activation}
-Energy spreads for at most two hops. Only the current frontier is expanded, and a neighbour is updated only if the transferred energy $0.58\,A_u\,\min(1, w_{uv})$ exceeds its current value. Transfers below 0.01 are ignored. Scores are then normalised by the maximum.
+Energy spreads for at most two hops. Only the current frontier is expanded, and a neighbour $v$ of a frontier node $u$ is updated only if the transferred energy exceeds its current value, as in Equation~\eqref{eq:frontier}:
+\begin{equation}
+  E_v \leftarrow \max\big(E_v,\; \delta\, E_u\, \min(1, w_{uv})\big),
+  \label{eq:frontier}
+\end{equation}
+where $E_u$ and $E_v$ are the energies of the two nodes, $w_{uv}$ is the weight of the edge between them and $\delta = 0.58$ is the hop decay. Transfers below 0.01 are ignored. After spreading, the normalised score of each node is $s(v) = E_v / \max_{u} E_u$.
 
 \section{Dual-Threshold Partition}
-With normalised score $s(v)$, nodes are partitioned as
+Using the normalised score $s(v) \in [0,1]$ defined above, nodes are partitioned into three classes by the two thresholds in Equation~\eqref{eq:partition}:
 \begin{equation}
   \text{class}(v) = \begin{cases}
-  \text{core} & s(v) \ge \theta_{\text{conf}} = 0.70,\\
-  \text{exploratory} & 0.35 = \theta_{\text{expl}} \le s(v) < \theta_{\text{conf}},\\
-  \text{pruned} & s(v) < \theta_{\text{expl}}.
+  \text{core} & s(v) \ge \theta_{\text{conf}},\\
+  \text{exploratory} & \theta_{\text{expl}} \le s(v) < \theta_{\text{conf}},\\
+  \text{pruned} & s(v) < \theta_{\text{expl}},
   \end{cases}
+  \label{eq:partition}
 \end{equation}
+where $\theta_{\text{conf}} = 0.70$ is the confident threshold and $\theta_{\text{expl}} = 0.35$ the exploratory threshold.
+
 The \emph{confident} persona returns only core nodes and is meant for quick, high-precision answers. The \emph{exploratory} persona returns core and exploratory nodes, which exposes related remedies, modalities and conditions for differential comparison (Figure~\ref{fig:persona}). Edges are then classified as \emph{internal} (both ends active) or \emph{bridging} (one end active). Pruned nodes are discarded before any result objects are created, which is the main source of the speed-up reported in Section~\ref{sec:res-persona}.
 
 \begin{figure}[H]
@@ -700,7 +740,7 @@ A small web interface was built to exercise the bridge interactively. Figure~\re
 All MPCS experiments use Bank~v3 (700 records) with 480 clean archetype queries and 480 noisy queries in which features are perturbed. The action space has five actions. A recommendation is \emph{unsafe} if the ground truth is \code{alert} or \code{withdraw} and the system chooses \code{approach} or \code{ignore}. Memory footprint is measured by recursive traversal of all Python objects, and latency with \code{time.perf\_counter}. All schemes were run in one process by \code{LocalKG/experiments/benchmark\_indexing\_and\_tide.py}; raw results are in \code{docs/benchmark\_indexing\_tide.json}. Experiments ran single-threaded in CPython on a laptop CPU; absolute latencies should be compared only within a table.
 
 \section{Indexing Schemes and MPCS Generations}
-Table~\ref{tab:master} compares two classical baselines, the Bloom filter used alone, the global top-5 baseline (B2) and five MPCS generations.
+Table~\ref{tab:master} and Figure~\ref{fig:acc} compare two classical baselines, the Bloom filter used alone, the global top-5 baseline (B2) and five MPCS generations.
 
 \begin{table}[H]
 \centering
@@ -835,8 +875,40 @@ UNGROUNDED & 3.5\% & 0.0\% & 5.4\% & 11.5\%\\
 
 \noindent Routing is well calibrated: when TIDE commits directly it is right 97.3\% of the time on clean queries, and the cases it marks as ungrounded are indeed those where it has no reliable answer. The low share of DIRECT routes shows that the margin of $0.25$ is conservative; it could be lowered if more direct answers were wanted at some cost in accuracy.
 
+\section{Component Ablation Study}
+To isolate the causal contribution of each architectural module in MPCS \texttt{G9 TIDE}, Table~\ref{tab:ablation} reports a systematic component-removal ablation on Bank~v3 ($N=700$ records, $480$ clean and $480$ noisy queries).
+
+\begin{table}[h]
+\centering
+\small
+\caption{Component ablation study on Bank~v3 (MPCS \texttt{G9 TIDE}).}
+\label{tab:ablation}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Configuration} & \textbf{Clean Acc} & \textbf{Noisy Acc} & \textbf{Clean Unsf.} & \textbf{Noisy Unsf.} \\
+\midrule
+\textbf{Full G9 TIDE (Urgent=False)} & \textbf{75.0\%} & \textbf{67.7\%} & 1.7\% & 3.8\% \\
+w/o TIDE Spread (G8 KERL) & 75.0\% & 67.7\% & 1.7\% & 3.8\% \\
+w/o KERL Guard (G7 SHMF) & 75.6\% & 68.1\% & 2.1\% & 3.8\% \\
+w/o SHMF Relax (G5 HyST) & 64.0\% & 46.7\% & \textbf{1.2\%} & \textbf{1.2\%} \\
+w/o HyST Hard Slots (G4) & 34.2\% & 34.6\% & 31.2\% & 30.4\% \\
+w/o Full-Read (Urgent $B=3$) & 71.9\% & 50.8\% & \textbf{1.2\%} & \textbf{1.2\%} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Removing \textbf{HyST Hard-Slot Gating} (\texttt{G4}) causes the most severe degradation: unsafe actions spike $26\times$ ($1.2\% \rightarrow 31.2\%$) and clean accuracy collapses ($64.0\% \rightarrow 34.2\%$). Removing \textbf{SHMF Auto-Relaxation} (\texttt{G5}) drops clean accuracy by $11.6$ percentage points ($75.6\% \rightarrow 64.0\%$) and noisy accuracy by $21.4$ percentage points ($68.1\% \rightarrow 46.7\%$).
+
+\section{Extended Indexing Techniques}
+Beyond \texttt{dlCBF}, \texttt{BM25}, and \texttt{Exact KNN}, we benchmarked two additional sub-linear/compressed indexing structures on Bank~v3 (\texttt{LocalKG/experiments/run\_ablations\_and\_indexes.py}):
+\begin{itemize}
+  \item \textbf{SimHash LSH (64-bit Random Projection):} Projects one-hot slot-value vectors into 64-bit Hamming sketches ($27.5\,\text{KB}$ space, $15.79\,\text{ms}$ build), achieving $0.117\,\text{ms}$ query latency with $96.2\%$ clean accuracy ($1.2\%$ unsafe) and $91.7\%$ noisy accuracy ($1.7\%$ unsafe).
+  \item \textbf{Slot Inverted Bitset:} Maps each \texttt{(slot, value)} pair to a packed integer bitmask ($7.5\,\text{KB}$ space, $1.11\,\text{ms}$ build, $0.276\,\text{ms}$ latency), yielding $66.2\%$ clean and noisy accuracy ($4.4\% / 4.8\%$ unsafe).
+  \item \textbf{Future Scaling Candidates:} For $>100\text{K}$ clinical records, \textbf{HNSW} (Hierarchical Navigable Small World) graphs, \textbf{IVF-PQ} (Product Quantization), \textbf{Cuckoo/Quotient Filters}, and \textbf{SPLADE} learned sparse retrieval are natural extensions.
+\end{itemize}
+
 \section{Graph Query Engine}\label{sec:res-persona}
-The persona engine was compared with an unoptimised baseline that scans all nodes linearly and instantiates a result object for every node. Each of 8 archetype queries was run 50 times (\code{benchmark\_persona\_engine.py}).
+The persona engine was compared with an unoptimised baseline (Table~\ref{tab:persona}) that scans all nodes linearly and instantiates a result object for every node. Each of 8 archetype queries was run 50 times (\code{benchmark\_persona\_engine.py}).
 
 \begin{table}[H]
 \centering
@@ -926,8 +998,12 @@ Future work includes:
 \appendix
 \titleformat{\chapter}[display]{\normalfont\bfseries\Large}{\large\scshape Appendix \thechapter}{6pt}{\LARGE}
 \chapter{Repository Map}\label{app:repo}
+Table~\ref{tab:repo} lists where each component of the system is implemented in the project repository.
+
 \begin{table}[H]
 \centering
+\caption{Location of each component in the repository.}
+\label{tab:repo}
 \small
 \begin{tabularx}{\linewidth}{@{}l X@{}}
 \toprule
