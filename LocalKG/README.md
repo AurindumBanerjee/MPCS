@@ -103,6 +103,20 @@ python LocalKG\experiments\benchmark_persona_engine.py
 
 *(Raw algorithmic traversal without Pydantic schema serialization runs in **1.29 ms**).*
 
+### Ablation & Extended Indexing Studies (Materia Medica KG)
+
+Empirical evaluation across all 953 clinical occurrences (202 JSONL rows, 452 unique 4-channel percepts; 300 clean + 300 noisy queries with 77 safety-critical queries per split) and the 1,106-node / 2,024-link cleaned MMKG graph:
+
+```powershell
+python LocalKG/experiments/run_ablations_and_indexes.py
+```
+
+Outputs are saved to `docs/ablation_and_indexing_study.json` and `docs/ABLATION_AND_INDEXING_STUDY.md`.
+
+- **Study A (7 Indexing Structures + MPCS B2, G4-G9 on MMKG):** `dlCBF Gate` (9.2 KB, 0.020 ms) and `Cuckoo Filter Gate` (35.1 KB, 0.025 ms) achieve **95.0%** clean accuracy (**100.0%** R@3, 10.4% unsafe) on exact repeats, dropping to 45.7% under perturbation. `Slot Inverted Bitset` leads noisy accuracy at **77.7%** (84.7% clean, 3.660 ms, 48.9 KB), ahead of `Exact KNN (Cosine)` (84.3% clean / 76.3% noisy, 8.505 ms) and `NSW Proximity Graph` (84.7% clean / 75.3% noisy, 2.651 ms, 278.9 scanned, 1,791.06 ms build). Among MPCS variants, `B2 Global Top-5` reaches 85.0% clean / 70.7% noisy, while full-read per-action voting limits `G4 Core`/`G6 HMGI` (10.0% clean, 46.8% unsafe), `G5 HyST`/`G7 SHMF` (44.0% clean, 11.7% unsafe; `G7 SHMF` at 4.946 ms vs `G5 HyST` at 10.651 ms), and `G8 KERL`/`G9 TIDE` (42.3% clean / 42.3% noisy, 26.0% unsafe).
+- **Study B (MPCS G9 TIDE Ablation, Anytime Budgets & Sufficiency Routing):** `Full G9 TIDE (Urgent=False)` (`affect_enabled=True`) scores 42.7% clean / 42.0% noisy (26.0% unsafe; 6.81 / 6.57 ms), whereas enabling `Urgent B=3` resolves full-read reward dilution in `_head_a` to jump to **91.0%** clean / **78.7%** noisy (11.7% / 14.3% unsafe; 5.67 ms clean / 5.39 ms noisy budget latency), and `B=10` cuts clean unsafe errors to **3.9%** (79.0% clean acc). Anytime accuracy sweeps monotonically from `B=3` (91.0% clean / 78.7% noisy) to `Full` (44.0% clean / 43.7% noisy). Removing `HyST Hard Slots (Soft Only)` collapses accuracy to 12.7% (34.48 ms clean / 35.58 ms noisy), while `w/o KERL Near-Miss Guard` and `w/o SHMF Auto-Relaxation` stay invariant (42.7% clean / 42.0% noisy) on dense 4-channel percepts. Sufficiency routing (`Urgent=False`) routes 19.7% (59) to `DIRECT` (44.1% acc), 80.3% (241) to `SUBGRAPH` (42.3% clean / 41.5% noisy), and 0.0% to `UNGROUNDED`.
+- **Study C (`PersonaQueryEngine` 8-Variant Ablation, 40 queries x 10 runs = 400 calls/variant, deterministic `(-score, label.lower())` tie-breaker):** `Full Exploratory Persona (theta=0.35)` retains 86.2 nodes (92.2% pruned, 108.4 internal edges) with **24/40 (60.0%)** Remedy Top-1 and **32/40 (80.0%)** Top-3 at 11.299 ms (0.59x vs the 6.661 ms raw-ID linear scan baseline due to Pydantic `QueryNode`/`QueryEdge` serialization, whereas compact `Full Confident Persona` runs in 4.387 ms / 1.52x and linear scan drops Top-1 to 19/40 = 47.5%). `Full Confident Persona (theta=0.70)` and `hops=0` yield 0/40 hits because 1-hop attenuation (`0.58 < 0.70`) keeps symptom-seeded `Medicine` nodes below `theta_conf`; `hops=1` matches `Full Exploratory` (86.2 nodes, 60.0% Top-1, 80.0% Top-3) at 9.844 ms (0.68x) because `0.58^2 = 0.3364 < 0.35`; `w/o Edge-Weight Modulation` is invariant because MMKG link weights in `[1.0, 2.95]` saturate `min(1.0, edge_w)`; `w/o Clinical Synonym Expansion` maintains 24/40 (60.0%) Top-1 and lifts Top-3 to 34/40 (85.0%); and `w/o VAD Arousal & Grade Multiplier (mu_v=1.0)` raises Top-1 to **32/40 (80.0%)** and Top-3 to **36/40 (90.0%)** at the cost of admitting 22.7% more ambient nodes (105.8 vs 86.2).
+
 ## MPCS-LocalRAG Neuro-Symbolic Cognitive Bridge & Studio
 
 The integrated bridge connects the **LocalKG Dual-Persona Spreading Activation Engine** with the **MPCS Generation 9 (TIDE) Perception-Decision Core**:

@@ -6,12 +6,12 @@
 \usepackage[a4paper,left=1in,right=0.85in,top=0.9in,bottom=0.9in]{geometry}
 \usepackage[T1]{fontenc}
 \usepackage{tgpagella}
-\usepackage[sc]{mathpazo}
 \linespread{1.18}
 \usepackage[final]{microtype}
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs,tabularx,multirow,array}
 \usepackage{graphicx}
+\graphicspath{{./}{report/}}
 \usepackage{xcolor}
 \usepackage{enumitem}
 \usepackage{listings}
@@ -19,7 +19,6 @@
 \usepackage{float}
 \usepackage{titlesec}
 \usepackage{fancyhdr}
-\usepackage{tocloft}
 \usepackage{setspace}
 \usepackage[hyphens]{url}
 \usepackage[hidelinks]{hyperref}
@@ -683,6 +682,163 @@ UNGROUNDED & 3.5\% & 0.0\% & 5.4\% & 11.5\%\\
 The confident persona answers a graph query in 1.43\ms{} on average and the exploratory persona in 1.95\ms{}, 2.56 and 1.87 times faster than a linear-scan baseline.
 The bridge was profiled on six queries (five ordinary and one emergency) in both roles, each repeated 25 times. Mean end-to-end latency for non-emergency queries was 3.91\ms{} (median 3.90\ms{}, 95th percentile 5.41\ms{}), and the Bloom filter check took 30\us{} on average. The fraction of graph nodes pruned ranged from 92.4\% to 99.4\%. For ``burning pains better from warmth, anxious after midnight'' the top-ranked remedy was \emph{Arsenicum album}, which matches the classical description of that remedy. The emergency query was diverted at stage 1 in every repetition. The bridge test suite (\code{LocalKG/tests/test\_localrag\_mpcs\_bridge.py}) covers initialisation, both personas, emergency gating and feedback adaptation, and all five tests pass.
 
+\section{Extended Indexing and MPCS on Materia Medica KG}
+To test whether the Bank~v3 trends hold on real extracted clinical data, \code{LocalKG/experiments/\allowbreak{}run\_ablations\_\allowbreak{}and\_indexes.py} maps all $N = 953$ clinical occurrences from the 202 JSONL rows of \code{kg\_full\_materia\_\allowbreak{}medica.jsonl} (452 unique four-channel percepts; 1,106 graph nodes and 2,024 links) into MPCS percepts and consensus action ground truth (\code{ignore}: 60, \code{observe}: 495, \code{approach}: 149, \code{alert}: 114, \code{withdraw}: 135). Queries comprise 300 clean samples and 300 noisy samples (each with one non-safety feature perturbed), containing 77 safety-critical queries per split.
+
+Table~\ref{tab:mmkg_study_a} evaluates seven indexing structures alongside seven MPCS architectures (B2 and G4-G9). Results are stored in \code{docs/ablation\_and\_indexing\_study.json}.
+
+\begin{table}[H]
+\centering
+\caption{Study A: Extended indexing structures and MPCS generations on LocalKG Materia Medica KG ($N=953$ occurrences, 300 clean and 300 noisy queries, 77 safety-critical per split).}
+\label{tab:mmkg_study_a}
+\footnotesize
+\setlength{\tabcolsep}{1.8pt}
+\begin{tabular}{@{}llrrrrr rrr rr@{}}
+\toprule
+& & & & & & & \multicolumn{3}{c}{Clean (\%)} & \multicolumn{2}{c}{Noisy (\%)}\\
+\cmidrule(lr){8-10}\cmidrule(l){11-12}
+Scheme / Model & Complexity & KB & Build & Scan & ms & p95 & Acc. & R@3 & Unsf & Acc. & Unsf\\
+\midrule
+Exact KNN (Cosine) & $O(N\cdot D)$ & 423.8 & 14.5 & 953 & 8.505 & 13.835 & 84.3 & 97.3 & 14.3 & 76.3 & 16.9\\
+BM25 Inverted Index & $O(|Q|\cdot\overline{DF})$ & 800.0 & 24.75 & 953.0 & 6.133 & 7.532 & 83.3 & 97.3 & 13.0 & 63.0 & 20.8\\
+dlCBF Gate & $O(d)$ hash & 9.2 & 15.11 & 11 & 0.020 & 0.030 & \textbf{95.0} & \textbf{100.0} & 10.4 & 45.7 & 10.4\\
+Cuckoo Filter Gate & $O(1)$ 2-choice & 35.1 & 17.3 & 11 & 0.025 & 0.035 & \textbf{95.0} & \textbf{100.0} & 10.4 & 45.7 & 10.4\\
+SimHash LSH (64-bit) & $O(N)$ popcnt & 106.4 & 36.67 & 953 & 0.689 & 0.836 & 82.7 & 97.3 & 18.2 & 65.3 & 18.2\\
+Slot Inverted Bitset & $O(|Q|\cdot\text{hits})$ & 48.9 & 6.85 & 953.0 & 3.660 & 4.345 & 84.7 & 97.3 & 15.6 & \textbf{77.7} & 15.6\\
+NSW Proximity Graph & $O(\text{ef}\,M\log N)$ & 591.3 & 1791.06 & 278.9 & 2.651 & 4.633 & 84.7 & 97.3 & 15.6 & 75.3 & 15.6\\
+\midrule
+B2 Global Top-5 & $O(N)$ & 1561.2 & 49.0 & 953 & 11.324 & 12.561 & 85.0 & 91.0 & 14.3 & 70.7 & 19.5\\
+G4 Core & $O(|A|\cdot N)$ & 1560.7 & 44.93 & 953 & 13.127 & 14.556 & 10.0 & 68.7 & 46.8 & 15.3 & 33.8\\
+G5 HyST & $O(N_{\text{slot}})$ & 1561.7 & 51.48 & 953 & 10.651 & 14.520 & 44.0 & 56.3 & 11.7 & 43.7 & 14.3\\
+G6 HMGI & $O(M_{\text{part}}+N_{\text{cand}})$ & 1611.8 & 49.01 & 953 & 14.488 & 15.953 & 10.0 & 68.7 & 46.8 & 15.3 & 33.8\\
+G7 SHMF & $O(M_{\text{part}}+N_{\text{slot}})$ & 1613.7 & 63.08 & 953 & 4.946 & 6.957 & 44.0 & 56.3 & 11.7 & 43.7 & 14.3\\
+G8 KERL & $O(N_{\text{slot}}+E_{\text{2hop}})$ & 1615.7 & 48.91 & 953 & 6.169 & 11.773 & 42.3 & 55.3 & 26.0 & 42.3 & 26.0\\
+G9 TIDE & $O(B_{\text{budget}}+E_{\text{act}})$ & 1617.3 & 47.6 & 953 & 6.605 & 12.091 & 42.3 & 55.3 & 26.0 & 42.3 & 26.0\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent Key findings from Study~A on MMKG:
+\begin{itemize}
+  \item \textbf{Exact-hash gates excel on repeats, fail on perturbation.} Both \code{dlCBF Gate} (9.2\,KB, 0.020\ms{}) and \code{Cuckoo Filter Gate} (35.1\,KB, 0.025\ms{}) reach 95.0\% clean accuracy (100.0\% R@3, 10.4\% unsafe) when matching exact stored percepts, but collapse to 45.7\% on single-feature perturbations because missed lookups fall back to \code{observe}.
+  \item \textbf{Slot Inverted Bitset and NSW lead noisy robustness.} The \code{Slot Inverted Bitset} index achieves the highest noisy accuracy (77.7\%, 84.7\% clean) in 48.9\,KB and 3.660\ms{}, outperforming \code{Exact KNN} (76.3\%, 8.505\ms{}) and \code{SimHash LSH} (65.3\%, 0.689\ms{}). \code{NSW Proximity Graph} scans only 278.9 of 953 records per query (2.651\ms{}, 75.3\% noisy) at the cost of a 1,791.06\ms{} graph build.
+  \item \textbf{Full-read reward averaging hurts MPCS G4-G9 on dense MMKG.} \code{G4 Core} and \code{G6 HMGI} score 10.0\% clean accuracy and 46.8\% unsafe actions because per-action top-5 scoring lets high-reward \code{approach} records override exact matches. \code{G5 HyST} and \code{G7 SHMF} enforce hard slots, cutting clean unsafe actions fourfold to 11.7\% (44.0\% clean accuracy), with \code{G7 SHMF} more than halving mean latency (4.946\ms{} vs 10.651\ms{}). In \code{models.py}, \code{G8 KERL} and \code{G9 TIDE} default to \code{affect\_enabled=False} and reach 42.3\% clean and noisy accuracy (matching Study~B's affect-disabled ablation row), whereas \code{B2 Global Top-5} avoids per-action dilution (85.0\% clean, 70.7\% noisy).
+  \item \textbf{Scaling beyond $10^4$ episodes.} For substantially larger banks, \code{NSW} build cost (1.79\,s at $N=953$) motivates hierarchical navigable small-world graphs (\code{HNSW}) for logarithmic build and tail control, product quantization (\code{IVF-PQ}) for compact dense storage, and sparse learned lexical expansion (\code{SPLADE}) to absorb archaic materia medica phrasing.
+\end{itemize}
+
+\section{MPCS G9 TIDE Ablation, Anytime Budgets and Routing on MMKG}
+Tables~\ref{tab:mmkg_b1}, \ref{tab:mmkg_b2} and \ref{tab:mmkg_b3} report Study~B on the 953-occurrence MMKG bank: an eight-variant component ablation of G9 TIDE (with \code{affect\_enabled=True} in the full baseline), an anytime candidate-budget sweep ($B \in \{3, 5, 10, 20, 50, \text{Full}\}$), and sufficiency routing with the \code{urgent} flag off.
+
+\begin{table}[H]
+\centering
+\caption{Study B1: MPCS G9 TIDE eight-variant component ablation on MMKG (300 clean and 300 noisy queries).}
+\label{tab:mmkg_b1}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}l rrr rrr@{}}
+\toprule
+& \multicolumn{3}{c}{Clean} & \multicolumn{3}{c}{Noisy}\\
+\cmidrule(lr){2-4}\cmidrule(l){5-7}
+Configuration & Acc. (\%) & Unsf (\%) & ms & Acc. (\%) & Unsf (\%) & ms\\
+\midrule
+Full G9 TIDE (Urgent=False) & 42.7 & 26.0 & 6.81 & 42.0 & 26.0 & 6.57\\
+w/o TIDE Spread (hops=0, $w_g=0$) & 42.7 & 26.0 & 6.15 & 42.0 & 26.0 & 6.33\\
+w/o VAD Affect \& Salience & 42.3 & 26.0 & 6.92 & 42.3 & 26.0 & 6.93\\
+w/o KERL Near-Miss Guard & 42.7 & 26.0 & 6.76 & 42.0 & 26.0 & 6.82\\
+w/o SHMF Auto-Relaxation & 42.7 & 26.0 & 6.84 & 42.0 & 26.0 & 6.82\\
+w/o HyST Hard Slots (Soft Only) & 12.7 & 0.0 & 34.48 & 12.7 & 0.0 & 35.58\\
+w/o Expert Grade Boost (boost=1.0) & 42.3 & 26.0 & 6.85 & 42.0 & 26.0 & 6.97\\
+w/o Full-Read (Urgent $B=3$) & \textbf{91.0} & 11.7 & 7.15 & \textbf{78.7} & 14.3 & 7.25\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Study B2: TIDE anytime deadline budgets (\code{urgent=True}) on MMKG.}
+\label{tab:mmkg_b2}
+\small
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{@{}l rrrrrr@{}}
+\toprule
+Split / Budget & Read / Avail & Cut Short (\%) & Acc. (\%) & Unsf (\%) & Agree w/ Full (\%) & Lat (ms)\\
+\midrule
+Clean $B=3$ & 2.8 / 67.3 & 81.7 & \textbf{91.0} & 11.7 & 38.4 & 5.67\\
+Clean $B=5$ & 4.4 / 67.3 & 74.0 & 87.0 & 14.3 & 37.4 & 5.71\\
+Clean $B=10$ & 7.9 / 67.3 & 65.7 & 79.0 & \textbf{3.9} & 37.6 & 5.68\\
+Clean $B=20$ & 13.8 / 67.3 & 49.7 & 68.0 & 14.3 & 43.6 & 5.75\\
+Clean $B=50$ & 26.4 / 67.3 & 31.0 & 55.3 & 18.2 & 54.8 & 6.18\\
+Clean Full & 67.3 / 67.3 & 0.0 & 44.0 & 27.3 & 100.0 & 6.89\\
+\midrule
+Noisy $B=3$ & 2.8 / 67.3 & 81.7 & \textbf{78.7} & 14.3 & 43.7 & 5.39\\
+Noisy $B=5$ & 4.4 / 67.3 & 74.0 & 76.7 & 14.3 & 43.7 & 5.69\\
+Noisy $B=10$ & 7.9 / 67.3 & 65.7 & 67.7 & 14.3 & 47.7 & 5.66\\
+Noisy $B=20$ & 13.8 / 67.3 & 49.7 & 61.3 & \textbf{13.0} & 50.3 & 6.12\\
+Noisy $B=50$ & 26.4 / 67.3 & 31.0 & 50.7 & 19.5 & 63.4 & 6.49\\
+Noisy Full & 67.3 / 67.3 & 0.0 & 43.7 & 27.3 & 100.0 & 7.36\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Study B3: TIDE sufficiency routing breakdown (\code{urgent=False}) on MMKG.}
+\label{tab:mmkg_b3}
+\small
+\begin{tabular}{@{}l rrr rrr@{}}
+\toprule
+& \multicolumn{3}{c}{Clean} & \multicolumn{3}{c}{Noisy}\\
+\cmidrule(lr){2-4}\cmidrule(l){5-7}
+Route Mode & Count & Share (\%) & Acc. (\%) & Count & Share (\%) & Acc. (\%)\\
+\midrule
+DIRECT & 59 & 19.7 & 44.1 & 59 & 19.7 & 44.1\\
+SUBGRAPH & 241 & 80.3 & 42.3 & 241 & 80.3 & 41.5\\
+UNGROUNDED & 0 & 0.0 & 0.0 & 0 & 0.0 & 0.0\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent Study~B highlights three architectural mechanisms on MMKG:
+\begin{itemize}
+  \item \textbf{Urgent truncation resolves full-read reward dilution.} Switching from \code{Full G9 TIDE (Urgent=False)} (42.7\% clean, 42.0\% noisy, 26.0\% unsafe) to \code{Urgent B=3} jumps accuracy to 91.0\% clean and 78.7\% noisy while halving clean unsafe errors to 11.7\% (and \code{B=10} lowers clean unsafe errors to 3.9\%). In \code{kerl\_layer.py}, \code{\_head\_a} scores each action by its normalised $\omega$-weighted reward average rather than similarity-scaled support. Over MMKG's 452 unique percepts across 953 records (averaging 67.3 hard-slot candidates per query), full reading admits lower-similarity records with high stored rewards and expert boosts from competing actions; truncating the sorted candidate list at $B=3$ restricts voting to the strongest similarity matches. Consequently, accuracy falls monotonically from $B=3$ (91.0\% clean, 78.7\% noisy) down to Full (44.0\% clean, 43.7\% noisy) in Table~\ref{tab:mmkg_b2}.
+  \item \textbf{Dense four-channel percepts render guard and auto-relaxation invariant.} Disabling the KERL near-miss guard or SHMF auto-relaxation leaves accuracy identical (42.7\% clean, 42.0\% noisy) because all 953 MMKG records populate all four modalities and every noisy query preserves safety slots, so strict HyST never returns an empty set and the guard rejects zero records.
+  \item \textbf{Removing hard slots collapses accuracy and latency.} Without HyST hard slots (\code{Soft Only}), every query reads the entire 953-record bank: latency rises fivefold (34.48\ms{} clean, 35.58\ms{} noisy) and accuracy collapses to 12.7\%, as high-reward danger records dominate \code{\_head\_a} across queries (yielding 0.0\% unsafe errors only through pervasive \code{alert}/\code{withdraw} over-prediction). With \code{urgent=False}, sufficiency routing places 19.7\% of queries in \code{DIRECT} (44.1\% accuracy) and 80.3\% in \code{SUBGRAPH} (42.3\% clean, 41.5\% noisy), with zero \code{UNGROUNDED} steps.
+\end{itemize}
+
+\section{PersonaQueryEngine Component Ablation on MMKG}
+Study~C evaluates eight configurations of \code{PersonaQueryEngine} on the full cleaned MMKG graph (1,106 nodes, 2,024 links) across 40 queries (32 remedy-specific four-symptom queries plus the 8 clinical archetypes) repeated 10 times each (400 calls per variant, using deterministic \code{(-score, label.lower())} remedy tie-breaking; Table~\ref{tab:mmkg_study_c}).
+
+\begin{table}[H]
+\centering
+\caption{Study C: \code{PersonaQueryEngine} eight-variant component ablation on MMKG (1,106 nodes, 2,024 links; 40 queries $\times$ 10 runs = 400 calls/variant).}
+\label{tab:mmkg_study_c}
+\scriptsize
+\setlength{\tabcolsep}{2.2pt}
+\begin{tabular}{@{}l rrrrrrrr@{}}
+\toprule
+Configuration & Kept & Pruned & Edges & Top-1 & Top-3 & Mean ms & p95 ms & Speedup\\
+\midrule
+Full Exploratory ($\theta=0.35$) & 86.2 & 92.2\% & 108.4 & 24/40 (60.0\%) & 32/40 (80.0\%) & 11.299 & 23.268 & 0.59x\\
+Full Confident ($\theta=0.70$) & 6.0 & 99.4\% & 0 & 0/40 (0.0\%) & 0/40 (0.0\%) & 4.387 & 8.462 & 1.52x\\
+w/o 2-Hop Spread (hops=0) & 65.2 & 94.1\% & 0.2 & 0/40 (0.0\%) & 0/40 (0.0\%) & \textbf{3.574} & 9.284 & \textbf{1.86x}\\
+w/o 2nd Hop (hops=1) & 86.2 & 92.2\% & 108.4 & 24/40 (60.0\%) & 32/40 (80.0\%) & 9.844 & 20.655 & 0.68x\\
+w/o VAD/Grade ($\mu_v=1.0$) & 105.8 & 90.4\% & 118.6 & \textbf{32/40 (80.0\%)} & \textbf{36/40 (90.0\%)} & 11.222 & 23.115 & 0.59x\\
+w/o Synonym Expansion & 87.0 & 92.1\% & 108.2 & 24/40 (60.0\%) & 34/40 (85.0\%) & 11.018 & 22.600 & 0.60x\\
+w/o Edge Weights ($w_{uv}=1.0$) & 86.2 & 92.2\% & 108.4 & 24/40 (60.0\%) & 32/40 (80.0\%) & 11.753 & 23.330 & 0.57x\\
+w/o Inverted Index (Linear) & 137.2 & 87.6\% & 181.8 & 19/40 (47.5\%) & 27/40 (67.5\%) & 6.661 & 9.546 & 1.00x\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent Five structural insights emerge from Study~C:
+\begin{itemize}
+  \item \textbf{1-hop attenuation falls below $\theta_{\text{conf}} = 0.70$.} On symptom-only queries, seed activation peaks on symptom or modality nodes (normalised to 1.0), so 1-hop propagation to \code{Medicine} nodes is capped at $\delta = 0.58 < 0.70$. Both \code{Full Confident} and \code{hops=0} therefore return 0/40 Top-1 and Top-3 remedy hits.
+  \item \textbf{2nd-hop attenuation falls below $\theta_{\text{expl}} = 0.35$.} Because $\delta^2 = 0.58^2 = 0.3364 < 0.35$, second-hop neighbours from a unit-normalised seed are pruned; \code{hops=1} produces the exact same active set (86.2 nodes, 108.4 internal edges, 60.0\% Top-1) while cutting mean latency from 11.299\ms{} to 9.844\ms{}.
+  \item \textbf{Edge-weight clamping causes invariance.} All 2,024 MMKG graph link weights lie in $[1.0, 2.95]$, so \code{min(1.0, edge\_w)} in \code{persona\_engine.py} saturates every edge at 1.0; removing edge-weight modulation leaves results identical.
+  \item \textbf{VAD/grade scaling trades remedy recall for ambient suppression.} Setting $\mu_v = 1.0$ raises Remedy Top-1 from 24/40 (60.0\%) to 32/40 (80.0\%) and Top-3 from 32/40 (80.0\%) to 36/40 (90.0\%) by preventing high-arousal hub symptoms from eclipsing multi-term lexical overlap, at the cost of admitting 22.7\% more ambient nodes (105.8 vs 86.2 kept; pruning drops from 92.2\% to 90.4\%). Disabling synonym expansion keeps Top-1 at 60.0\% and raises Top-3 to 85.0\% (34/40) because 32 of the 40 queries use exact graph labels.
+  \item \textbf{Pydantic serialization dominates large-subgraph latency.} On large exploratory subgraphs (86.2 nodes, 108.4 internal edges), \code{Full Exploratory} takes 11.299\ms{} (0.59x) versus 6.661\ms{} for the raw ID-only linear baseline solely due to Pydantic \code{QueryNode} and \code{QueryEdge} construction, whereas compact outputs (\code{Confident} at 4.387\ms{}, 1.52x; \code{hops=0} at 3.574\ms{}, 1.86x) remain faster. Moreover, raw substring scanning admits 137.2 nodes (87.6\% pruned) and drops Top-1 to 19/40 (47.5\%).
+\end{itemize}
+
 % ==================================================================
 \chapter{Discussion}\label{ch:discussion}
 % ==================================================================
@@ -695,8 +851,9 @@ For graph construction, the hybrid extractor shows that a language model is most
 
 \section{Limitations}
 \begin{itemize}
-  \item \textbf{Synthetic episode data.} Bank~v3 is generated from archetype scenes. Classical baselines reach about 94\% on it, which indicates that it is easier than real perceptual data, and MPCS has not yet been tested on real sensor streams.
-  \item \textbf{Accuracy gap to classical retrieval.} The best MPCS generation is about 19 points below exact KNN on clean queries. The gap comes mainly from per-action voting inherited from the base engine; the global top-5 variant (B2) already closes about half of it.
+  \item \textbf{Synthetic and text-derived episode data.} Bank~v3 is generated from archetype scenes (where classical baselines reach about 94\%), and while the MMKG benchmarks evaluate 953 real extracted occurrences, those percepts are mapped deterministically from text and annotations rather than live sensor streams.
+  \item \textbf{Reward-averaging dilution under per-action scoring.} On Bank~v3, the best MPCS generation trails exact KNN by about 19 points under per-action voting, while global top-5 (B2) closes half that gap. On MMKG, \code{\_head\_a} normalises out similarity when averaging top-$k$ candidate rewards, dropping full-read G9 TIDE to 42.7\% clean whereas \code{Urgent B=3} reaches 91.0\% (ahead of Exact KNN's 84.3\%).
+  \item \textbf{Graph parameter regimes in PersonaQueryEngine.} On MMKG, all 2,024 link weights lie in $[1.0, 2.95]$ and saturate \code{min(1.0, edge\_w)}, $\delta = 0.58 < \theta_{\text{conf}}$ prevents 1-hop \code{Medicine} nodes from entering Confident mode on symptom-only queries, $\delta^2 = 0.3364 < \theta_{\text{expl}}$ truncates two-hop paths from unit-normalised seeds, and Pydantic model construction introduces serialization overhead on large exploratory subgraphs.
   \item \textbf{Small extraction gold set.} The extraction comparison uses 26 keynotes over 8 remedies. Precision is not meaningful as an absolute number because the gold set is not exhaustive.
   \item \textbf{Heuristic bridge mapping.} Modality words are mapped to percepts with a fixed table, and the bridge's routing thresholds were set by hand.
   \item \textbf{Knowledge source.} The graph encodes historical claims. Its value here is as a structured, citable test corpus, not as medical knowledge.
@@ -748,6 +905,8 @@ Future work includes:
 \chapter{Repository Map}\label{app:repo}
 \begin{table}[H]
 \centering
+\caption{Repository structure and key files.}
+\label{tab:repo}
 \small
 \begin{tabularx}{\linewidth}{@{}l X@{}}
 \toprule
@@ -764,8 +923,8 @@ Ontology and schemas & \code{LocalKG/src/lkg/schema/}\\
 Cleaning, affect, weighting & \code{LocalKG/src/lkg/extract/affect.py}\\
 Query engine & \code{LocalKG/src/lkg/query/persona\_engine.py}\\
 Extraction comparison & \code{Extraction\_KRAG/homeopathy-kg/}\\
-Benchmarks & \code{LocalKG/experiments/benchmark\_indexing\_and\_tide.py}, \code{benchmark\_persona\_engine.py}\\
-Benchmark results & \code{docs/benchmark\_indexing\_tide.json}, \code{docs/BENCHMARK\_INDEXING\_TIDE.md}\\
+Benchmarks & \code{LocalKG/experiments/benchmark\_indexing\_and\_tide.py}, \code{benchmark\_persona\_engine.py}, \code{run\_ablations\_and\_indexes.py}\\
+Benchmark results & \code{docs/benchmark\_indexing\_tide.json}, \code{docs/BENCHMARK\_INDEXING\_TIDE.md}, \code{docs/ablation\_and\_indexing\_study.json}, \code{docs/ABLATION\_AND\_INDEXING\_STUDY.md}\\
 Tests & \code{LocalKG/tests/}\\
 \bottomrule
 \end{tabularx}
@@ -775,6 +934,7 @@ Tests & \code{LocalKG/tests/}\\
 \begin{lstlisting}[language=bash]
 python LocalKG/experiments/benchmark_indexing_and_tide.py
 python LocalKG/experiments/benchmark_persona_engine.py
+python LocalKG/experiments/run_ablations_and_indexes.py
 python LocalKG/tests/test_localrag_mpcs_bridge.py
 \end{lstlisting}
 
