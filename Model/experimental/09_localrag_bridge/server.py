@@ -40,7 +40,6 @@ SAMPLE_QUERIES = [
         "persona": "doctor",
         "title": "Acute Febrile Delirium with Vascular Congestion",
         "query": "violent throbbing headache with high fever, dilated pupils, flushed red face, restless anxiety after exposure to cold dry wind",
-        "modalities": {"thermal": "hot", "motion": "fast", "contact": "sharp"},
     },
     {
         "id": "doc_trauma",
@@ -48,7 +47,6 @@ SAMPLE_QUERIES = [
         "persona": "doctor",
         "title": "Severe Traumatic Contusion & Jarring Shock",
         "query": "sore bruised pain all over body from fall, bed feels too hard, aversion to touch or anyone approaching, traumatic sprain",
-        "modalities": {"thermal": "neutral", "contact": "impact", "motion": "static"},
     },
     {
         "id": "patient_fever",
@@ -56,7 +54,6 @@ SAMPLE_QUERIES = [
         "persona": "patient",
         "title": "Sudden Burning Fever & Restless Panic",
         "query": "I woke up in the night with sudden high fever, pounding headache, burning dry skin and feeling panicked",
-        "modalities": {"thermal": "hot", "motion": "fast"},
     },
     {
         "id": "patient_sprain",
@@ -64,7 +61,6 @@ SAMPLE_QUERIES = [
         "persona": "patient",
         "title": "Twisted Ankle with Bruising and Soreness",
         "query": "twisted ankle while running, severe soreness and bruised feeling, hurts if anyone touches it",
-        "modalities": {"contact": "impact", "thermal": "neutral"},
     },
     {
         "id": "emergency_cardiac",
@@ -72,7 +68,6 @@ SAMPLE_QUERIES = [
         "persona": "patient",
         "title": "Acute Retrosternal Chest Pain (Cardiac Triage)",
         "query": "severe crushing chest pain radiating to left arm with shortness of breath and fainting",
-        "modalities": {"contact": "sharp", "sound": "alarm"},
     },
     {
         "id": "emergency_hemorrhage",
@@ -80,7 +75,6 @@ SAMPLE_QUERIES = [
         "persona": "patient",
         "title": "Acute Abdomen with Severe Bleeding",
         "query": "severe abdominal pain with vomiting blood and loss of consciousness",
-        "modalities": {"contact": "sharp", "thermal": "cold"},
     },
 ]
 
@@ -102,12 +96,11 @@ def health_check():
     """System health check and component status."""
     return jsonify({
         "status": "healthy",
-        "engine": "MPCS-LocalRAG Neuro-Symbolic Bridge",
-        "version": "3.4.0-Production",
+        "engine": "MPCS-LocalRAG Homeopathic TIDE Bridge",
+        "version": "4.0.0-Homeopathic-TIDE",
         "graph_nodes": len(bridge.persona_engine.nodes),
         "graph_links": len(bridge.persona_engine.links),
-        "memory_size": len(bridge.session.memory),
-        "dlcbf_capacity": len(bridge.session.memory._dlcbf),
+        "stage1_rules_count": len(bridge.learned_emergency_queries) + 1,
     })
 
 
@@ -125,11 +118,10 @@ def get_sample_queries():
 
 @app.route("/api/query", methods=["POST"])
 def run_query():
-    """Execute integrated LocalRAG retrieval + MPCS cognitive step."""
+    """Execute integrated LocalRAG retrieval + Homeopathic TIDE cognitive step."""
     data = request.get_json(force=True, silent=True) or {}
     query_text = data.get("query", "").strip()
     persona = data.get("persona", "doctor").strip().lower()
-    explicit_modalities = data.get("modalities")
     manual_reward = data.get("manual_reward")
 
     if not query_text:
@@ -138,7 +130,6 @@ def run_query():
     resp = bridge.process_query(
         query=query_text,
         persona=persona,
-        explicit_modalities=explicit_modalities,
         manual_reward=manual_reward,
     )
 
@@ -147,8 +138,7 @@ def run_query():
         "persona": resp.persona,
         "is_emergency": resp.is_emergency,
         "emergency_warning": resp.emergency_warning,
-        "dlcbf_hit": resp.dlcbf_hit,
-        "dlcbf_latency_us": resp.dlcbf_latency_us,
+        "stage1_latency_us": resp.stage1_latency_us,
         "total_latency_ms": resp.total_latency_ms,
         "action": resp.action,
         "action_label": resp.action_label,
@@ -168,13 +158,14 @@ def run_query():
 
 @app.route("/api/feedback", methods=["POST"])
 def submit_feedback():
-    """Submit clinical reinforcement feedback or expert teaching."""
+    """Submit clinical reinforcement feedback or register expert red-flag emergency."""
     data = request.get_json(force=True, silent=True) or {}
     step = int(data.get("step", bridge.step_counter))
     reward = float(data.get("reward", 1.0))
     expert_action = data.get("expert_action")
+    query = data.get("query")
 
-    result = bridge.apply_feedback(step=step, reward=reward, expert_action=expert_action)
+    result = bridge.apply_feedback(step=step, reward=reward, expert_action=expert_action, query=query)
     return jsonify(result)
 
 

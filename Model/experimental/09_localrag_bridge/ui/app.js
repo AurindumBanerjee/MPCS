@@ -31,11 +31,6 @@ let simNodes = [], simLinks = [];
 
 const state = {
   activePersona: "doctor",
-  selectedModalities: {
-    thermal: "",
-    motion: "",
-    contact: "",
-  },
   lastResponse: null,
 };
 
@@ -72,7 +67,8 @@ async function initApp() {
     const healthRes = await fetch("/api/health");
     if (healthRes.ok) {
       const health = await healthRes.json();
-      document.getElementById("dlcbf-badge").textContent = `dlCBF Gate: ${health.dlcbf_capacity} Fingerprints`;
+      const badge = document.getElementById("safety-badge") || document.getElementById("dlcbf-badge");
+      if (badge) badge.textContent = `Stage 1 Safety Guard: ${health.stage1_rules_count} Rules Active`;
     }
   } catch (err) {
     console.warn("Health check error:", err);
@@ -313,18 +309,6 @@ function setupCognitiveControls() {
   btnDoc.addEventListener("click", () => setPersona("doctor"));
   btnPat.addEventListener("click", () => setPersona("patient"));
 
-  // Modality Chips
-  document.querySelectorAll(".mod-chips").forEach(group => {
-    const grpName = group.getAttribute("data-group");
-    group.querySelectorAll(".mod-chip").forEach(chip => {
-      chip.addEventListener("click", () => {
-        group.querySelectorAll(".mod-chip").forEach(c => c.classList.remove("active"));
-        chip.classList.add("active");
-        state.selectedModalities[grpName] = chip.getAttribute("data-val") || "";
-      });
-    });
-  });
-
   // Query Input Enter shortcut
   const inputEl = document.getElementById("query-input");
   inputEl.addEventListener("keydown", (e) => {
@@ -375,29 +359,10 @@ function renderSampleScenarios(samples) {
     btn.addEventListener("click", () => {
       document.getElementById("query-input").value = sample.query;
       setPersona(sample.persona);
-      if (sample.modalities) {
-        applyModalities(sample.modalities);
-      }
       executeCognitiveLoop();
     });
 
     container.appendChild(btn);
-  });
-}
-
-function applyModalities(mods) {
-  Object.keys(mods).forEach(grp => {
-    state.selectedModalities[grp] = mods[grp];
-    const groupEl = document.querySelector(`.mod-chips[data-group="${grp}"]`);
-    if (groupEl) {
-      groupEl.querySelectorAll(".mod-chip").forEach(chip => {
-        if (chip.getAttribute("data-val") === mods[grp]) {
-          chip.classList.add("active");
-        } else {
-          chip.classList.remove("active");
-        }
-      });
-    }
   });
 }
 
@@ -1031,7 +996,6 @@ async function executeCognitiveLoop() {
     const payload = {
       query: queryText,
       persona: state.activePersona,
-      modalities: state.selectedModalities,
     };
 
     const res = await fetch("/api/query", {
@@ -1142,16 +1106,24 @@ function renderPipelineResults(data) {
 
   // Emergency Check
   const banner = document.getElementById("emergency-banner");
+  const st1Status = document.getElementById("stage1-status-val");
+  const st1Badge = document.getElementById("stage1-status");
   if (data.is_emergency) {
     banner.classList.remove("hidden");
     document.getElementById("emergency-title").textContent = "CRITICAL EMERGENCY RED-FLAG DETECTED";
     document.getElementById("emergency-message").textContent = data.emergency_warning;
-    document.getElementById("stage1-status").textContent = "REFLEX BLOCKED";
-    document.getElementById("stage1-status").className = "badge badge-danger";
+    if (st1Badge) {
+      st1Badge.textContent = "REFLEX BLOCKED";
+      st1Badge.className = "badge badge-danger";
+    }
+    if (st1Status) st1Status.textContent = "REFLEX BLOCKED";
   } else {
     banner.classList.add("hidden");
-    document.getElementById("stage1-status").textContent = "SAFE DELIBERATION";
-    document.getElementById("stage1-status").className = "badge badge-success";
+    if (st1Badge) {
+      st1Badge.textContent = "SAFE DELIBERATION";
+      st1Badge.className = "badge badge-success";
+    }
+    if (st1Status) st1Status.textContent = "SAFE DELIBERATION";
   }
 
   // Header Bar Meta
@@ -1162,10 +1134,13 @@ function renderPipelineResults(data) {
   document.getElementById("policy-sub").textContent = `Policy: ${data.policy} · Step: ${data.step_index}`;
   document.getElementById("stage1-total-lat").textContent = `${data.total_latency_ms} ms`;
 
-  // Stage 01 Body
-  document.getElementById("stage1-dlcbf").textContent = data.dlcbf_hit ? "SEEN VERBATIM" : "NOVEL ENCOUNTER";
-  document.getElementById("stage1-dlcbf-lat").textContent = `${data.dlcbf_latency_us} us`;
-  document.getElementById("stage1-total-lat-body").textContent = `${data.total_latency_ms} ms`;
+  // Stage 01 Body (Reflex Guard & Stage 1 Filter)
+  const st1Lat = document.getElementById("stage1-latency-val");
+  if (st1Lat) st1Lat.textContent = `${data.stage1_latency_us} µs`;
+  const st1Rules = document.getElementById("stage1-rules-val");
+  if (st1Rules) st1Rules.textContent = `${data.safety_audit ? data.safety_audit.stage1_rules_active : 1} Active Rules`;
+  const st1Total = document.getElementById("stage1-total-lat-body");
+  if (st1Total) st1Total.textContent = `${data.total_latency_ms} ms`;
 
   // Stage 02 Body
   document.getElementById("stage2-pruning").textContent = `${data.pruning_ratio_pct.toFixed(1)}% Ambient Cut`;
@@ -1337,6 +1312,60 @@ function formatMarkdown(text) {
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
     .replace(/`(.*?)`/g, "<code class='mono'>$1</code>")
     .replace(/\n\n/g, "<br/><br/>");
+}
+
+/**
+ * Submit Expert Action: RED_FLAG_URGENT_REFERRAL
+ * Registers current query into Stage 1 Emergency Guard
+ */
+async function submitExpertRedFlag() {
+  const expertAction = document.getElementById("expert-action-select").value;
+  if (!expertAction) {
+    alert("Please select an expert action.");
+    return;
+  }
+
+  const queryText = (state.lastResponse && state.lastResponse.query) || document.getElementById("query-input").value.trim();
+  if (!queryText) {
+    alert("Please enter a query or run a scenario first before registering a red flag.");
+    return;
+  }
+
+  const btn = document.getElementById("btn-teach");
+  btn.disabled = true;
+  btn.textContent = "Registering...";
+
+  try {
+    const res = await fetch("/api/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        step: state.lastResponse ? state.lastResponse.step_index : 1,
+        expert_action: expertAction,
+        query: queryText
+      })
+    });
+
+    if (res.ok) {
+      const resp = await res.json();
+      alert(`[SAFETY GUARD UPDATED]\n${resp.message}\nTotal Stage 1 Registered Rules: ${resp.total_learned_flags}`);
+      // Refresh health badge
+      const healthRes = await fetch("/api/health");
+      if (healthRes.ok) {
+        const health = await healthRes.json();
+        const badge = document.getElementById("safety-badge") || document.getElementById("dlcbf-badge");
+        if (badge) badge.textContent = `Stage 1 Safety Guard: ${health.stage1_rules_count} Rules Active`;
+      }
+    } else {
+      alert("Failed to register red flag feedback.");
+    }
+  } catch (err) {
+    console.error("Feedback submission error:", err);
+    alert(`Error: ${err.message}`);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Register Red Flag";
+  }
 }
 
 // Start application on DOM ready

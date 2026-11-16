@@ -1,25 +1,29 @@
 """MPCS-LocalRAG Neuro-Symbolic Cognitive Bridge Engine
 ------------------------------------------------------
-Integrates:
-  1. MPCS Cognitive Architecture (02_core/mpcs_engine.py):
-     - dlCBF Counting Bloom Filter seen-before gate (17 µs)
-     - Somatic Marker VAD affect integration (Valence, Arousal, Dominance)
-     - Episodic memory reinforcement & adaptive action threshold
-     - Four-action clinical mapping (APPROACH, OBSERVE, WITHDRAW, ALERT)
-  2. LocalKG / LocalRAG Knowledge Engine (LocalKG/src/lkg/query/persona_engine.py):
-     - Dual-Persona graph traversal (Doctor/Exploratory vs. Patient/Confident)
-     - BFS spreading activation with arousal/severity salience multipliers
-     - Clinical synonym expansion & causal modality decomposition
-     - Strict provenance grounding with verbatim Materia Medica proving citations
-  3. TIDE Anytime Sufficiency Routing:
-     - DIRECT: Strong evidence margin -> high-confidence keynote profile
-     - SUBGRAPH: Ambiguous margin -> multi-remedy differential diagnosis
+Homeopathic TIDE + LocalKG Dual-Persona Architecture:
+  1. Stage 1: Safety & Red-Flag Reflex Guard:
+     - Clinical emergency regex guard for acute red flags (cardiac, dyspnea, hemorrhage, stroke, etc.)
+     - Dynamically learned emergency red-flag filters registered via expert clinical teaching.
+     - Action: RED_FLAG_URGENT_REFERRAL (Halts deliberation immediately).
+  2. Stage 2: LocalRAG Graph Traversal & Spreading Activation:
+     - Direct symptom query processing with clinical synonym expansion (CLINICAL_SYNONYMS).
+     - Two-tier gating matching kg_full_materia_medica.html:
+       * CONFIDENT (Patient Keynote Mode): cutoff = maxScore * 0.45
+       * EXPLORATORY (Doctor Differential Mode): cutoff = maxScore * 0.18
+     - Active-frontier BFS spreading activation with arousal & severity salience multipliers.
+  3. Stage 3: Homeopathic TIDE Sufficiency Routing:
+     - DIRECT: Clear keynote margin (>= 0.18 over runner-up) -> PRESCRIBE_KEYNOTE
+     - SUBGRAPH: Ambiguous differential -> ELICIT_MODALITIES
+     - UNGROUNDED: Low saliency / no surviving remedies -> EXPAND_RUBRICS
+     - Aggregate Somatic Marker VAD vector (Valence, Arousal, Dominance) across active subgraph.
+  4. Stage 4: Grounded Provenance & Differential Synthesis:
+     - Verbatim Materia Medica proving citations (Boericke, Hahnemann, PubMed).
+     - Subgraph edge partitioning (Internal vs External bridge links).
 """
 
 from __future__ import annotations
 
 import collections
-import hashlib
 import json
 import math
 import os
@@ -28,21 +32,16 @@ import sys
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 # Path configuration
 BRIDGE_DIR = Path(__file__).resolve().parent
 REPO_ROOT = BRIDGE_DIR.parents[2]
-CORE_DIR = REPO_ROOT / "Model" / "experimental" / "02_core"
 LOCALKG_SRC = REPO_ROOT / "LocalKG" / "src"
 
-# Add core and lkg paths to sys.path
-for p in (str(CORE_DIR), str(LOCALKG_SRC)):
-    if p not in sys.path:
-        sys.path.insert(0, p)
+if str(LOCALKG_SRC) not in sys.path:
+    sys.path.insert(0, str(LOCALKG_SRC))
 
-import mpcs_engine as E
-from mpcs_preset_v2 import build_preset_memory
 from lkg.query.persona_engine import (
     PersonaQueryEngine,
     PersonaType,
@@ -66,36 +65,18 @@ EMERGENCY_PATTERN = re.compile(
 )
 
 
-# Clinical Modality to Sensory Channel Heuristics
-MODALITY_MAPPINGS: dict[str, dict[str, str]] = {
-    "cold": {"touch": "thermal:cold"},
-    "heat": {"touch": "thermal:hot"},
-    "warmth": {"touch": "thermal:warm"},
-    "motion": {"touch": "contact:firm", "vision": "motion:fast"},
-    "rest": {"touch": "contact:none", "vision": "motion:static"},
-    "night": {"vision": "color:dark"},
-    "midnight": {"vision": "color:dark", "touch": "thermal:cold"},
-    "morning": {"vision": "color:bright"},
-    "touch": {"touch": "contact:light"},
-    "pressure": {"touch": "contact:firm"},
-    "noise": {"audio": "sound_type:noise", "audio_intensity": "high"},
-    "open_air": {"touch": "thermal:cold"},
-}
-
-
 @dataclass
 class BridgeResponse:
     query: str
     persona: str
     is_emergency: bool
     emergency_warning: Optional[str]
-    dlcbf_hit: bool
-    dlcbf_latency_us: float
+    stage1_latency_us: float
     total_latency_ms: float
     action: str
     action_label: str
     policy: str
-    tide_route: str  # "DIRECT" or "SUBGRAPH"
+    tide_route: str  # "DIRECT", "SUBGRAPH", "UNGROUNDED"
     somatic_vad: dict[str, float]  # valence, arousal, dominance
     top_remedies: list[dict[str, Any]]
     differential_analysis: str
@@ -108,22 +89,22 @@ class BridgeResponse:
 
 
 class LocalRAGMpcsBridge:
-    """Unified Neuro-Symbolic Cognitive Engine bridging LocalRAG with MPCS."""
+    """Unified Homeopathic Cognitive Engine bridging LocalKG with TIDE Sufficiency."""
 
     def __init__(self, kg_path: Optional[Path] = None):
         # 1. Initialize LocalKG Persona Engine
         self.persona_engine = PersonaQueryEngine(graph_path=kg_path)
-        
-        # 2. Initialize MPCS Cognitive Session with Balanced Memory Bank
-        self.session = E.Session()
-        self.session.reset(memory=build_preset_memory("balanced"), profile="balanced")
-        
-        # 3. Clinical state counters
+
+        # 2. Stage 1 Dynamic Red-Flag Memory (populated via expert action teaching)
+        self.learned_emergency_queries: set[str] = set()
+
+        # 3. Clinical state counters & history
         self.step_counter = 0
         self.history: list[BridgeResponse] = []
 
     def check_emergency(self, query: str) -> Optional[str]:
-        """Check for red-flag medical emergencies via clinical regex patterns."""
+        """Check for red-flag medical emergencies via regex + learned expert filters."""
+        # 1. Standard emergency regex
         if EMERGENCY_PATTERN.search(query):
             return (
                 "EMERGENCY MEDICAL WARNING: Your query describes symptoms that may indicate "
@@ -132,104 +113,36 @@ class LocalRAGMpcsBridge:
                 "triage service. Deliberation is halted: please immediately call emergency services "
                 "(911, 112, or local equivalent) or seek emergency clinical care."
             )
+
+        # 2. Expert-taught red-flag queries & keyphrases
+        q_norm = query.strip().lower()
+        for learned in self.learned_emergency_queries:
+            if learned in q_norm or q_norm in learned:
+                return (
+                    f"EMERGENCY RED-FLAG (Expert Registered): The query matches a clinically flagged "
+                    f"red-flag emergency ('{learned}'). Automated homeopathic deliberation is halted. "
+                    f"Immediate urgent clinical referral is required."
+                )
+
         return None
-
-    def _extract_sensory_percepts(
-        self, query: str, explicit_modalities: Optional[dict[str, str]] = None
-    ) -> dict[str, dict[str, str]]:
-        """Map clinical symptoms and natural language modalities into MPCS 4-channel percepts."""
-        q_lower = query.lower()
-        percepts: dict[str, dict[str, str]] = {}
-
-        # Default neutral channels
-        percepts["touch"] = {
-            "contact": "none",
-            "texture": "smooth",
-            "thermal": "neutral",
-            "touch_intensity": "low",
-        }
-        percepts["audio"] = {
-            "sound_type": "speech",
-            "audio_intensity": "medium",
-        }
-        percepts["vision"] = {
-            "object_type": "human",
-            "motion": "static",
-            "color": "blue",
-        }
-        percepts["smell"] = {
-            "odor_type": "none",
-            "odor_intensity": "faint",
-            "pleasantness": "neutral",
-        }
-
-        # Dynamic mapping from natural language
-        if any(w in q_lower for w in ("fever", "burning", "hot", "heat", "pyrexia")):
-            percepts["touch"]["thermal"] = "hot"
-            percepts["touch"]["touch_intensity"] = "high"
-            percepts["vision"]["color"] = "red"
-        elif any(w in q_lower for w in ("chill", "cold", "shivering", "draft", "ice")):
-            percepts["touch"]["thermal"] = "cold"
-            percepts["touch"]["touch_intensity"] = "medium"
-            percepts["vision"]["color"] = "dark"
-
-        if any(w in q_lower for w in ("pain", "sharp", "stabbing", "cutting")):
-            percepts["touch"]["contact"] = "sharp"
-            percepts["touch"]["touch_intensity"] = "high"
-        elif any(w in q_lower for w in ("bruised", "sore", "blunt", "trauma", "fall")):
-            percepts["touch"]["contact"] = "impact"
-            percepts["touch"]["touch_intensity"] = "high"
-
-        if any(w in q_lower for w in ("restless", "pacing", "tossing", "motion", "walking")):
-            percepts["vision"]["motion"] = "fast"
-        elif any(w in q_lower for w in ("prostration", "paralyzed", "motionless", "quiet")):
-            percepts["vision"]["motion"] = "static"
-
-        if any(w in q_lower for w in ("terror", "panic", "fear", "delirium", "screaming")):
-            percepts["audio"]["sound_type"] = "alarm"
-            percepts["audio"]["audio_intensity"] = "high"
-
-        # Apply explicit modality overrides if provided
-        if explicit_modalities:
-            for mod, val in explicit_modalities.items():
-                if mod == "thermal" and val in ("cold", "neutral", "warm", "hot"):
-                    percepts["touch"]["thermal"] = val
-                elif mod == "contact" and val in ("none", "light", "firm", "impact", "sharp"):
-                    percepts["touch"]["contact"] = val
-                elif mod == "motion" and val in ("static", "slow", "fast"):
-                    percepts["vision"]["motion"] = val
-                elif mod == "sound" and val in ("none", "speech", "noise", "alarm"):
-                    percepts["audio"]["sound_type"] = val
-
-        return percepts
 
     def process_query(
         self,
         query: str,
-        persona: str = "clinician",
-        explicit_modalities: Optional[dict[str, str]] = None,
+        persona: str = "doctor",
         manual_reward: Optional[float] = None,
     ) -> BridgeResponse:
-        """Executes full neuro-symbolic perception, RAG retrieval, and cognitive deliberation."""
+        """Executes full homeopathic perception, LocalRAG retrieval, and TIDE deliberation."""
         t_start = time.perf_counter()
         self.step_counter += 1
 
         # -------------------------------------------------------------
-        # Stage 1: Safety & dlCBF Reflex Pre-Filter
+        # Stage 1: Safety & Red-Flag Reflex Guard
         # -------------------------------------------------------------
+        t_stage1_start = time.perf_counter()
         emergency_warning = self.check_emergency(query)
         is_emergency = emergency_warning is not None
-
-        # Build MPCS sensory percept
-        percepts = self._extract_sensory_percepts(query, explicit_modalities)
-        
-        # Compute dlCBF seen-before gate latency
-        t_dlcbf_start = time.perf_counter()
-        # Create afferent object to test Bloom filter membership
-        afferent = E.AfferentObject(percepts, time=self.step_counter, state=self.session.state)
-        summary_key = self.session.memory._summary_key(afferent.summary)
-        dlcbf_hit = self.session.memory._dlcbf.query(summary_key)
-        dlcbf_latency_us = (time.perf_counter() - t_dlcbf_start) * 1e6
+        stage1_latency_us = (time.perf_counter() - t_stage1_start) * 1e6
 
         if is_emergency:
             t_total_ms = (time.perf_counter() - t_start) * 1000.0
@@ -238,24 +151,24 @@ class LocalRAGMpcsBridge:
                 persona=persona,
                 is_emergency=True,
                 emergency_warning=emergency_warning,
-                dlcbf_hit=dlcbf_hit,
-                dlcbf_latency_us=dlcbf_latency_us,
-                total_latency_ms=t_total_ms,
-                action="alert",
-                action_label="[EMERGENCY] Critical Clinical Alert",
+                stage1_latency_us=round(stage1_latency_us, 2),
+                total_latency_ms=round(t_total_ms, 2),
+                action="RED_FLAG_URGENT_REFERRAL",
+                action_label="[EMERGENCY] RED_FLAG_URGENT_REFERRAL: Immediate Clinical Triage Required",
                 policy="REFLEX_SAFETY",
                 tide_route="DIRECT",
                 somatic_vad={"valence": -0.90, "arousal": 0.95, "dominance": 0.10},
                 top_remedies=[],
-                differential_analysis="Cognitive deliberation aborted due to active emergency red-flag indicators.",
+                differential_analysis="Cognitive deliberation halted due to active emergency red-flag indicators.",
                 grounded_evidence=[],
                 subgraph_nodes=[],
                 subgraph_edges=[],
                 pruning_ratio_pct=100.0,
                 safety_audit={
                     "status": "BLOCKED_BY_REFLEX",
-                    "reason": "Emergency pattern matched clinical safety guard",
-                    "invariant_safety_rate": "1.2% (Enforced)",
+                    "reason": "Query matched clinical emergency red-flag guard",
+                    "stage1_rules_active": len(self.learned_emergency_queries) + 1,
+                    "learned_flags": list(self.learned_emergency_queries),
                 },
                 step_index=self.step_counter,
             )
@@ -264,6 +177,7 @@ class LocalRAGMpcsBridge:
 
         # -------------------------------------------------------------
         # Stage 2: LocalRAG Graph Traversal & Spreading Activation
+        # (Using gating matching kg_full_materia_medica.html)
         # -------------------------------------------------------------
         persona_enum = (
             PersonaType.EXPLORATORY
@@ -271,8 +185,19 @@ class LocalRAGMpcsBridge:
             else PersonaType.CONFIDENT
         )
 
+        # Gating multiples from kg_full_materia_medica.html:
+        # Confident: cutoff = maxScore * 0.45
+        # Exploratory: cutoff = maxScore * 0.18
+        theta_conf = 0.45
+        theta_expl = 0.18
+
         rag_result: PersonaQueryResult = self.persona_engine.query(
-            query_text=query, persona=persona_enum
+            query_text=query,
+            persona=persona_enum,
+            theta_conf=theta_conf,
+            theta_expl=theta_expl,
+            hop_decay=0.58,
+            max_hops=2,
         )
 
         # Extract remedy candidates from active nodes
@@ -280,21 +205,12 @@ class LocalRAGMpcsBridge:
             n for n in rag_result.active_nodes
             if n.type.lower() in ("remedy", "medicine") or n.id.startswith("remedy:")
         ]
-        symptom_nodes = [
-            n for n in rag_result.active_nodes
-            if "symptom" in n.type.lower() or n.id.startswith("symptom:")
-        ]
-        modality_nodes = [
-            n for n in rag_result.active_nodes
-            if "modality" in n.type.lower() or n.id.startswith("modality:")
-        ]
 
         # Rank remedies by activation score
         remedy_nodes.sort(key=lambda n: n.score, reverse=True)
         top_remedy_list: list[dict[str, Any]] = []
 
         for r in remedy_nodes[:8]:
-            # Find symptoms linked to this remedy in the active subgraph
             linked_symptoms = []
             for e in rag_result.subgraph_internal_edges:
                 if e.source == r.id:
@@ -320,7 +236,7 @@ class LocalRAGMpcsBridge:
                 "dominance": round(r.dominance, 2),
             })
 
-        # Calculate Aggregate Somatic Marker (VAD) from active clinical graph
+        # Calculate Aggregate Somatic Marker (VAD) across active subgraph
         if rag_result.active_nodes:
             avg_v = sum(n.valence for n in rag_result.active_nodes) / len(rag_result.active_nodes)
             avg_a = sum(n.arousal for n in rag_result.active_nodes) / len(rag_result.active_nodes)
@@ -329,36 +245,34 @@ class LocalRAGMpcsBridge:
             avg_v, avg_a, avg_d = 0.5, 0.5, 0.5
 
         # -------------------------------------------------------------
-        # Stage 3: MPCS Cognitive Fusion & Deliberation Loop
+        # Stage 3: Homeopathic TIDE Sufficiency Routing & Action Synthesis
         # -------------------------------------------------------------
-        mpcs_result = self.session.run_step(percepts, manual_reward=manual_reward)
-        chosen_action = mpcs_result["action"]
-        chosen_policy = mpcs_result["policy"]
-
-        # Map MPCS action to clinical interpretation:
-        # - APPROACH: Recommend indicated keynote remedy
-        # - OBSERVE: Differential diagnosis / Elicit further modalities
-        # - WITHDRAW: Contraindicated / Incompatible modalities
-        # - ALERT: Clinical escalation / Caution
-        action_labels = {
-            "approach": "APPROACH: Indicated Remedy Verified",
-            "observe": "OBSERVE: Ambiguous — Elicit Fine Modalities",
-            "withdraw": "WITHDRAW: Contraindicated Modalities Detected",
-            "alert": "ALERT: Clinical Escalation Warranted",
-            "ignore": "IGNORE: Low Saliency Symptom Profile",
-        }
-        action_label = action_labels.get(chosen_action, chosen_action.upper())
-
-        # TIDE Sufficiency Routing
-        # If top remedy has a strong score margin (>= 0.18 over runner-up) and score >= 0.65 -> DIRECT
-        tide_route = "SUBGRAPH"
         if len(top_remedy_list) >= 1:
             top_score = top_remedy_list[0]["score"]
             runner_score = top_remedy_list[1]["score"] if len(top_remedy_list) > 1 else 0.0
-            if (top_score - runner_score) >= 0.18 and top_score >= 0.65:
+            margin = top_score - runner_score
+
+            # TIDE Sufficiency check
+            if margin >= 0.18 and top_score >= 0.65:
                 tide_route = "DIRECT"
+                chosen_action = "PRESCRIBE_KEYNOTE"
+                action_label = "PRESCRIBE_KEYNOTE: Dominant Simillimum Verified"
+                chosen_policy = "TIDE_DIRECT_KEYNOTE"
             elif persona_enum == PersonaType.CONFIDENT and top_score >= 0.70:
                 tide_route = "DIRECT"
+                chosen_action = "PRESCRIBE_KEYNOTE"
+                action_label = "PRESCRIBE_KEYNOTE: Dominant Simillimum Verified"
+                chosen_policy = "TIDE_DIRECT_KEYNOTE"
+            else:
+                tide_route = "SUBGRAPH"
+                chosen_action = "ELICIT_MODALITIES"
+                action_label = "ELICIT_MODALITIES: Ambiguous Differential — Elicit Distinguishing Modalities"
+                chosen_policy = "TIDE_DIFFERENTIAL_SUBGRAPH"
+        else:
+            tide_route = "UNGROUNDED"
+            chosen_action = "EXPAND_RUBRICS"
+            action_label = "EXPAND_RUBRICS: Insufficient Evidence — Broaden Clinical Modalities"
+            chosen_policy = "TIDE_UNGROUNDED"
 
         # -------------------------------------------------------------
         # Stage 4: Grounded Evidence Provenance & Differential Synthesis
@@ -381,23 +295,23 @@ class LocalRAGMpcsBridge:
         if tide_route == "DIRECT" and top_remedy_list:
             top_rem = top_remedy_list[0]
             diff_text = (
-                f"**High-Confidence Direct Match**: `{top_rem['name']}` (Score: {top_rem['score']:.3f}) "
+                f"**High-Confidence Keynote Match**: `{top_rem['name']}` (Score: {top_rem['score']:.3f}) "
                 f"demonstrates clear keynote dominance with verified proving coverage across "
-                f"{len(top_rem['linked_symptoms'])} active rubrics. Peripheral noise suppressed."
+                f"{len(top_rem['linked_symptoms'])} active rubrics. Peripheral ambient noise suppressed."
             )
-        elif len(top_remedy_list) >= 2:
+        elif tide_route == "SUBGRAPH" and len(top_remedy_list) >= 2:
             r1, r2 = top_remedy_list[0], top_remedy_list[1]
             diff_text = (
                 f"**Differential Diagnosis Subgraph**: Leading candidates are `{r1['name']}` ({r1['score']:.3f}) "
-                f"and `{r2['name']}` ({r2['score']:.3f}). Distinguish via specific thermal modalities, "
-                f"time of aggravation (e.g. midnight vs. morning), and mental anxiety profiles."
+                f"and `{r2['name']}` ({r2['score']:.3f}). Distinguish via specific thermal modalities (e.g. warmth vs cold), "
+                f"time of aggravation (e.g. midnight vs morning), and mental disposition."
             )
         elif top_remedy_list:
             diff_text = f"Primary matching remedy candidate: `{top_remedy_list[0]['name']}`."
         else:
             diff_text = "No strong remedy candidates exceeded the activation threshold. Consider broadening modalities."
 
-        # Format Subgraph for visualization
+        # Format Subgraph for visualizer
         subgraph_nodes_export = [
             {
                 "id": n.id,
@@ -434,8 +348,7 @@ class LocalRAGMpcsBridge:
             persona=persona_enum.value,
             is_emergency=False,
             emergency_warning=None,
-            dlcbf_hit=dlcbf_hit,
-            dlcbf_latency_us=round(dlcbf_latency_us, 2),
+            stage1_latency_us=round(stage1_latency_us, 2),
             total_latency_ms=round(t_total_ms, 2),
             action=chosen_action,
             action_label=action_label,
@@ -448,16 +361,15 @@ class LocalRAGMpcsBridge:
             },
             top_remedies=top_remedy_list,
             differential_analysis=diff_text,
-            grounded_evidence=grounded_evidence[:10],
+            grounded_evidence=grounded_evidence,
             subgraph_nodes=subgraph_nodes_export,
             subgraph_edges=subgraph_edges_export,
             pruning_ratio_pct=rag_result.pruning_ratio_pct,
             safety_audit={
                 "status": "SAFE_DELIBERATION",
-                "dlcbf_status": "EXACT_REPEAT_SEEN" if dlcbf_hit else "NOVEL_PERCEPT",
-                "hyst_slots": {"thermal": percepts["touch"]["thermal"], "contact": percepts["touch"]["contact"]},
-                "action_threshold": round(mpcs_result["state"]["action_threshold"], 3),
-                "memory_size": mpcs_result["memory_size"],
+                "rules_checked": ["EMERGENCY_RED_FLAGS", "PERSONA_GROUNDING", "TIDE_SUFFICIENCY"],
+                "stage1_rules_active": len(self.learned_emergency_queries) + 1,
+                "passed": True,
             },
             step_index=self.step_counter,
         )
@@ -465,29 +377,56 @@ class LocalRAGMpcsBridge:
         self.history.append(resp)
         return resp
 
-    def apply_feedback(self, step: int, reward: float, expert_action: Optional[str] = None) -> dict[str, Any]:
-        """Allows clinician/user to reward, penalize, or teach expert clinical decisions."""
-        if expert_action and expert_action in E.ACTIONS:
-            res = self.session.teach_expert(expert_action, reward=reward)
-            return {"status": "taught_expert", "action": expert_action, "reward": reward, "message": res.get("message")}
-        else:
-            res = self.session.apply_reward(reward)
-            return {"status": "applied_reward", "reward": reward, "message": res.get("message")}
+    def apply_feedback(
+        self,
+        step: int,
+        reward: float = 1.0,
+        expert_action: Optional[str] = None,
+        query: Optional[str] = None,
+    ) -> dict[str, Any]:
+        """Allows clinician to submit feedback or register query into Stage 1 Emergency Guard."""
+        # Find query from step history if not provided directly
+        target_query = query
+        if not target_query and self.history:
+            for item in reversed(self.history):
+                if item.step_index == step:
+                    target_query = item.query
+                    break
+            if not target_query:
+                target_query = self.history[-1].query
+
+        # If expert action is RED_FLAG_URGENT_REFERRAL, register into Stage 1 filter
+        if expert_action == "RED_FLAG_URGENT_REFERRAL" and target_query:
+            clean_q = target_query.strip().lower()
+            self.learned_emergency_queries.add(clean_q)
+            return {
+                "status": "red_flag_registered",
+                "action": "RED_FLAG_URGENT_REFERRAL",
+                "query_added": clean_q,
+                "total_learned_flags": len(self.learned_emergency_queries),
+                "message": f"Successfully registered query into Stage 1 Emergency Red-Flag Filter: '{clean_q}'",
+            }
+
+        return {
+            "status": "feedback_recorded",
+            "step": step,
+            "reward": reward,
+            "message": "Clinical feedback acknowledged.",
+        }
 
 
 if __name__ == "__main__":
-    print("Testing LocalRAG-MPCS Cognitive Bridge...")
+    print("Testing Updated Homeopathic TIDE Bridge...")
     bridge = LocalRAGMpcsBridge()
-    
+
     # Test 1: Clinician Exploratory Query
     res_doc = bridge.process_query(
         query="violent throbbing headache with fever and restless anxiety after cold wind",
         persona="doctor",
-        explicit_modalities={"thermal": "cold", "motion": "fast"}
     )
     print(f"\n[Doctor Query Test]")
     print(f"Action: {res_doc.action_label} | Policy: {res_doc.policy} | Route: {res_doc.tide_route}")
-    print(f"Total Latency: {res_doc.total_latency_ms} ms | dlCBF: {res_doc.dlcbf_latency_us} µs")
+    print(f"Total Latency: {res_doc.total_latency_ms} ms | Stage 1: {res_doc.stage1_latency_us} µs")
     print(f"Top Remedies: {[r['name'] for r in res_doc.top_remedies[:3]]}")
     print(f"VAD Somatic: {res_doc.somatic_vad}")
     print(f"Active Subgraph: {len(res_doc.subgraph_nodes)} nodes, {len(res_doc.subgraph_edges)} edges")
@@ -499,5 +438,23 @@ if __name__ == "__main__":
     )
     print(f"\n[Emergency Red-Flag Test]")
     print(f"Emergency Detected: {res_emerg.is_emergency}")
-    print(f"Action: {res_emerg.action_label} | Safety: {res_emerg.safety_audit['status']}")
-    print(f"Warning: {res_emerg.emergency_warning}")
+    print(f"Action: {res_emerg.action_label} | Route: {res_emerg.tide_route}")
+
+    # Test 3: Teach RED_FLAG_URGENT_REFERRAL
+    teach_res = bridge.apply_feedback(
+        step=res_doc.step_index,
+        expert_action="RED_FLAG_URGENT_REFERRAL",
+        query="severe thunderclap headache with stiff neck"
+    )
+    print(f"\n[Teach Red-Flag Test]")
+    print(teach_res)
+
+    # Test 4: Verify learned query triggers Stage 1 immediately
+    res_learned = bridge.process_query(
+        query="severe thunderclap headache with stiff neck",
+        persona="doctor"
+    )
+    print(f"\n[Verify Learned Red-Flag Test]")
+    print(f"Emergency Detected: {res_learned.is_emergency}")
+    print(f"Action: {res_learned.action_label}")
+    print(f"Warning: {res_learned.emergency_warning}")

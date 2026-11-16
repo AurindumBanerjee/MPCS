@@ -4,7 +4,8 @@ MPCS-LocalRAG Unified Cognitive Studio Launcher
 ================================================
 Launches the integrated Neuro-Symbolic Cognitive UI connecting:
   - LocalRAG / LocalKG (Dual-Persona Spreading Activation & Provenance Engine)
-  - MPCS Generation 9 Core (dlCBF Bloom Gates, HyST Slots, VAD Somatic Markers, TIDE Anytime Sufficiency Routing)
+  - Homeopathic TIDE Anytime Sufficiency Routing & Safety Reflex Guard
+  - Dynamic Red-Flag Expert Teaching Filter
 
 Usage:
   python serve_localrag_mpcs_ui.py [--port 8090] [--no-browser]

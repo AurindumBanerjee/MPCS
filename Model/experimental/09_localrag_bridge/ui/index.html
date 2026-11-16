@@ -24,8 +24,8 @@
       </div>
       <div class="header-right">
         <div class="badge" id="stats-badge">Loading Nodes...</div>
-        <div class="badge status-dlcbf" id="dlcbf-badge">dlCBF Gate: 17 us Ready</div>
-        <div class="badge status-hyst">HyST Safety: 1.2% Invariant</div>
+        <div class="badge status-dlcbf" id="safety-badge">Stage 1 Safety Reflex: Active</div>
+        <div class="badge status-hyst">TIDE Sufficiency: Active</div>
         <div class="sidebar-toggle-group">
           <button id="toggle-left-btn" class="sidebar-toggle-btn active" title="Toggle Remedy Explorer Sidebar">
             <span class="toggle-indicator"></span> Remedies
@@ -207,14 +207,14 @@
                   <span class="persona-tag">DOC</span>
                   <strong class="persona-name">Doctor / Clinician</strong>
                 </div>
-                <div class="persona-desc">Exploratory (&theta; = 0.35) &middot; Differential Diagnosis &middot; 2-Hop Subgraph</div>
+                <div class="persona-desc">Exploratory (&theta; = 0.18 &middot; maxScore &times; 0.18) &middot; Differential &middot; 2-Hop Subgraph</div>
               </button>
               <button type="button" class="persona-card" id="btn-persona-patient" data-persona="patient">
                 <div class="persona-card-header">
                   <span class="persona-tag patient-tag">PT</span>
                   <strong class="persona-name">Patient / End-User</strong>
                 </div>
-                <div class="persona-desc">Confident (&theta; = 0.70) &middot; Acute Keynote Triage &middot; Suppressed Noise</div>
+                <div class="persona-desc">Confident (&theta; = 0.45 &middot; maxScore &times; 0.45) &middot; Acute Keynote Triage &middot; Noise Cut</div>
               </button>
             </div>
           </div>
@@ -233,39 +233,6 @@
             <button id="run-btn" class="execute-btn" onclick="executeCognitiveLoop()">
               <span class="btn-text">Execute Cognitive Loop</span>
             </button>
-          </div>
-
-          <!-- Sensory Modalities Chips -->
-          <div class="studio-section modalities-section">
-            <label class="studio-section-label">SENSORY MODALITIES:</label>
-            <div class="modality-row">
-              <span class="mod-group-title">Thermal:</span>
-              <div class="mod-chips" data-group="thermal">
-                <button class="mod-chip active" data-val="">Auto</button>
-                <button class="mod-chip" data-val="cold">Cold</button>
-                <button class="mod-chip" data-val="neutral">Neutral</button>
-                <button class="mod-chip" data-val="warm">Warm</button>
-                <button class="mod-chip" data-val="hot">Hot</button>
-              </div>
-            </div>
-            <div class="modality-row">
-              <span class="mod-group-title">Motion:</span>
-              <div class="mod-chips" data-group="motion">
-                <button class="mod-chip active" data-val="">Auto</button>
-                <button class="mod-chip" data-val="static">Rest/Static</button>
-                <button class="mod-chip" data-val="fast">Motion/Restless</button>
-              </div>
-            </div>
-            <div class="modality-row">
-              <span class="mod-group-title">Contact:</span>
-              <div class="mod-chips" data-group="contact">
-                <button class="mod-chip active" data-val="">Auto</button>
-                <button class="mod-chip" data-val="light">Light Touch</button>
-                <button class="mod-chip" data-val="firm">Pressure</button>
-                <button class="mod-chip" data-val="sharp">Sharp/Stab</button>
-                <button class="mod-chip" data-val="impact">Bruised/Trauma</button>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -329,27 +296,27 @@
 
       <!-- 4 Stages Grid -->
       <div class="pipeline-grid" id="pipeline-grid">
-        <!-- Stage 01: Safety & Reflex Triage -->
+        <!-- Stage 01: Safety & Reflex Guard -->
         <div class="stage-card">
           <div class="card-step-header">
             <span class="card-step-num">01</span>
             <div>
-              <h4>Safety &amp; Reflex Triage</h4>
-              <span class="card-step-sub">dlCBF Gate &amp; HyST Slots</span>
+              <h4>Safety &amp; Reflex Guard</h4>
+              <span class="card-step-sub">Clinical Emergency Red-Flag Triage</span>
             </div>
           </div>
           <div class="card-step-body">
             <div class="metric-row">
-              <span class="m-label">dlCBF Memory:</span>
-              <span class="m-val mono" id="stage1-dlcbf">&mdash;</span>
+              <span class="m-label">Safety Status:</span>
+              <span class="m-val mono" id="stage1-status-val">SAFE DELIBERATION</span>
             </div>
             <div class="metric-row">
-              <span class="m-label">dlCBF Gate Latency:</span>
-              <span class="m-val mono" id="stage1-dlcbf-lat">&mdash;</span>
+              <span class="m-label">Stage 1 Filter Latency:</span>
+              <span class="m-val mono" id="stage1-latency-val">&mdash;</span>
             </div>
             <div class="metric-row">
-              <span class="m-label">HyST Safety Invariant:</span>
-              <span class="m-val">1.2% Safe Rate</span>
+              <span class="m-label">Active Red-Flag Rules:</span>
+              <span class="m-val mono" id="stage1-rules-val">Active (Regex + Expert)</span>
             </div>
             <div class="metric-row">
               <span class="m-label">Total Execution Time:</span>
@@ -382,13 +349,13 @@
           </div>
         </div>
 
-        <!-- Stage 03: MPCS Cognitive Fusion & Somatic Markers -->
+        <!-- Stage 03: Homeopathic TIDE Deliberation -->
         <div class="stage-card">
           <div class="card-step-header">
             <span class="card-step-num">03</span>
             <div>
-              <h4>MPCS Cognitive Fusion</h4>
-              <span class="card-step-sub">VAD Somatics &amp; TIDE Routing</span>
+              <h4>Homeopathic TIDE Deliberation</h4>
+              <span class="card-step-sub">VAD Affect &amp; Sufficiency Routing</span>
             </div>
           </div>
           <div class="card-step-body">
@@ -449,29 +416,21 @@
         </div>
       </div>
 
-      <!-- Clinical Reinforcement Learning Loop Footer (Commented out for now as requested) -->
-      <!--
+      <!-- Clinical Expert Safety Feedback Loop -->
       <div class="feedback-panel">
         <div class="feedback-info">
-          <span class="feedback-title">Clinical Reinforcement Learning Loop</span>
-          <span class="feedback-sub">Submit clinical feedback to adapt MPCS episodic memory weights and action threshold for future encounters</span>
+          <span class="feedback-title">Clinical Expert Safety Guard (Stage 1 Teaching)</span>
+          <span class="feedback-sub">Flag queries requiring immediate emergency triage. Registered patterns dynamically update the Stage 1 Red-Flag Filter in memory.</span>
         </div>
         <div class="feedback-actions">
-          <button id="btn-validate" class="feedback-btn btn-agree">Validate (+1.0)</button>
-          <button id="btn-penalize" class="feedback-btn btn-disagree">Off-Target (0.0)</button>
           <div class="teach-group">
             <select id="expert-action-select">
-              <option value="">Teach Expert Action...</option>
-              <option value="approach">APPROACH (Indicated)</option>
-              <option value="observe">OBSERVE (Gather Modalities)</option>
-              <option value="withdraw">WITHDRAW (Contraindicated)</option>
-              <option value="alert">ALERT (Clinical Escalation)</option>
+              <option value="RED_FLAG_URGENT_REFERRAL">🚨 RED_FLAG_URGENT_REFERRAL (Register Query to Stage 1 Emergency Guard)</option>
             </select>
-            <button id="btn-teach" class="feedback-btn btn-teach">Teach</button>
+            <button id="btn-teach" class="feedback-btn btn-teach" onclick="submitExpertRedFlag()">Register Red Flag</button>
           </div>
         </div>
       </div>
-      -->
 
     </section>
 

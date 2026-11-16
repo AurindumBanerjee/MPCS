@@ -1111,21 +1111,25 @@ canvas:active {
   border: 1px solid #3b82f6;
 }
 
+.action-pill.prescribe_keynote,
 .action-pill.approach {
   background: rgba(6, 214, 160, 0.2);
   color: var(--green);
   border-color: var(--green);
 }
+.action-pill.elicit_modalities,
 .action-pill.observe {
   background: rgba(255, 209, 102, 0.2);
   color: var(--gold);
   border-color: var(--gold);
 }
+.action-pill.expand_rubrics,
 .action-pill.withdraw {
   background: rgba(244, 143, 177, 0.2);
   color: var(--pink);
   border-color: var(--pink);
 }
+.action-pill.red_flag_urgent_referral,
 .action-pill.alert {
   background: rgba(239, 68, 68, 0.2);
   color: var(--danger);

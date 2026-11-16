@@ -11,7 +11,7 @@ Implements:
      - Precomputed inverted token index for O(1) candidate seeding (bypassing linear graph scans).
      - Active-Frontier BFS spreading activation (only propagating energy across non-zero frontiers).
      - Clinical domain synonym expansion bridging archaic 19th-century and modern medical lexicons.
-     - Dual-Threshold Gating: theta_conf (default = 0.70 for confirmed core) and theta_expl (default = 0.35 for exploratory expansion).
+     - Dual-Threshold Gating: theta_conf (default = 0.45 for confirmed core, matching kg_full_materia_medica.html) and theta_expl (default = 0.18 for exploratory expansion).
   3. Subgraph Edge Partitioning:
      - internal_edges: Both source and target belong to the active subgraph (rendered solid green).
      - external_edges: Bridging edges connecting active nodes outward (rendered dashed pink).
@@ -158,8 +158,8 @@ class PersonaQueryEngine:
         self,
         query_text: str,
         persona: PersonaType = PersonaType.EXPLORATORY,
-        theta_conf: float = 0.70,
-        theta_expl: float = 0.35,
+        theta_conf: float = 0.45,
+        theta_expl: float = 0.18,
         hop_decay: float = 0.58,
         max_hops: int = 2,
     ) -> PersonaQueryResult:
