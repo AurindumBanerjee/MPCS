@@ -21,28 +21,22 @@
   blko/.style={blk,fill=ochre!22},
   arr/.style={-{Stealth[length=2.2mm]},line width=0.6pt,draw=ink},
   lbl/.style={font=\scriptsize\itshape,text=mid},
-  st/.style={blk,minimum width=92mm,minimum height=9.5mm,text width=88mm,align=left},
+  st/.style={blk,minimum width=98mm,minimum height=11.5mm,text width=94mm,align=left},
   grpblue/.style={draw=navy,dashed,line width=0.7pt,rounded corners=4pt,fill=navybg,fill opacity=0.45,inner sep=7pt},
   grpochre/.style={draw=ochre,dashed,line width=0.7pt,rounded corners=4pt,fill=ochrebg,fill opacity=0.55,inner sep=7pt},
 }
 
 \begin{document}
-\begin{tikzpicture}[node distance=3.5mm]
-  % Input
-  \node[st,blkg] (q) {\textbf{Query percept} (4-channel confidence-weighted tuple)};
+\begin{tikzpicture}[node distance=3.8mm]
+  % Stage I: Indexing & Filtering
+  \node[st,blkn] (c1) {\textbf{dlCBF} \enspace d-Left Counting Bloom Filter\\[-1pt]\scriptsize\itshape $O(d)$ hash-indexed exact-match fast exit};
+  \node[st,blkn,below=of c1] (c2) {\textbf{HMGI} \enspace Hierarchical Modality-Gated Index\\[-1pt]\scriptsize\itshape Scans only partitions sharing active channels};
+  \node[st,blkn,below=of c2] (c3) {\textbf{HyST} \enspace Hybrid Spatio-Temporal Slot Filter\\[-1pt]\scriptsize\itshape Discards hard constraint mismatches; grades soft slots};
+  \node[st,blkn,below=of c3] (c4) {\textbf{SHMF} \enspace Soft Hierarchical Multimodal Filter\\[-1pt]\scriptsize\itshape Dynamic auto-relaxation preventing zero-candidate starvation};
 
-  % Blue section nodes
-  \node[st,blkn,below=8mm of q] (c1) {\textbf{dlCBF} \enspace exact-repeat hint in $O(d)$ hashing};
-  \node[st,blkn,below=of c1] (c2) {\textbf{HMGI} \enspace scan only partitions sharing a modality};
-  \node[st,blkn,below=of c2] (c3) {\textbf{HyST} \enspace drop hard-slot mismatches, grade soft slots};
-  \node[st,blkn,below=of c3] (c4) {\textbf{SHMF} \enspace relax filter if it empties the candidate set};
-
-  % Brown/Ochre section nodes
-  \node[st,blko,below=11mm of c4] (c5) {\textbf{KERL} \enspace near-miss guard, fused relevance};
-  \node[st,blko,below=of c5] (c6) {\textbf{TIDE} \enspace spreading activation, budget, routing};
-
-  % Output
-  \node[st,blkg,below=8mm of c6] (out) {\textbf{Action} with sufficiency-routed decision};
+  % Stage II: Scoring, Spreading & Dynamic Routing
+  \node[st,blko,below=12mm of c4] (c5) {\textbf{KERL} \enspace Knowledge-Enhanced Representation Layer\\[-1pt]\scriptsize\itshape Calibration, fused relevance \& near-miss safety guard};
+  \node[st,blko,below=of c5] (c6) {\textbf{TIDE} \enspace Time-Bounded Inference over Dynamic Episodes\\[-1pt]\scriptsize\itshape Affect-weighted graph diffusion, anytime bounds \& sufficiency routing (DIRECT / SUBGRAPH)};
 
   % Group boxes on background layer
   \begin{scope}[on background layer]
@@ -51,18 +45,16 @@
   \end{scope}
 
   % Section headers on right
-  \node[right=4mm of gblue.north east,anchor=north west,font=\footnotesize\bfseries,text=navy,align=left] {Indexing \& Filtering\\[-1pt]\scriptsize\itshape\normalfont cuts scan scope, enforces safety};
-  \node[right=4mm of gochre.north east,anchor=north west,font=\footnotesize\bfseries,text=ochre,align=left] {Scoring, Spreading \& Routing\\[-1pt]\scriptsize\itshape\normalfont bounds latency, guards near-misses};
+  \node[right=4.5mm of gblue.north east,anchor=north west,font=\footnotesize\bfseries,text=navy,align=left] {Stage I: Indexing \& Filtering\\[-1pt]\scriptsize\itshape\normalfont Scope Reduction \& Sub-linear Search Guarantee};
+  \node[right=4.5mm of gochre.north east,anchor=north west,font=\footnotesize\bfseries,text=ochre,align=left] {Stage II: Scoring, Spreading \& Dynamic Routing\\[-1pt]\scriptsize\itshape\normalfont Safety Invariants, Graph Diffusion \& Anytime Bounds};
 
-  % Internal arrows
+  % Internal cascade arrows
   \draw[arr] (c1) -- (c2);
   \draw[arr] (c2) -- (c3);
   \draw[arr] (c3) -- (c4);
   \draw[arr] (c5) -- (c6);
 
-  % Section I/O arrows
-  \draw[arr] (q.south) -- node[lbl,right=2pt]{query percept} (gblue.north);
-  \draw[arr] (gblue.south) -- node[lbl,right=2pt]{filtered candidate set} (gochre.north);
-  \draw[arr] (gochre.south) -- node[lbl,right=2pt]{action + sufficiency route} (out.north);
+  % Inter-stage transition arrow
+  \draw[arr] (gblue.south) -- node[lbl,right=3pt]{Admitted Candidate Set} (gochre.north);
 \end{tikzpicture}
 \end{document}

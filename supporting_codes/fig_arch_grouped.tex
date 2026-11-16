@@ -26,40 +26,35 @@
 \begin{document}
 \begin{tikzpicture}[node distance=5.5mm and 8mm]
   % MPCS column
-  \node[blkg,minimum width=44mm] (perc) {Percept\\\scriptsize vision, audio, touch, smell};
-  \node[blk,below=of perc,minimum width=44mm] (refl) {Reflex rules};
+  \node[blkg,minimum width=64mm] (perc) {Clinical Input Query \& Persona\\\scriptsize symptom expression + Doctor / Patient toggle};
+  \node[blk,below=of perc,minimum width=64mm] (refl) {\textbf{Stage 1 Safety Reflex Guard}\\\scriptsize \texttt{EMERGENCY\_PATTERN} regex + learned red-flag filters};
 
-  % Expanded 2-layer retrieval matching cascade
-  \node[blkn,below=6mm of refl,minimum width=44mm] (ret_blue) {\textbf{Indexing \& Filtering}\\\scriptsize dlCBF, HMGI, HyST, SHMF};
-  \node[blko,below=6mm of ret_blue,minimum width=44mm] (ret_brown) {\textbf{Scoring, Spreading \& Routing}\\\scriptsize KERL, TIDE};
+  % Retrieval & TIDE deliberation
+  \node[blkn,below=6mm of refl,minimum width=64mm] (ret_blue) {\textbf{Constraint Filtering}\\\scriptsize HMGI, HyST, SHMF};
+  \node[blko,below=6mm of ret_blue,minimum width=64mm] (ret_brown) {\textbf{Scoring, Spreading \& Routing}\\\scriptsize KERL, TIDE};
 
-  \node[blk,below=6mm of ret_brown,minimum width=44mm] (dec) {Deliberation\\\scriptsize score, explore, hesitate};
-  \node[blk,below=of dec,minimum width=44mm] (rew) {Reward and storage};
-  \node[blkg,right=22mm of ret_blue,yshift=-6.5mm,minimum width=24mm] (mem) {Episodic\\memory};
+  \node[blk,below=6mm of ret_brown,minimum width=64mm] (dec) {Sufficiency Routing \& Synthesis\\\scriptsize DIRECT keynote vs. SUBGRAPH differential};
 
   \draw[arr] (perc) -- (refl);
-  \draw[arr] (refl) -- node[lbl,right]{no rule fires} (ret_blue);
+  \draw[arr] (refl) -- node[lbl,right]{no red-flag} (ret_blue);
   \draw[arr] (ret_blue) -- node[lbl,right]{filtered candidates} (ret_brown);
-  \draw[arr] (ret_brown) -- node[lbl,right]{ranked action + route} (dec);
-  \draw[arr] (dec) -- (rew);
-  \draw[arr] (mem.west) -| ([xshift=4mm]ret_blue.east) -- (ret_blue.east);
-  \draw[arr] (rew.east) -| (mem.south);
-  \draw[darr] (refl.west) -- ++(-6mm,0) |- node[lbl,pos=0.25,left=3pt,fill=white,inner sep=1pt]{reflex action} (rew.west);
+  \draw[arr] (ret_brown) -- node[lbl,right]{ranked remedies + route} (dec);
+  \draw[darr] (refl.west) -- ++(-7mm,0) |- node[lbl,pos=0.25,left=3pt,fill=white,inner sep=1pt]{emergency halt} (dec.west);
 
-  \node[grp,fit=(perc)(refl)(ret_blue)(ret_brown)(dec)(rew)(mem),label={[font=\footnotesize\bfseries]above:MPCS agent}] (g1) {};
+  \node[grp,fit=(perc)(refl)(ret_blue)(ret_brown)(dec),label={[font=\footnotesize\bfseries]above:MPCS agent}] (g1) {};
 
   % LocalKG column
-  \node[blkg,right=22mm of g1.north east,anchor=north west,minimum width=38mm] (src) {Source texts\\\scriptsize Materia Medica, PubMed};
-  \node[blko,below=of src,minimum width=38mm] (ext) {Parse, chunk, extract};
-  \node[blko,below=of ext,minimum width=38mm] (aff) {Affect and weight};
-  \node[blkg,below=of aff,minimum width=38mm] (kg) {Typed graph\\\scriptsize 1,106 nodes, 2,024 edges};
-  \node[blk,below=of kg,minimum width=38mm] (qe) {Dual-persona\\query engine};
+  \node[blkg,right=18mm of g1.north east,anchor=north west,minimum width=40mm] (src) {Source texts\\\scriptsize Materia Medica, PubMed};
+  \node[blko,below=of src,minimum width=40mm] (ext) {Parse, chunk, extract};
+  \node[blko,below=of ext,minimum width=40mm] (aff) {Affect and weight};
+  \node[blkg,below=of aff,minimum width=40mm] (kg) {Typed graph\\\scriptsize 1,106 nodes, 2,024 edges};
+  \node[blk,below=of kg,minimum width=40mm] (qe) {Dual-persona\\query engine};
   \draw[arr] (src)--(ext); \draw[arr] (ext)--(aff); \draw[arr] (aff)--(kg); \draw[arr] (kg)--(qe);
   \node[grp,fit=(src)(ext)(aff)(kg)(qe),label={[font=\footnotesize\bfseries]above:LocalKG}] (g2) {};
 
   % Bridge
-  \node[blk,below=8mm of g1.south,xshift=22mm,minimum width=76mm] (br) {Bridge: red-flag guard, percept mapping,\\action fusion, cited evidence};
+  \node[blk,below=8mm of g1.south,xshift=28mm,minimum width=84mm] (br) {Bridge: red-flag guard, subgraph grounding,\\differential synthesis, cited Materia Medica evidence};
   \draw[arr] (qe.south) |- (br.east);
-  \draw[arr] (br.west) -| ([xshift=-12mm]perc.west) -- (perc.west);
+  \draw[arr] (br.west) -| ([xshift=-28mm]perc.west) -- (perc.west);
 \end{tikzpicture}
 \end{document}

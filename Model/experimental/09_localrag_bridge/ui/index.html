@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Full Materia Medica Knowledge Graph (MPCS Gen 9 TIDE + LocalKG v2)</title>
+  <title>Full Materia Medica Knowledge Graph</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,14 +18,11 @@
       <div class="title-block">
         <div class="brand-row">
           <span class="logo-pill">MPCS</span>
-          <h1 id="graph-title">Full Materia Medica Knowledge Graph (TIDE Spreading Activation)</h1>
+          <h1 id="graph-title">Full Materia Medica Knowledge Graph</h1>
         </div>
-        <p>Interactive Homeopathic Materia Medica, Modality &amp; Cognitive-Affective Knowledge Graph (MPCS LocalKG v2)</p>
+        <p>Homeopathic Materia Medica &amp; Cognitive Decision Support</p>
       </div>
       <div class="header-right">
-        <div class="badge" id="stats-badge">Loading Nodes...</div>
-        <div class="badge status-dlcbf" id="safety-badge">Stage 1 Safety Reflex: Active</div>
-        <div class="badge status-hyst">TIDE Sufficiency: Active</div>
         <div class="sidebar-toggle-group">
           <button id="toggle-left-btn" class="sidebar-toggle-btn active" title="Toggle Remedy Explorer Sidebar">
             <span class="toggle-indicator"></span> Remedies
@@ -36,8 +33,8 @@
           <button id="toggle-right2-btn" class="sidebar-toggle-btn active primary-toggle" title="Toggle Cognitive Studio Sidebar">
             <span class="toggle-indicator"></span> Cognitive Studio
           </button>
-          <button id="btn-scroll-results" class="sidebar-toggle-btn results-toggle hidden" title="Scroll to Pipeline Results Below">
-            Results [1-4] &darr;
+          <button id="btn-scroll-results" class="sidebar-toggle-btn results-toggle hidden" title="Scroll to Results Below">
+            Results &darr;
           </button>
         </div>
       </div>
@@ -67,37 +64,16 @@
           <div class="sidebar-header">
             <div class="sidebar-header-title">
               <h3>Remedy Explorer (<span id="rem-total-count">0</span>)</h3>
-              <button class="collapse-btn" onclick="toggleSidebar('left')" title="Minimize Remedies Sidebar">&laquo;</button>
+              <button class="collapse-btn" onclick="toggleSidebar('left')" title="Minimize Remedies Sidebar">&lsaquo;</button>
             </div>
             <input id="rem-search" type="text" placeholder="Filter remedies or nodes..." oninput="filterRemedySidebar()"/>
           </div>
           <div id="remedy-list"></div>
         </div>
 
-        <!-- Minimized Icon Rail (48px wide) -->
+        <!-- Minimized Icon Rail (44px wide) -->
         <div class="sidebar-rail" onclick="toggleSidebar('left')" title="Click to Expand Remedy Explorer">
-          <button class="rail-btn rail-expand-btn" title="Expand Remedy Explorer">&raquo;</button>
-          <div class="rail-icon" title="Remedy Directory">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-            </svg>
-          </div>
-          <div class="rail-icon" title="Search Remedies">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8"/>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-          </div>
-          <div class="rail-badge" id="rail-rem-badge" title="Medicines Count">41</div>
-          <div class="rail-icon" title="Grid View">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="3" width="7" height="7"/>
-              <rect x="14" y="3" width="7" height="7"/>
-              <rect x="14" y="14" width="7" height="7"/>
-              <rect x="3" y="14" width="7" height="7"/>
-            </svg>
-          </div>
+          <button class="rail-btn rail-expand-btn" title="Expand Remedy Explorer">&rsaquo;</button>
         </div>
       </div>
 
@@ -126,7 +102,7 @@
           <div class="sidebar-header-plain">
             <div class="sidebar-header-title">
               <h3>Graph Analysis</h3>
-              <button class="collapse-btn" onclick="toggleSidebar('right1')" title="Minimize Graph Analysis Sidebar">&raquo;</button>
+              <button class="collapse-btn" onclick="toggleSidebar('right1')" title="Minimize Graph Analysis Sidebar">&rsaquo;</button>
             </div>
           </div>
           <div class="card">
@@ -149,31 +125,13 @@
 
           <div class="card" id="inspector">
             <h3>Node Inspector</h3>
-            <p class="inspector-hint">Click any node on the canvas or select a medicine on the left to inspect its VAD affect profile, severity weight, verbatim book quote, and connected neighbors.</p>
+            <p class="inspector-hint">Click any node or medicine to view proving details</p>
           </div>
         </div>
 
-        <!-- Minimized Icon Rail (48px wide) -->
+        <!-- Minimized Icon Rail (44px wide) -->
         <div class="sidebar-rail" onclick="toggleSidebar('right1')" title="Click to Expand Graph Analysis">
-          <button class="rail-btn rail-expand-btn" title="Expand Graph Analysis">&laquo;</button>
-          <div class="rail-icon" title="Graph Network Stats">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="6" cy="6" r="3"/>
-              <circle cx="18" cy="6" r="3"/>
-              <circle cx="12" cy="18" r="3"/>
-              <line x1="8.5" y1="7.5" x2="15.5" y2="7.5"/>
-              <line x1="7.5" y1="8.5" x2="10.5" y2="15.5"/>
-              <line x1="16.5" y1="8.5" x2="13.5" y2="15.5"/>
-            </svg>
-          </div>
-          <div class="rail-icon" title="Inspector / Metrics">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="16" x2="12" y2="12"/>
-              <line x1="12" y1="8" x2="12.01" y2="8"/>
-            </svg>
-          </div>
-          <div class="rail-badge green-badge" id="rail-kept-badge" title="Kept Nodes">1.1k</div>
+          <button class="rail-btn rail-expand-btn" title="Expand Graph Analysis">&lsaquo;</button>
         </div>
       </aside>
 
@@ -184,7 +142,7 @@
           <div class="sidebar-header-plain">
             <div class="sidebar-header-title">
               <h3>Cognitive Studio</h3>
-              <button class="collapse-btn" onclick="toggleSidebar('right2')" title="Minimize Cognitive Studio">&raquo;</button>
+              <button class="collapse-btn" onclick="toggleSidebar('right2')" title="Minimize Cognitive Studio">&rsaquo;</button>
             </div>
           </div>
 
@@ -194,7 +152,7 @@
             <div class="alert-body">
               <h4 id="emergency-title">CRITICAL RED-FLAG DETECTED</h4>
               <p id="emergency-message"></p>
-              <span class="emergency-sub">Homeopathic deliberation halted. Please seek immediate professional clinical intervention.</span>
+              <span class="emergency-sub">Deliberation halted. Please seek immediate professional medical care.</span>
             </div>
           </div>
 
@@ -207,141 +165,77 @@
                   <span class="persona-tag">DOC</span>
                   <strong class="persona-name">Doctor / Clinician</strong>
                 </div>
-                <div class="persona-desc">Exploratory (&theta; = 0.18 &middot; maxScore &times; 0.18) &middot; Differential &middot; 2-Hop Subgraph</div>
+                <div class="persona-desc">Exploratory Differential</div>
               </button>
               <button type="button" class="persona-card" id="btn-persona-patient" data-persona="patient">
                 <div class="persona-card-header">
                   <span class="persona-tag patient-tag">PT</span>
                   <strong class="persona-name">Patient / End-User</strong>
                 </div>
-                <div class="persona-desc">Confident (&theta; = 0.45 &middot; maxScore &times; 0.45) &middot; Acute Keynote Triage &middot; Noise Cut</div>
+                <div class="persona-desc">Keynote Triage</div>
               </button>
             </div>
           </div>
 
-          <!-- Quick Archetype Scenarios -->
+          <!-- Clinical Scenario Presets Dropdown -->
           <div class="studio-section">
-            <label class="studio-section-label">QUICK ARCHETYPE SCENARIOS:</label>
-            <div class="scenarios-scroll" id="archetype-pills">
-              <span class="pill-loading">Loading archetype scenarios...</span>
-            </div>
+            <label class="studio-section-label">CLINICAL SCENARIO PRESETS:</label>
+            <select id="archetype-select" class="clean-dropdown">
+              <option value="">-- Select Archetype Scenario --</option>
+            </select>
           </div>
 
           <!-- Query Textarea and Action Execution Button -->
           <div class="studio-section query-section">
-            <textarea id="query-input" rows="3" placeholder="Enter clinical symptoms, modalities, or layman distress (e.g., 'violent throbbing headache with high fever, dilated pupils, flushed red face, restless anxiety after cold dry wind')..."></textarea>
+            <textarea id="query-input" rows="3" placeholder="Enter clinical symptoms or modalities..."></textarea>
             <button id="run-btn" class="execute-btn" onclick="executeCognitiveLoop()">
               <span class="btn-text">Execute Cognitive Loop</span>
             </button>
+            <div id="execution-meta" class="execution-meta hidden">
+              <span class="meta-dot"></span>
+              <span id="latency-text">Execution Time: -- ms</span>
+            </div>
           </div>
         </div>
 
-        <!-- Minimized Icon Rail (48px wide matching screenshot) -->
+        <!-- Minimized Icon Rail (44px wide) -->
         <div class="sidebar-rail" onclick="toggleSidebar('right2')" title="Click to Expand Cognitive Studio">
-          <button class="rail-btn rail-expand-btn" title="Expand Cognitive Studio">&laquo;</button>
-          <!-- Glowing Diamond Sparkle Icon -->
-          <div class="rail-sparkle-btn" title="Cognitive Loop Engine">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-              <defs>
-                <linearGradient id="sparkleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#f59e0b"/>
-                  <stop offset="35%" stop-color="#ef4444"/>
-                  <stop offset="70%" stop-color="#3b82f6"/>
-                  <stop offset="100%" stop-color="#10b981"/>
-                </linearGradient>
-              </defs>
-              <path d="M12 2L14.8 9.2L22 12L14.8 14.8L12 22L9.2 14.8L2 12L9.2 9.2L12 2Z" fill="url(#sparkleGrad)"/>
-            </svg>
-          </div>
-          <div class="rail-icon" title="Toggle Switch">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="2" y="6" width="20" height="12" rx="6"/>
-              <circle cx="8" cy="12" r="3"/>
-            </svg>
-          </div>
-          <div class="rail-icon" title="Query Input">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-            </svg>
-          </div>
-          <div class="rail-badge persona-rail-badge" id="rail-persona-badge" title="Active Persona">DOC</div>
-          <div class="rail-icon" title="Execute Loop">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polygon points="5 3 19 12 5 21 5 3"/>
-            </svg>
-          </div>
+          <button class="rail-btn rail-expand-btn" title="Expand Cognitive Studio">&lsaquo;</button>
         </div>
       </aside>
 
     </section>
 
     <!-- =========================================================================
-         Cognitive Loop Results Section (Stages 01 - 04)
-         Natural Document Flow Addition to Page (NOT an overlap/overlay!)
+         Unified Two-Column Clinical Results Dashboard
          ========================================================================= -->
     <section id="results-section" class="results-section hidden">
       <div class="results-section-header">
         <div class="results-title-group">
           <div class="results-step-tag">OUTPUT</div>
-          <h3>Cognitive Loop Pipeline Execution (Stages 01 &ndash; 04)</h3>
+          <h3>Clinical Decision &amp; Differential Dashboard</h3>
           <span class="badge badge-success" id="stage1-status">SAFE DELIBERATION</span>
           <span class="action-pill" id="action-pill">APPROACH</span>
           <span class="badge badge-route" id="tide-route-badge">DIRECT ROUTE</span>
-          <span class="pipeline-meta" id="policy-sub">Policy: REINFORCED &middot; Step: 1</span>
-          <span class="pipeline-meta mono" id="stage1-total-lat">14.2 ms</span>
+          <span class="pipeline-meta" id="subgraph-meta">0 Nodes &middot; 0% Cut</span>
         </div>
         <button class="back-to-top-btn" onclick="scrollToTop()">Back to Knowledge Graph &uarr;</button>
       </div>
 
-      <!-- 4 Stages Grid -->
-      <div class="pipeline-grid" id="pipeline-grid">
-        <!-- Stage 01: Safety & Reflex Guard -->
-        <div class="stage-card">
-          <div class="card-step-header">
-            <span class="card-step-num">01</span>
-            <div>
-              <h4>Safety &amp; Reflex Guard</h4>
-              <span class="card-step-sub">Clinical Emergency Red-Flag Triage</span>
+      <div class="results-dashboard">
+        <!-- Primary Column: Differential Synthesis + Click-to-Expand Remedies -->
+        <div class="dashboard-primary">
+          <div class="dashboard-card">
+            <h4 class="dashboard-card-title">Differential Synthesis</h4>
+            <div class="differential-box" id="diff-analysis">
+              <p class="diff-placeholder">Differential synthesis will appear here once query runs.</p>
             </div>
           </div>
-          <div class="card-step-body">
-            <div class="metric-row">
-              <span class="m-label">Safety Status:</span>
-              <span class="m-val mono" id="stage1-status-val">SAFE DELIBERATION</span>
-            </div>
-            <div class="metric-row">
-              <span class="m-label">Stage 1 Filter Latency:</span>
-              <span class="m-val mono" id="stage1-latency-val">&mdash;</span>
-            </div>
-            <div class="metric-row">
-              <span class="m-label">Active Red-Flag Rules:</span>
-              <span class="m-val mono" id="stage1-rules-val">Active (Regex + Expert)</span>
-            </div>
-            <div class="metric-row">
-              <span class="m-label">Total Execution Time:</span>
-              <span class="m-val mono highlight" id="stage1-total-lat-body">&mdash;</span>
-            </div>
-          </div>
-        </div>
 
-        <!-- Stage 02: LocalRAG Graph Traversal -->
-        <div class="stage-card">
-          <div class="card-step-header">
-            <span class="card-step-num">02</span>
-            <div>
-              <h4>LocalRAG Traversal</h4>
-              <span class="card-step-sub">Spreading Activation &amp; Keynotes</span>
-            </div>
-          </div>
-          <div class="card-step-body">
-            <div class="metric-row">
-              <span class="m-label">Ambient Noise Pruned:</span>
-              <span class="m-val mono" id="stage2-pruning">&mdash;</span>
-            </div>
-            <div class="metric-row">
-              <span class="m-label">Active Subgraph Nodes:</span>
-              <span class="m-val mono" id="stage2-nodecount">&mdash;</span>
+          <div class="dashboard-card">
+            <div class="dashboard-card-header-row">
+              <h4 class="dashboard-card-title">Indicated Remedies</h4>
+              <span class="dashboard-hint">Click any remedy to expand &amp; focus graph</span>
             </div>
             <div class="remedies-list" id="top-remedies-container">
               <div class="empty-hint">Execute a query to retrieve grounded remedies...</div>
@@ -349,68 +243,15 @@
           </div>
         </div>
 
-        <!-- Stage 03: Homeopathic TIDE Deliberation -->
-        <div class="stage-card">
-          <div class="card-step-header">
-            <span class="card-step-num">03</span>
-            <div>
-              <h4>Homeopathic TIDE Deliberation</h4>
-              <span class="card-step-sub">VAD Affect &amp; Sufficiency Routing</span>
-            </div>
-          </div>
-          <div class="card-step-body">
-            <div class="metric-row">
-              <span class="m-label">Sufficiency Route:</span>
-              <span class="badge badge-route" id="stage3-route">&mdash;</span>
-            </div>
-            <!-- Somatic Marker VAD Gauges -->
-            <div class="vad-container">
-              <div class="vad-item">
-                <div class="vad-header">
-                  <span>Valence (Pleasure vs Distress):</span>
-                  <span class="vad-val" id="val-valence">0.50</span>
-                </div>
-                <div class="vad-bar-bg"><div class="vad-bar-fill" id="fill-valence" style="width: 50%;"></div></div>
-              </div>
-              <div class="vad-item">
-                <div class="vad-header">
-                  <span>Arousal (Calm vs Agitation):</span>
-                  <span class="vad-val" id="val-arousal">0.50</span>
-                </div>
-                <div class="vad-bar-bg"><div class="vad-bar-fill orange" id="fill-arousal" style="width: 50%;"></div></div>
-              </div>
-              <div class="vad-item">
-                <div class="vad-header">
-                  <span>Dominance (Helpless vs In-Control):</span>
-                  <span class="vad-val" id="val-dominance">0.50</span>
-                </div>
-                <div class="vad-bar-bg"><div class="vad-bar-fill purple" id="fill-dominance" style="width: 50%;"></div></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Stage 04: Grounded Provenance & Proving Texts -->
-        <div class="stage-card">
-          <div class="card-step-header">
-            <span class="card-step-num">04</span>
-            <div>
-              <h4>Grounded Provenance</h4>
-              <span class="card-step-sub">Differential &amp; Proving Texts</span>
-            </div>
-          </div>
-          <div class="card-step-body">
-            <div class="differential-box" id="diff-analysis">
-              <p class="diff-placeholder">Differential synthesis will appear here once query runs.</p>
-            </div>
-            <div class="evidence-box">
-              <h5 class="evidence-title">Materia Medica Proving Citations:</h5>
-              <div class="evidence-list" id="evidence-container">
-                <div class="empty-hint">No citations loaded yet.</div>
-              </div>
+        <!-- Secondary Column: Top 5 Materia Medica Proving Citations -->
+        <div class="dashboard-secondary">
+          <div class="dashboard-card">
+            <h4 class="dashboard-card-title">Top 5 Materia Medica Proving Citations</h4>
+            <div class="evidence-list" id="evidence-container">
+              <div class="empty-hint">No citations loaded yet.</div>
             </div>
             <div class="disclaimer-footer">
-              <strong>Mandatory Notice:</strong> Results represent historical Materia Medica archival texts. Homeopathy clinical efficacy is not established by controlled evidence. Not medical advice.
+              <strong>Notice:</strong> Historical Materia Medica archival texts; not validated clinical advice.
             </div>
           </div>
         </div>
