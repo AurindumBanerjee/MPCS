@@ -216,3 +216,7 @@ __marimo__/
 !report/*.PDF
 !report/**/*.pdf
 !report/**/*.PDF
+
+# Staged deprecated files
+to_delete/
+
