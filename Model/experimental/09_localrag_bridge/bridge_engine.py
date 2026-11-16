@@ -107,11 +107,8 @@ class LocalRAGMpcsBridge:
         # 1. Standard emergency regex
         if EMERGENCY_PATTERN.search(query):
             return (
-                "EMERGENCY MEDICAL WARNING: Your query describes symptoms that may indicate "
-                "an acute or life-threatening medical emergency (such as acute chest pain, dyspnea, "
-                "severe hemorrhage, or stroke). This cognitive decision support system is not an emergency "
-                "triage service. Deliberation is halted: please immediately call emergency services "
-                "(911, 112, or local equivalent) or seek emergency clinical care."
+                "Symptoms may indicate a medical emergency. "
+                "Call emergency services (911/112) or seek urgent care immediately."
             )
 
         # 2. Expert-taught red-flag queries & keyphrases
@@ -119,9 +116,8 @@ class LocalRAGMpcsBridge:
         for learned in self.learned_emergency_queries:
             if learned in q_norm or q_norm in learned:
                 return (
-                    f"EMERGENCY RED-FLAG (Expert Registered): The query matches a clinically flagged "
-                    f"red-flag emergency ('{learned}'). Automated homeopathic deliberation is halted. "
-                    f"Immediate urgent clinical referral is required."
+                    f"Matches a flagged red-flag symptom ('{learned}'). "
+                    "Seek urgent clinical care immediately."
                 )
 
         return None
@@ -291,25 +287,35 @@ class LocalRAGMpcsBridge:
                     "score": round(n.score, 3),
                 })
 
-        # Differential synthesis text
+        # Differential synthesis text (plain-language clinical English)
         if tide_route == "DIRECT" and top_remedy_list:
             top_rem = top_remedy_list[0]
+            sym_list = top_rem.get("linked_symptoms") or []
+            symptoms_str = ", ".join(sym_list[:3]) if sym_list else "core clinical pattern"
             diff_text = (
-                f"**High-Confidence Keynote Match**: `{top_rem['name']}` (Score: {top_rem['score']:.3f}) "
-                f"demonstrates clear keynote dominance with verified proving coverage across "
-                f"{len(top_rem['linked_symptoms'])} active rubrics. Peripheral ambient noise suppressed."
+                f"**Top Indicated Medicine**: **{top_rem['name']}** (Match: {top_rem['score']:.0%}). "
+                f"Covers primary symptoms ({symptoms_str}). Shows clear keynote dominance over other possibilities."
             )
         elif tide_route == "SUBGRAPH" and len(top_remedy_list) >= 2:
             r1, r2 = top_remedy_list[0], top_remedy_list[1]
             diff_text = (
-                f"**Differential Diagnosis Subgraph**: Leading candidates are `{r1['name']}` ({r1['score']:.3f}) "
-                f"and `{r2['name']}` ({r2['score']:.3f}). Distinguish via specific thermal modalities (e.g. warmth vs cold), "
-                f"time of aggravation (e.g. midnight vs morning), and mental disposition."
+                f"**Differential Comparison**: The closest matching medicines are **{r1['name']}** ({r1['score']:.0%}) "
+                f"and **{r2['name']}** ({r2['score']:.0%}). Distinguish between them by checking whether symptoms are worse "
+                f"with heat or cold, exact peak times (e.g., midnight vs morning), and presence of thirst."
             )
         elif top_remedy_list:
-            diff_text = f"Primary matching remedy candidate: `{top_remedy_list[0]['name']}`."
+            top_rem = top_remedy_list[0]
+            sym_list = top_rem.get("linked_symptoms") or []
+            symptoms_str = ", ".join(sym_list[:3]) if sym_list else "core clinical pattern"
+            diff_text = (
+                f"**Top Indicated Medicine**: **{top_rem['name']}** (Match: {top_rem['score']:.0%}). "
+                f"Covers primary symptoms ({symptoms_str})."
+            )
         else:
-            diff_text = "No strong remedy candidates exceeded the activation threshold. Consider broadening modalities."
+            diff_text = (
+                "**Broaden Symptoms**: No single medicine had sufficient matches. "
+                "Please provide additional details regarding time of day, thermal reactions, or emotional state."
+            )
 
         # Format Subgraph for visualizer
         subgraph_nodes_export = [

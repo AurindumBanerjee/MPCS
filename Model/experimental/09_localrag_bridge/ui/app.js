@@ -16,7 +16,7 @@ let neighborsMap = new Map();
 let hiddenTypes = new Set();
 let selectedRemedy = "ALL";
 let minWeight = 1.0;
-let layoutMode = "galaxy"; // "galaxy" | "force"
+let layoutMode = "galaxy"; // "galaxy" | "spiral" | "force"
 let hoverEdgeMode = "subgraph_and_outside"; // "subgraph_and_outside" | "subgraph_only" | "all_unified"
 let edgeStyle = "straight"; // "straight" | "curved" | "glow"
 let labelMode = "smart"; // "smart" | "all" | "hubs"
@@ -97,7 +97,8 @@ async function initApp() {
     }
   } catch (err) {
     console.error("Failed to load graph data:", err);
-    document.getElementById("stats-badge").textContent = "Error Loading Graph";
+    const statsBadge = document.getElementById("stats-badge");
+    if (statsBadge) statsBadge.textContent = "Error Loading Graph";
   }
 }
 
@@ -118,8 +119,11 @@ function initGraphDataStructures() {
     neighborsMap.get(l.target).push({ id: l.source, label: l.label, weight: l.weight });
   });
 
-  document.getElementById("stats-badge").textContent = 
-    `${GRAPH_DATA.nodes.length.toLocaleString()} Nodes · ${GRAPH_DATA.links.length.toLocaleString()} Links`;
+  const statsBadge = document.getElementById("stats-badge");
+  if (statsBadge) {
+    statsBadge.textContent =
+      `${GRAPH_DATA.nodes.length.toLocaleString()} Nodes · ${GRAPH_DATA.links.length.toLocaleString()} Links`;
+  }
 
   const medicines = GRAPH_DATA.nodes.filter(n => n.type === "Medicine");
   const remBadge = document.getElementById("rail-rem-badge");
@@ -166,8 +170,9 @@ function toggleSidebar(which) {
     // Resize canvas to adapt to new available width
     setTimeout(() => {
       resizeCanvas();
-      drawCanvas();
-    }, 240);
+      rebuildGraphLayout();
+      fitToScreen();
+    }, 220);
   }
 }
 
@@ -343,27 +348,51 @@ function setPersona(persona) {
 }
 
 /**
- * Render Sample Archetype Scenarios
+ * Render Sample Archetype Scenarios into categorized <select> dropdown
  */
 function renderSampleScenarios(samples) {
-  const container = document.getElementById("archetype-pills");
-  container.innerHTML = "";
+  const select = document.getElementById("archetype-select");
+  if (!select) return;
+  select.innerHTML = `<option value="">-- Select Archetype Scenario --</option>`;
 
-  samples.forEach(sample => {
-    const btn = document.createElement("button");
-    const isEmerg = sample.id.startsWith("emergency");
-    btn.className = `pill-scenario ${isEmerg ? "emergency" : ""}`;
-    btn.textContent = `${isEmerg ? "[CRITICAL] " : ""}${sample.title}`;
-    btn.title = sample.query;
+  const groups = {
+    doctor: { label: "Doctor / Clinician Cases", items: [] },
+    patient: { label: "Patient / End-User Cases", items: [] },
+    emergency: { label: "Emergency Red-Flag Cases", items: [] },
+  };
 
-    btn.addEventListener("click", () => {
-      document.getElementById("query-input").value = sample.query;
-      setPersona(sample.persona);
-      executeCognitiveLoop();
-    });
-
-    container.appendChild(btn);
+  samples.forEach((sample, idx) => {
+    const isEmerg = sample.id && sample.id.startsWith("emergency");
+    if (isEmerg) {
+      groups.emergency.items.push({ sample, idx });
+    } else if (sample.persona === "patient") {
+      groups.patient.items.push({ sample, idx });
+    } else {
+      groups.doctor.items.push({ sample, idx });
+    }
   });
+
+  Object.values(groups).forEach(group => {
+    if (group.items.length === 0) return;
+    const optgroup = document.createElement("optgroup");
+    optgroup.label = group.label;
+    group.items.forEach(({ sample, idx }) => {
+      const opt = document.createElement("option");
+      opt.value = String(idx);
+      opt.textContent = sample.title;
+      optgroup.appendChild(opt);
+    });
+    select.appendChild(optgroup);
+  });
+
+  select.onchange = () => {
+    if (select.value === "") return;
+    const chosen = samples[Number(select.value)];
+    if (!chosen) return;
+    document.getElementById("query-input").value = chosen.query;
+    setPersona(chosen.persona);
+    executeCognitiveLoop();
+  };
 }
 
 /**
@@ -521,6 +550,185 @@ function rebuildGraphLayout() {
         n.y = cy + orbitRadius * Math.sin(orbitAngle);
       });
     }
+  } else if (layoutMode === "spiral") {
+    // Golden-Angle Phyllotaxis Spiral Layout (following kg_full_materia_medica.html)
+    const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+    const byDegreeDesc = (a, b) => (nodeDegree.get(b.id) || 0) - (nodeDegree.get(a.id) || 0);
+
+    if (isSingleRemedy) {
+      const centerRem = simNodes.find(n => n.id === selectedRemedy) || meds[0];
+      if (centerRem) { centerRem.x = 0; centerRem.y = 0; centerRem.pinned = true; }
+
+      const spiralNodes = [
+        ...domains.slice().sort(byDegreeDesc),
+        ...regions.slice().sort(byDegreeDesc),
+        ...others.slice().sort((a, b) => a.type.localeCompare(b.type) || byDegreeDesc(a, b))
+      ].filter(n => n !== centerRem);
+
+      spiralNodes.forEach((n, idx) => {
+        const r = 210 + 95 * Math.sqrt(idx + 1);
+        const theta = idx * goldenAngle;
+        n.x = r * Math.cos(theta);
+        n.y = r * Math.sin(theta);
+      });
+    } else {
+      const sortedDomains = domains.slice().sort(byDegreeDesc);
+      const sortedMeds = meds.slice().sort(byDegreeDesc);
+      const sortedRegions = regions.slice().sort((a, b) => a.type.localeCompare(b.type) || byDegreeDesc(a, b));
+      const sortedOthers = others.slice().sort((a, b) => a.type.localeCompare(b.type) || byDegreeDesc(a, b));
+
+      sortedDomains.forEach((d, idx) => {
+        const r = 140 + 80 * Math.sqrt(idx + 1);
+        const theta = idx * goldenAngle;
+        d.x = r * Math.cos(theta);
+        d.y = r * Math.sin(theta);
+      });
+
+      const medOffset = sortedDomains.length;
+      sortedMeds.forEach((m, idx) => {
+        const r = 380 + 135 * Math.sqrt(idx + 1);
+        const theta = (idx + medOffset) * goldenAngle;
+        m.x = r * Math.cos(theta);
+        m.y = r * Math.sin(theta);
+      });
+
+      const outerNodes = [...sortedRegions, ...sortedOthers];
+      const outerOffset = medOffset + sortedMeds.length;
+      outerNodes.forEach((n, idx) => {
+        const r = 820 + 78 * Math.sqrt(idx + 1);
+        const theta = (idx + outerOffset) * goldenAngle;
+        n.x = r * Math.cos(theta);
+        n.y = r * Math.sin(theta);
+      });
+    }
+  } else if (layoutMode === "galaxy_spiral") {
+    // Multi-Arm Swirling Galaxy Spiral Layout
+    const numArms = 4;
+    const byDegreeDesc = (a, b) => (nodeDegree.get(b.id) || 0) - (nodeDegree.get(a.id) || 0);
+
+    if (isSingleRemedy) {
+      const centerRem = simNodes.find(n => n.id === selectedRemedy) || meds[0];
+      if (centerRem) { centerRem.x = 0; centerRem.y = 0; centerRem.pinned = true; }
+
+      const hubs = [...domains, ...regions].filter(n => n !== centerRem);
+      const arms = Math.min(4, Math.max(2, hubs.length || 2));
+      const hubArmMap = new Map();
+
+      hubs.forEach((h, idx) => {
+        const arm = idx % arms;
+        hubArmMap.set(h.id, arm);
+        const t = (Math.floor(idx / arms) + 1) / Math.max(1, Math.ceil(hubs.length / arms));
+        const r = 240 + t * 320;
+        const theta = (2 * Math.PI * arm) / arms + t * 1.9;
+        h.x = r * Math.cos(theta);
+        h.y = r * Math.sin(theta);
+      });
+
+      others.forEach((n, idx) => {
+        const nbrs = neighborsMap.get(n.id) || [];
+        let arm = idx % arms;
+        for (const nb of nbrs) {
+          if (hubArmMap.has(nb.id)) { arm = hubArmMap.get(nb.id); break; }
+        }
+        const t = (Math.floor(idx / arms) + 1) / Math.max(1, Math.ceil(others.length / arms));
+        const r = 420 + t * 620;
+        const spread = (hashStr(n.id) - 0.5) * 0.28;
+        const theta = (2 * Math.PI * arm) / arms + (r / 650) * 1.9 + spread;
+        n.x = r * Math.cos(theta);
+        n.y = r * Math.sin(theta);
+      });
+    } else {
+      // Galactic Core: Cognitive Domains
+      domains.forEach((d, idx) => {
+        const ang = (2 * Math.PI * idx) / Math.max(1, domains.length);
+        d.x = 220 * Math.cos(ang);
+        d.y = 220 * Math.sin(ang);
+      });
+
+      // 4 Sweeping Spiral Arms: Medicines lead the arms, Regions & Symptoms trail outward
+      const sortedMeds = meds.slice().sort(byDegreeDesc);
+      const medArmMap = new Map();
+      const armSteps = new Array(numArms).fill(0);
+
+      sortedMeds.forEach((m, idx) => {
+        const arm = idx % numArms;
+        medArmMap.set(m.id, arm);
+        const t = (Math.floor(idx / numArms) + 1) / Math.max(1, Math.ceil(sortedMeds.length / numArms));
+        const r = 360 + t * 1050;
+        const theta = (2 * Math.PI * arm) / numArms + t * 2.5;
+        m.x = r * Math.cos(theta);
+        m.y = r * Math.sin(theta);
+      });
+
+      const trailingNodes = [...regions, ...others].sort((a, b) => a.type.localeCompare(b.type) || byDegreeDesc(a, b));
+      trailingNodes.forEach((n, idx) => {
+        const nbrs = neighborsMap.get(n.id) || [];
+        let arm = idx % numArms;
+        for (const nb of nbrs) {
+          if (medArmMap.has(nb.id)) { arm = medArmMap.get(nb.id); break; }
+        }
+        const step = armSteps[arm]++;
+        const t = step / Math.max(1, Math.ceil(trailingNodes.length / numArms));
+        const r = 480 + t * 1950;
+        const spread = (hashStr(n.id + ":" + idx) - 0.5) * 0.24;
+        const theta = (2 * Math.PI * arm) / numArms + (r / 1500) * 2.5 + spread;
+        n.x = r * Math.cos(theta);
+        n.y = r * Math.sin(theta);
+      });
+    }
+  } else if (layoutMode === "mandala") {
+    // Radial Mandala Layout (following kg_arnica_montana_showcase.html)
+    if (isSingleRemedy) {
+      const center = simNodes.find(n => n.id === selectedRemedy) || meds[0];
+      if (center) { center.x = 0; center.y = 0; center.pinned = true; }
+
+      domains.forEach((d, i) => {
+        const a = (2 * Math.PI * i) / Math.max(1, domains.length);
+        d.x = 240 * Math.cos(a);
+        d.y = 240 * Math.sin(a);
+      });
+
+      regions.forEach((r, i) => {
+        const a = (2 * Math.PI * i) / Math.max(1, regions.length) + 0.35;
+        r.x = 360 * Math.cos(a);
+        r.y = 360 * Math.sin(a);
+      });
+
+      others.forEach((n, i) => {
+        const ring = n.type === "Affective Symptom" ? 520 : (n.type === "Modality" ? 680 : 840);
+        const spread = (i % 3 - 1) * 55;
+        const a = (2 * Math.PI * i) / Math.max(1, others.length);
+        n.x = (ring + spread) * Math.cos(a);
+        n.y = (ring + spread) * Math.sin(a);
+      });
+    } else {
+      domains.forEach((d, i) => {
+        const a = (2 * Math.PI * i) / Math.max(1, domains.length);
+        d.x = 240 * Math.cos(a);
+        d.y = 240 * Math.sin(a);
+      });
+
+      meds.forEach((m, i) => {
+        const a = (2 * Math.PI * i) / Math.max(1, meds.length);
+        const r = 520 + (i % 2) * 90;
+        m.x = r * Math.cos(a);
+        m.y = r * Math.sin(a);
+      });
+
+      regions.forEach((r, i) => {
+        const a = (2 * Math.PI * i) / Math.max(1, regions.length) + 0.35;
+        r.x = 840 * Math.cos(a);
+        r.y = 840 * Math.sin(a);
+      });
+
+      others.forEach((n, i) => {
+        const ring = n.type === "Affective Symptom" ? 1140 : (n.type === "Modality" ? 1440 : 1760);
+        const spread = (i % 3 - 1) * 70;
+        const a = (2 * Math.PI * i) / Math.max(1, others.length);
+        n.x = (ring + spread) * Math.cos(a);
+        n.y = (ring + spread) * Math.sin(a);
+      });
+    }
   } else {
     // Concentric Semantic Rings Layout
     const rings = [
@@ -647,10 +855,18 @@ function updateWeightFilter(val) {
 }
 
 function toggleLayoutMode() {
-  layoutMode = layoutMode === "galaxy" ? "force" : "galaxy";
+  const order = ["galaxy", "spiral", "galaxy_spiral", "mandala", "force"];
+  layoutMode = order[(order.indexOf(layoutMode) + 1) % order.length];
+  const titles = {
+    galaxy: "Layout: Galaxy Clusters",
+    spiral: "Layout: Golden Spiral",
+    galaxy_spiral: "Layout: Galaxy Spiral",
+    mandala: "Layout: Radial Mandala",
+    force: "Layout: Concentric Rings"
+  };
   const btn = document.getElementById("layout-btn");
-  btn.textContent = layoutMode === "galaxy" ? "Layout: Galaxy Clusters" : "Layout: Concentric Rings";
-  btn.classList.toggle("active-toggle", layoutMode === "galaxy");
+  btn.textContent = titles[layoutMode];
+  btn.classList.toggle("active-toggle", layoutMode !== "force");
   rebuildGraphLayout();
 }
 
@@ -776,8 +992,8 @@ function drawCanvas() {
       strokeWidth = 1.6 / Math.max(0.6, Math.sqrt(scale));
       if (edgeStyle === "glow") isGlowing = true;
     } else if (hasActivation && !bothActive) {
-      strokeColor = "#252c40";
-      strokeAlpha = 0.06;
+      strokeColor = "#2e3750";
+      strokeAlpha = 0.15;
       strokeWidth = 1.0 / Math.max(0.6, Math.sqrt(scale));
     } else {
       strokeColor = "#333e5c";
@@ -839,7 +1055,7 @@ function drawCanvas() {
     const r = nodeRadius(n) + (activeNodes.has(n.id) ? (activeNodes.get(n.id) || 1) * 3 : 0);
     const color = COLORS[n.type] || COLORS.default;
 
-    ctx.globalAlpha = !isAct ? 0.10 : (hoveredNbrs.size > 0 && !isFocus ? 0.28 : 1.0);
+    ctx.globalAlpha = !isAct ? 0.25 : (hoveredNbrs.size > 0 && !isFocus ? 0.28 : 1.0);
 
     // Outer glow for key nodes
     if ((n.type === "Medicine" || n.type === "Cognitive Domain" || activeNodes.has(n.id)) && isAct) {
@@ -848,7 +1064,7 @@ function drawCanvas() {
       ctx.fillStyle = color;
       ctx.globalAlpha *= 0.22;
       ctx.fill();
-      ctx.globalAlpha = !isAct ? 0.10 : (hoveredNbrs.size > 0 && !isFocus ? 0.28 : 1.0);
+      ctx.globalAlpha = !isAct ? 0.25 : (hoveredNbrs.size > 0 && !isFocus ? 0.28 : 1.0);
     }
 
     ctx.beginPath();
@@ -861,12 +1077,14 @@ function drawCanvas() {
     ctx.stroke();
 
     // Labels
-    const isHub = n.type === "Medicine" || n.type === "Cognitive Domain" || n.type === "Clinical Condition";
+    const isHub = n.type === "Medicine" || n.type === "Cognitive Domain";
     let showLabel = false;
     if (labelMode === "all") showLabel = true;
     else if (labelMode === "hubs") showLabel = isHub || n === hoveredNode || n === inspectedNode;
     else {
       showLabel = isHub
+        || n === hoveredNode
+        || n === inspectedNode
         || (hasActivation && isAct)
         || (hoveredNbrs.size > 0 && isFocus)
         || simNodes.length <= 120
@@ -1035,6 +1253,13 @@ async function executeCognitiveLoop() {
  * Prune Canvas Graph Based on API Response
  */
 function pruneGraphToResponse(data) {
+  if (selectedRemedy !== "ALL") {
+    selectedRemedy = "ALL";
+    const searchEl = document.getElementById("rem-search");
+    renderRemedySidebar(searchEl ? searchEl.value : "");
+    rebuildGraphLayout();
+  }
+
   activeNodes.clear();
 
   (data.subgraph_nodes || []).forEach(n => {
@@ -1082,6 +1307,12 @@ function updatePruningStats(mode, seeded, kept, pruned, ratio = null) {
 function resetActivation() {
   activeNodes.clear();
   inspectedNode = null;
+  if (selectedRemedy !== "ALL") {
+    selectedRemedy = "ALL";
+    const searchEl = document.getElementById("rem-search");
+    renderRemedySidebar(searchEl ? searchEl.value : "");
+    rebuildGraphLayout();
+  }
   document.getElementById("act-mode").textContent = "Full Graph";
   document.getElementById("act-seeded").textContent = "0";
   document.getElementById("act-kept").textContent = simNodes.length;
@@ -1097,79 +1328,72 @@ function resetActivation() {
 }
 
 /**
- * Render Stages 1 - 4 in the Results Section below canvas
+ * Render Unified Two-Column Clinical Dashboard below canvas
  */
 function renderPipelineResults(data) {
   const section = document.getElementById("results-section");
   const scrollBtn = document.getElementById("btn-scroll-results");
   const floatBtn = document.getElementById("float-scroll-btn");
 
-  // Emergency Check
+  // Emergency Banner Check (Visible only when data.is_emergency === true)
   const banner = document.getElementById("emergency-banner");
-  const st1Status = document.getElementById("stage1-status-val");
   const st1Badge = document.getElementById("stage1-status");
-  if (data.is_emergency) {
+  if (data.is_emergency === true) {
     banner.classList.remove("hidden");
-    document.getElementById("emergency-title").textContent = "CRITICAL EMERGENCY RED-FLAG DETECTED";
-    document.getElementById("emergency-message").textContent = data.emergency_warning;
+    document.getElementById("emergency-title").textContent = "CRITICAL RED-FLAG DETECTED";
+    document.getElementById("emergency-message").textContent = data.emergency_warning || "";
     if (st1Badge) {
       st1Badge.textContent = "REFLEX BLOCKED";
       st1Badge.className = "badge badge-danger";
     }
-    if (st1Status) st1Status.textContent = "REFLEX BLOCKED";
   } else {
     banner.classList.add("hidden");
     if (st1Badge) {
       st1Badge.textContent = "SAFE DELIBERATION";
       st1Badge.className = "badge badge-success";
     }
-    if (st1Status) st1Status.textContent = "SAFE DELIBERATION";
   }
 
-  // Header Bar Meta
+  // Latency directly beneath #run-btn in Cognitive Studio sidebar
+  const execMeta = document.getElementById("execution-meta");
+  const latText = document.getElementById("latency-text");
+  if (execMeta && latText) {
+    execMeta.classList.remove("hidden");
+    latText.textContent = `\u26A1 Latency: ${data.total_latency_ms} ms`;
+  }
+
+  // Header Bar Meta (Action Pill + Compact TIDE Route Badge)
   const actPill = document.getElementById("action-pill");
   actPill.textContent = data.action.toUpperCase();
   actPill.className = `action-pill ${data.action.toLowerCase()}`;
-  document.getElementById("tide-route-badge").textContent = `${data.tide_route} ROUTE`;
-  document.getElementById("policy-sub").textContent = `Policy: ${data.policy} · Step: ${data.step_index}`;
-  document.getElementById("stage1-total-lat").textContent = `${data.total_latency_ms} ms`;
+  const routeBadge = document.getElementById("tide-route-badge");
+  if (routeBadge) {
+    routeBadge.textContent = `${data.tide_route} ROUTE`;
+  }
+  const subMeta = document.getElementById("subgraph-meta");
+  if (subMeta) {
+    subMeta.textContent = `${data.subgraph_nodes.length} Nodes \u00B7 ${data.pruning_ratio_pct.toFixed(1)}% Ambient Cut`;
+  }
 
-  // Stage 01 Body (Reflex Guard & Stage 1 Filter)
-  const st1Lat = document.getElementById("stage1-latency-val");
-  if (st1Lat) st1Lat.textContent = `${data.stage1_latency_us} µs`;
-  const st1Rules = document.getElementById("stage1-rules-val");
-  if (st1Rules) st1Rules.textContent = `${data.safety_audit ? data.safety_audit.stage1_rules_active : 1} Active Rules`;
-  const st1Total = document.getElementById("stage1-total-lat-body");
-  if (st1Total) st1Total.textContent = `${data.total_latency_ms} ms`;
-
-  // Stage 02 Body
-  document.getElementById("stage2-pruning").textContent = `${data.pruning_ratio_pct.toFixed(1)}% Ambient Cut`;
-  document.getElementById("stage2-nodecount").textContent = `${data.subgraph_nodes.length} Nodes · ${data.subgraph_edges.length} Edges`;
-  renderTopRemedies(data.top_remedies);
-
-  // Stage 03 Body
-  document.getElementById("stage3-route").textContent = `${data.tide_route} ROUTE`;
-  const vad = data.somatic_vad || { valence: 0.5, arousal: 0.5, dominance: 0.5 };
-  document.getElementById("val-valence").textContent = vad.valence.toFixed(2);
-  document.getElementById("fill-valence").style.width = `${Math.max(0, Math.min(100, (vad.valence + 1.0) * 50))}%`;
-
-  document.getElementById("val-arousal").textContent = vad.arousal.toFixed(2);
-  document.getElementById("fill-arousal").style.width = `${Math.max(0, Math.min(100, vad.arousal * 100))}%`;
-
-  document.getElementById("val-dominance").textContent = vad.dominance.toFixed(2);
-  document.getElementById("fill-dominance").style.width = `${Math.max(0, Math.min(100, vad.dominance * 100))}%`;
-
-  // Stage 04 Body
+  // Differential Synthesis, Click-to-Expand Remedies, and Top 5 Citations
   document.getElementById("diff-analysis").innerHTML = formatMarkdown(data.differential_analysis);
+  renderTopRemedies(data.top_remedies);
   renderEvidence(data.grounded_evidence);
 
-  // UNHIDE RESULTS SECTION & BUTTONS
+  // Unhide results section & scroll triggers
   section.classList.remove("hidden");
-  if (scrollBtn) {
-    scrollBtn.classList.remove("hidden");
-  }
-  if (floatBtn) {
-    floatBtn.classList.remove("hidden");
+  if (scrollBtn) scrollBtn.classList.remove("hidden");
+  if (floatBtn) floatBtn.classList.remove("hidden");
+}
+
+function toggleRemedyAccordion(cardEl, remedyId) {
+  const isExpanded = cardEl.classList.contains("expanded");
+  document.querySelectorAll("#top-remedies-container .remedy-accordion.expanded").forEach(el => {
+    if (el !== cardEl) el.classList.remove("expanded");
+  });
+  cardEl.classList.toggle("expanded", !isExpanded);
+  if (remedyId) {
+    selectRemedy(remedyId);
   }
 }
 
@@ -1180,41 +1404,74 @@ function renderTopRemedies(remedies) {
     return;
   }
 
-  container.innerHTML = remedies.map(r => `
-    <div class="remedy-item" data-id="${r.id}">
-      <div class="rem-top">
-        <span class="rem-name">${r.name}</span>
-        <span class="rem-score">W = ${r.score.toFixed(3)}</span>
+  container.innerHTML = remedies.map(r => {
+    const safeId = escapeHtml(r.id).replace(/'/g, "\\'");
+    const symText = r.linked_symptoms && r.linked_symptoms.length > 0
+      ? escapeHtml(r.linked_symptoms.join(", "))
+      : "General constitutional rubric match";
+    const srcCount = Array.isArray(r.sources) ? r.sources.length : 0;
+    return `
+      <div class="remedy-accordion" data-id="${escapeHtml(r.id)}" onclick="toggleRemedyAccordion(this, '${safeId}')">
+        <div class="remedy-summary-row">
+          <div class="rem-title-group">
+            <span class="rem-name">${escapeHtml(r.name)}</span>
+            <span class="rem-grade-badge">Grade ${r.grade}</span>
+          </div>
+          <div class="rem-meta-group">
+            <span class="rem-score-pill">W = ${r.score.toFixed(2)}</span>
+            <span class="rem-chevron">\u25BE</span>
+          </div>
+        </div>
+        <div class="remedy-drawer">
+          <div class="drawer-row"><strong>Classification:</strong> <span>${escapeHtml(r.classification)}</span></div>
+          <div class="drawer-row"><strong>Proving Sources:</strong> <span>${srcCount} source(s)</span></div>
+          <div class="drawer-row"><strong>Linked Rubrics:</strong> <span>${symText}</span></div>
+        </div>
       </div>
-      <div class="rem-sub">
-        <span>Grade ${r.grade}</span>
-        <span>&bull;</span>
-        <span>${r.classification.replace("_", " ")}</span>
-        <span>&bull;</span>
-        <span>VAD: (${r.valence}, ${r.arousal}, ${r.dominance})</span>
-      </div>
-      ${r.linked_symptoms && r.linked_symptoms.length > 0
-        ? `<div class="rem-rubrics" title="${escapeHtml(r.linked_symptoms.join(', '))}">Rubrics: ${escapeHtml(r.linked_symptoms.join(', '))}</div>`
-        : ""}
-    </div>
-  `).join("");
+    `;
+  }).join("");
+}
+
+function formatCitationBadge(src) {
+  const s = String(src || "Materia Medica");
+  const lower = s.toLowerCase();
+  if (lower.includes("boericke")) {
+    const m = s.match(/p\.?\s*\d+/i);
+    return `[Boericke ${m ? m[0].replace(/\s+/g, "") : "MM"}]`;
+  }
+  if (lower.includes("hahnemann")) {
+    const m = s.match(/p\.?\s*\d+/i);
+    return `[Hahnemann ${m ? m[0].replace(/\s+/g, "") : "MMP"}]`;
+  }
+  if (lower.includes("pubmed") || /pmid/i.test(s)) {
+    const m = s.match(/\d{5,}/);
+    return `[PubMed ${m ? "PMID:" + m[0] : "PMID"}]`;
+  }
+  return `[${s}]`;
 }
 
 function renderEvidence(evidence) {
   const container = document.getElementById("evidence-container");
-  if (!evidence || evidence.length === 0) {
+  const topFive = (evidence || []).slice(0, 5);
+  if (topFive.length === 0) {
     container.innerHTML = `<div class="empty-hint">No occurrence quotes attached to active nodes.</div>`;
     return;
   }
 
-  container.innerHTML = evidence.map(e => `
-    <div class="evidence-item">
-      <div class="evidence-quote">"${escapeHtml(e.quote)}"</div>
-      <div class="evidence-meta">
-        <strong>${escapeHtml(e.label)}</strong> (${escapeHtml(e.section)}) &middot; Grade ${e.grade} &middot; <em>${escapeHtml(e.sources.join(', '))}</em>
+  container.innerHTML = topFive.map(e => {
+    const badges = (e.sources && e.sources.length ? e.sources : ["Materia Medica"])
+      .slice(0, 2)
+      .map(s => `<span class="citation-badge">${escapeHtml(formatCitationBadge(s))}</span>`)
+      .join(" ");
+    return `
+      <div class="evidence-item">
+        <div class="evidence-quote">"${escapeHtml(e.quote)}"</div>
+        <div class="evidence-meta">
+          <strong>${escapeHtml(e.label)}</strong> (${escapeHtml(e.section)}) &middot; Grade ${e.grade} ${badges}
+        </div>
       </div>
-    </div>
-  `).join("");
+    `;
+  }).join("");
 }
 
 /**
