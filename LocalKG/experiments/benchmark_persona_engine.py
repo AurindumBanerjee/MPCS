@@ -33,7 +33,7 @@ ARCHETYPE_QUERIES = [
 ]
 
 
-def run_unoptimized_baseline(engine: PersonaQueryEngine, query_text: str, theta_conf=0.70, theta_expl=0.35, max_hops=2, hop_decay=0.58):
+def run_unoptimized_baseline(engine: PersonaQueryEngine, query_text: str, theta_conf=0.45, theta_expl=0.18, max_hops=2, hop_decay=0.58):
     """Simulates the pre-optimization unoptimized implementation:
     1. Linear scan over ALL 1,106 nodes checking substring matches.
     2. Full iteration over ALL 2,024 links on every hop.

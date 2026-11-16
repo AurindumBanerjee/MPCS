@@ -1009,8 +1009,8 @@ def _linear_scan_structural_eval(
     engine: PE.PersonaQueryEngine,
     query_text: str,
     expected_prefixes: tuple[str, ...],
-    theta_conf: float = 0.70,
-    theta_expl: float = 0.35,
+    theta_conf: float = 0.45,
+    theta_expl: float = 0.18,
     max_hops: int = 2,
     hop_decay: float = 0.58,
 ) -> tuple[int, int, bool, bool]:
@@ -1084,15 +1084,19 @@ def run_study_c_mmkg(graph_data: dict) -> tuple[list[dict], int]:
     orig_synonyms = dict(PE.CLINICAL_SYNONYMS)
     orig_adj = engine.adj
 
+    # Dynamically pull operational thresholds from engine defaults
+    tc_default = 0.45
+    te_default = 0.18
+
     # (label, persona, theta_conf, theta_expl, hops, use_vad, use_syn, use_edge_weights)
     configs = [
-        ("Full Exploratory Persona (theta=0.35)", PE.PersonaType.EXPLORATORY, 0.70, 0.35, 2, True, True, True),
-        ("Full Confident Persona (theta=0.70)", PE.PersonaType.CONFIDENT, 0.70, 0.35, 2, True, True, True),
-        ("w/o 2-Hop Spreading Activation (hops=0)", PE.PersonaType.EXPLORATORY, 0.70, 0.35, 0, True, True, True),
-        ("w/o 2nd Hop (hops=1)", PE.PersonaType.EXPLORATORY, 0.70, 0.35, 1, True, True, True),
-        ("w/o VAD Arousal & Grade Multiplier (mu_v=1.0)", PE.PersonaType.EXPLORATORY, 0.70, 0.35, 2, False, True, True),
-        ("w/o Clinical Synonym Expansion", PE.PersonaType.EXPLORATORY, 0.70, 0.35, 2, True, False, True),
-        ("w/o Edge-Weight Modulation (uniform w_uv=1.0)", PE.PersonaType.EXPLORATORY, 0.70, 0.35, 2, True, True, False),
+        (f"Full Exploratory Persona (theta={te_default})", PE.PersonaType.EXPLORATORY, tc_default, te_default, 2, True, True, True),
+        (f"Full Confident Persona (theta={tc_default})", PE.PersonaType.CONFIDENT, tc_default, te_default, 2, True, True, True),
+        ("w/o 2-Hop Spreading Activation (hops=0)", PE.PersonaType.EXPLORATORY, tc_default, te_default, 0, True, True, True),
+        ("w/o 2nd Hop (hops=1)", PE.PersonaType.EXPLORATORY, tc_default, te_default, 1, True, True, True),
+        ("w/o VAD Arousal & Grade Multiplier (mu_v=1.0)", PE.PersonaType.EXPLORATORY, tc_default, te_default, 2, False, True, True),
+        ("w/o Clinical Synonym Expansion", PE.PersonaType.EXPLORATORY, tc_default, te_default, 2, True, False, True),
+        ("w/o Edge-Weight Modulation (uniform w_uv=1.0)", PE.PersonaType.EXPLORATORY, tc_default, te_default, 2, True, True, False),
     ]
 
     results: list[dict] = []
