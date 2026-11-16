@@ -1,11 +1,34 @@
 /**
  * MPCS-LocalRAG Unified Cognitive Studio — Frontend Controller
  * ============================================================
- * Handles real-time query dispatch, 4-stage pipeline visualization,
- * interactive 60 FPS HTML5 Canvas graph rendering, and reinforcement loop.
+ * Implements:
+ * 1. Continuous high-DPI HTML5 Canvas Knowledge Graph visualization
+ * 2. Complete node class numbering & legend with Sensation at top
+ * 3. Minimized icon rail sidebars (expandable / collapsible like screenshot)
+ * 4. Scrollable page addition for Cognitive Loop Output (Stages 1-4)
+ * 5. Learning loop commented out for now
  */
 
-// Application State
+// Global Application State
+let GRAPH_DATA = { nodes: [], links: [] };
+let nodeDegree = new Map();
+let neighborsMap = new Map();
+let hiddenTypes = new Set();
+let selectedRemedy = "ALL";
+let minWeight = 1.0;
+let layoutMode = "galaxy"; // "galaxy" | "force"
+let hoverEdgeMode = "subgraph_and_outside"; // "subgraph_and_outside" | "subgraph_only" | "all_unified"
+let edgeStyle = "straight"; // "straight" | "curved" | "glow"
+let labelMode = "smart"; // "smart" | "all" | "hubs"
+let activeNodes = new Map(); // id -> activationScore
+let hoveredNode = null;
+let inspectedNode = null;
+let draggedNode = null;
+let isPanning = false;
+let startX = 0, startY = 0;
+let panX = 0, panY = 0, scale = 1.0;
+let simNodes = [], simLinks = [];
+
 const state = {
   activePersona: "doctor",
   selectedModalities: {
@@ -14,184 +37,360 @@ const state = {
     contact: "",
   },
   lastResponse: null,
-  activeNodes: [],
-  activeEdges: [],
-  canvasTransform: { x: 0, y: 0, k: 1 },
-  hoveredNode: null,
 };
 
-// DOM Element References
-const elements = {
-  btnDoctor: document.getElementById("btn-persona-doctor"),
-  btnPatient: document.getElementById("btn-persona-patient"),
-  archetypePills: document.getElementById("archetype-pills"),
-  queryInput: document.getElementById("query-input"),
-  runBtn: document.getElementById("run-btn"),
-  emergencyBanner: document.getElementById("emergency-banner"),
-  emergencyTitle: document.getElementById("emergency-title"),
-  emergencyMessage: document.getElementById("emergency-message"),
-  dlcbfStatus: document.getElementById("dlcbf-status"),
-  kgStats: document.getElementById("kg-stats"),
-  stage1Status: document.getElementById("stage1-status"),
-  stage1Dlcbf: document.getElementById("stage1-dlcbf"),
-  stage1DlcbfLat: document.getElementById("stage1-dlcbf-lat"),
-  stage1TotalLat: document.getElementById("stage1-total-lat"),
-  stage2Pruning: document.getElementById("stage2-pruning"),
-  stage2Nodecount: document.getElementById("stage2-nodecount"),
-  topRemediesContainer: document.getElementById("top-remedies-container"),
-  actionPill: document.getElementById("action-pill"),
-  policySub: document.getElementById("policy-sub"),
-  tideRouteBadge: document.getElementById("tide-route-badge"),
-  valValence: document.getElementById("val-valence"),
-  fillValence: document.getElementById("fill-valence"),
-  valArousal: document.getElementById("val-arousal"),
-  fillArousal: document.getElementById("fill-arousal"),
-  valDominance: document.getElementById("val-dominance"),
-  fillDominance: document.getElementById("fill-dominance"),
-  diffAnalysis: document.getElementById("diff-analysis"),
-  evidenceContainer: document.getElementById("evidence-container"),
-  canvas: document.getElementById("subgraph-canvas"),
-  tooltip: document.getElementById("node-tooltip"),
-  btnValidate: document.getElementById("btn-validate"),
-  btnPenalize: document.getElementById("btn-penalize"),
-  expertSelect: document.getElementById("expert-action-select"),
-  btnTeach: document.getElementById("btn-teach"),
-};
-
-// Canvas 2D Context
-const ctx = elements.canvas.getContext("2d");
-
-// Entity Color Palette
+// Entity Color Palette with Sensation included
 const COLORS = {
-  remedy: "#4a90e2",
-  medicine: "#4a90e2",
-  physical: "#e94e77",
-  affective: "#9013fe",
-  modality: "#f5a623",
-  domain: "#10b981",
-  condition: "#06b6d4",
-  default: "#94a3b8",
+  "Medicine": "#58b8ff",
+  "Affective Symptom": "#c5b3f8",
+  "Physical Symptom": "#f48fb1",
+  "Sensation": "#ffb74d",
+  "Modality": "#ffd166",
+  "Cognitive Domain": "#06d6a0",
+  "Body Region": "#4dd0e1",
+  "Clinical Condition": "#ff8a65",
+  "Literature Citation": "#ff8a80",
+  "default": "#8b95ab"
 };
+
+// Canvas Setup
+const canvas = document.getElementById("graph-canvas");
+const ctx = canvas.getContext("2d");
+const tooltip = document.getElementById("tooltip");
+let width = 960, height = 680, dpr = window.devicePixelRatio || 1;
 
 /**
- * Initialize application and load server endpoints
+ * Initialize Application
  */
 async function initApp() {
-  setupEventListeners();
+  setupSidebarToggles();
+  setupCognitiveControls();
   resizeCanvas();
-  window.addEventListener("resize", resizeCanvas);
 
+  // 1. Fetch System Health & Status
   try {
-    // 1. Fetch Health & Stats
     const healthRes = await fetch("/api/health");
     if (healthRes.ok) {
       const health = await healthRes.json();
-      elements.kgStats.textContent = `${health.graph_nodes.toLocaleString()} Nodes · ${health.graph_links.toLocaleString()} Edges`;
-      elements.dlcbfStatus.textContent = `${health.dlcbf_capacity} Fingerprints`;
+      document.getElementById("dlcbf-badge").textContent = `dlCBF Gate: ${health.dlcbf_capacity} Fingerprints`;
     }
+  } catch (err) {
+    console.warn("Health check error:", err);
+  }
 
-    // 2. Fetch Sample Queries
+  // 2. Fetch Sample Archetype Scenarios
+  try {
     const samplesRes = await fetch("/api/sample_queries");
     if (samplesRes.ok) {
       const samples = await samplesRes.json();
-      renderSamplePills(samples);
+      renderSampleScenarios(samples);
     }
   } catch (err) {
-    console.error("Failed to connect to bridge backend:", err);
+    console.warn("Failed to load sample scenarios:", err);
+  }
+
+  // 3. Fetch Full Knowledge Graph for Continuous Visualizer
+  try {
+    const graphRes = await fetch("/api/graph");
+    if (graphRes.ok) {
+      GRAPH_DATA = await graphRes.json();
+      initGraphDataStructures();
+      renderLegendWithCounts();
+      renderRemedySidebar();
+      rebuildGraphLayout();
+    }
+  } catch (err) {
+    console.error("Failed to load graph data:", err);
+    document.getElementById("stats-badge").textContent = "Error Loading Graph";
   }
 }
 
 /**
- * Setup Event Listeners
+ * Initialize Neighbor Adjacency and Degree Counts
  */
-function setupEventListeners() {
-  // Persona Toggle
-  elements.btnDoctor.addEventListener("click", () => setPersona("doctor"));
-  elements.btnPatient.addEventListener("click", () => setPersona("patient"));
+function initGraphDataStructures() {
+  nodeDegree.clear();
+  neighborsMap.clear();
+
+  GRAPH_DATA.links.forEach(l => {
+    nodeDegree.set(l.source, (nodeDegree.get(l.source) || 0) + 1);
+    nodeDegree.set(l.target, (nodeDegree.get(l.target) || 0) + 1);
+
+    if (!neighborsMap.has(l.source)) neighborsMap.set(l.source, []);
+    if (!neighborsMap.has(l.target)) neighborsMap.set(l.target, []);
+    neighborsMap.get(l.source).push({ id: l.target, label: l.label, weight: l.weight });
+    neighborsMap.get(l.target).push({ id: l.source, label: l.label, weight: l.weight });
+  });
+
+  document.getElementById("stats-badge").textContent = 
+    `${GRAPH_DATA.nodes.length.toLocaleString()} Nodes · ${GRAPH_DATA.links.length.toLocaleString()} Links`;
+
+  const medicines = GRAPH_DATA.nodes.filter(n => n.type === "Medicine");
+  const remBadge = document.getElementById("rail-rem-badge");
+  if (remBadge) remBadge.textContent = medicines.length;
+
+  const keptBadge = document.getElementById("rail-kept-badge");
+  if (keptBadge) keptBadge.textContent = `${(GRAPH_DATA.nodes.length / 1000).toFixed(1)}k`;
+}
+
+/**
+ * Setup Sidebar Toggles: Minimized Rail vs Expanded
+ */
+function setupSidebarToggles() {
+  document.getElementById("toggle-left-btn").addEventListener("click", () => toggleSidebar("left"));
+  document.getElementById("toggle-right1-btn").addEventListener("click", () => toggleSidebar("right1"));
+  document.getElementById("toggle-right2-btn").addEventListener("click", () => toggleSidebar("right2"));
+  
+  const scrollResultsBtn = document.getElementById("btn-scroll-results");
+  if (scrollResultsBtn) {
+    scrollResultsBtn.addEventListener("click", scrollToResults);
+  }
+}
+
+function toggleSidebar(which) {
+  let panel, toggleBtn;
+  if (which === "left") {
+    panel = document.getElementById("left-sidebar");
+    toggleBtn = document.getElementById("toggle-left-btn");
+  } else if (which === "right1") {
+    panel = document.getElementById("right-sidebar-inspector");
+    toggleBtn = document.getElementById("toggle-right1-btn");
+  } else if (which === "right2") {
+    panel = document.getElementById("right-sidebar-cognitive");
+    toggleBtn = document.getElementById("toggle-right2-btn");
+  }
+
+  if (panel) {
+    // Toggle minimized rail state (thin rail vs expanded)
+    panel.classList.toggle("minimized");
+    const isMinimized = panel.classList.contains("minimized");
+    if (toggleBtn) {
+      toggleBtn.classList.toggle("active", !isMinimized);
+    }
+    // Resize canvas to adapt to new available width
+    setTimeout(() => {
+      resizeCanvas();
+      drawCanvas();
+    }, 240);
+  }
+}
+
+function scrollToResults() {
+  const section = document.getElementById("results-section");
+  if (section) {
+    section.classList.remove("hidden");
+    section.scrollIntoView({ behavior: "smooth" });
+  }
+}
+
+function scrollToTop() {
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+/**
+ * Render Interactive Legend with Node Class Numbering and Sensation Included
+ */
+function renderLegendWithCounts() {
+  const container = document.getElementById("legend");
+  container.innerHTML = "";
+
+  // Count instances of each node type in GRAPH_DATA
+  const typeCounts = {};
+  GRAPH_DATA.nodes.forEach(n => {
+    const t = n.type || "Other";
+    typeCounts[t] = (typeCounts[t] || 0) + 1;
+  });
+
+  // Ordered list of classes prioritizing clinical importance
+  const orderedClasses = [
+    "Medicine",
+    "Physical Symptom",
+    "Affective Symptom",
+    "Sensation",
+    "Modality",
+    "Clinical Condition",
+    "Cognitive Domain",
+    "Body Region"
+  ];
+
+  orderedClasses.forEach(type => {
+    const count = typeCounts[type] || 0;
+    if (count === 0 && !typeCounts[type]) return;
+
+    const col = COLORS[type] || COLORS.default;
+    const item = document.createElement("div");
+    item.className = "legend-item";
+    item.setAttribute("data-type", type);
+    item.title = `Click to toggle visibility of all ${count} ${type} nodes`;
+    item.innerHTML = `
+      <span class="dot" style="background:${col};color:${col}"></span>
+      <span>${type}</span>
+      <span class="legend-count">${count}</span>
+    `;
+
+    item.addEventListener("click", () => toggleType(type));
+    container.appendChild(item);
+  });
+}
+
+function toggleType(type) {
+  if (hiddenTypes.has(type)) {
+    hiddenTypes.delete(type);
+  } else {
+    hiddenTypes.add(type);
+  }
+  document.querySelectorAll(".legend-item").forEach(el => {
+    if (el.getAttribute("data-type") === type) {
+      el.classList.toggle("hidden-type", hiddenTypes.has(type));
+    }
+  });
+  rebuildGraphLayout();
+}
+
+/**
+ * Render Left Remedy Explorer
+ */
+function renderRemedySidebar(filterText = "") {
+  const listEl = document.getElementById("remedy-list");
+  const q = filterText.trim().toLowerCase();
+  const medicines = GRAPH_DATA.nodes
+    .filter(n => n.type === "Medicine")
+    .sort((a, b) => (nodeDegree.get(b.id) || 0) - (nodeDegree.get(a.id) || 0));
+
+  document.getElementById("rem-total-count").textContent = medicines.length;
+  const railBadge = document.getElementById("rail-rem-badge");
+  if (railBadge) railBadge.textContent = medicines.length;
+
+  let html = `<div class="rem-item ${selectedRemedy === 'ALL' ? 'selected' : ''}" onclick="selectRemedy('ALL')">
+    <span>All Remedies (Full Graph)</span>
+    <span class="rem-count">${GRAPH_DATA.nodes.length}</span>
+  </div>`;
+
+  medicines.forEach(m => {
+    if (q && !m.label.toLowerCase().includes(q)) return;
+    const deg = nodeDegree.get(m.id) || 0;
+    const sel = selectedRemedy === m.id ? "selected" : "";
+    html += `<div class="rem-item ${sel}" onclick="selectRemedy('${m.id.replace(/'/g, "\\'")}')">
+      <span>${m.label}</span>
+      <span class="rem-count">${deg}</span>
+    </div>`;
+  });
+
+  listEl.innerHTML = html;
+}
+
+function filterRemedySidebar() {
+  const q = document.getElementById("rem-search").value;
+  renderRemedySidebar(q);
+}
+
+function selectRemedy(remId) {
+  selectedRemedy = remId;
+  renderRemedySidebar(document.getElementById("rem-search").value);
+  rebuildGraphLayout();
+
+  if (remId !== "ALL") {
+    const found = simNodes.find(n => n.id === remId);
+    if (found) {
+      inspectNode(found);
+      activeNodes.clear();
+      simNodes.forEach(n => activeNodes.set(n.id, 1.0));
+      updatePruningStats(`Subgraph: ${found.label}`, 1, simNodes.length, GRAPH_DATA.nodes.length - simNodes.length);
+      drawCanvas();
+    }
+  } else {
+    resetActivation();
+  }
+}
+
+/**
+ * Setup Cognitive Controls & Modalities
+ */
+function setupCognitiveControls() {
+  const btnDoc = document.getElementById("btn-persona-doctor");
+  const btnPat = document.getElementById("btn-persona-patient");
+
+  btnDoc.addEventListener("click", () => setPersona("doctor"));
+  btnPat.addEventListener("click", () => setPersona("patient"));
 
   // Modality Chips
-  document.querySelectorAll(".chip-group").forEach((group) => {
-    const groupName = group.getAttribute("data-group");
-    group.querySelectorAll(".mod-chip").forEach((chip) => {
+  document.querySelectorAll(".mod-chips").forEach(group => {
+    const grpName = group.getAttribute("data-group");
+    group.querySelectorAll(".mod-chip").forEach(chip => {
       chip.addEventListener("click", () => {
-        group.querySelectorAll(".mod-chip").forEach((c) => c.classList.remove("active"));
+        group.querySelectorAll(".mod-chip").forEach(c => c.classList.remove("active"));
         chip.classList.add("active");
-        state.selectedModalities[groupName] = chip.getAttribute("data-val") || "";
+        state.selectedModalities[grpName] = chip.getAttribute("data-val") || "";
       });
     });
   });
 
-  // Execute Query Button
-  elements.runBtn.addEventListener("click", executeQuery);
-  elements.queryInput.addEventListener("keydown", (e) => {
+  // Query Input Enter shortcut
+  const inputEl = document.getElementById("query-input");
+  inputEl.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
-      executeQuery();
+      executeCognitiveLoop();
     }
-  });
-
-  // Canvas Mouse Interactions
-  elements.canvas.addEventListener("mousemove", handleCanvasMouseMove);
-  elements.canvas.addEventListener("mouseleave", () => {
-    state.hoveredNode = null;
-    elements.tooltip.classList.add("hidden");
-    drawGraph();
-  });
-
-  // Reinforcement Learning Loop
-  elements.btnValidate.addEventListener("click", () => submitFeedback(1.0));
-  elements.btnPenalize.addEventListener("click", () => submitFeedback(0.0));
-  elements.btnTeach.addEventListener("click", () => {
-    const expertAction = elements.expertSelect.value;
-    if (!expertAction) {
-      alert("Please choose an expert action from the dropdown first.");
-      return;
-    }
-    submitFeedback(1.0, expertAction);
   });
 }
 
-/**
- * Set Active Persona
- */
 function setPersona(persona) {
   state.activePersona = persona;
+  const btnDoc = document.getElementById("btn-persona-doctor");
+  const btnPat = document.getElementById("btn-persona-patient");
+  const railBadge = document.getElementById("rail-persona-badge");
+
   if (persona === "doctor") {
-    elements.btnDoctor.classList.add("active");
-    elements.btnPatient.classList.remove("active");
+    btnDoc.classList.add("active");
+    btnPat.classList.remove("active");
+    if (railBadge) {
+      railBadge.textContent = "DOC";
+      railBadge.className = "rail-badge persona-rail-badge";
+    }
   } else {
-    elements.btnPatient.classList.add("active");
-    elements.btnDoctor.classList.remove("active");
+    btnPat.classList.add("active");
+    btnDoc.classList.remove("active");
+    if (railBadge) {
+      railBadge.textContent = "PT";
+      railBadge.className = "rail-badge persona-rail-badge patient-tag";
+    }
   }
 }
 
 /**
- * Render Sample Archetype Buttons
+ * Render Sample Archetype Scenarios
  */
-function renderSamplePills(samples) {
-  elements.archetypePills.innerHTML = "";
-  samples.forEach((sample) => {
+function renderSampleScenarios(samples) {
+  const container = document.getElementById("archetype-pills");
+  container.innerHTML = "";
+
+  samples.forEach(sample => {
     const btn = document.createElement("button");
-    btn.className = `pill-btn ${sample.id.startsWith("emergency") ? "pill-emergency" : ""}`;
-    btn.textContent = `${sample.id.startsWith("emergency") ? "🚨 " : ""}${sample.title}`;
+    const isEmerg = sample.id.startsWith("emergency");
+    btn.className = `pill-scenario ${isEmerg ? "emergency" : ""}`;
+    btn.textContent = `${isEmerg ? "[CRITICAL] " : ""}${sample.title}`;
+    btn.title = sample.query;
+
     btn.addEventListener("click", () => {
-      elements.queryInput.value = sample.query;
+      document.getElementById("query-input").value = sample.query;
       setPersona(sample.persona);
       if (sample.modalities) {
         applyModalities(sample.modalities);
       }
-      executeQuery();
+      executeCognitiveLoop();
     });
-    elements.archetypePills.appendChild(btn);
+
+    container.appendChild(btn);
   });
 }
 
 function applyModalities(mods) {
-  Object.keys(mods).forEach((grp) => {
+  Object.keys(mods).forEach(grp => {
     state.selectedModalities[grp] = mods[grp];
-    const groupEl = document.querySelector(`.chip-group[data-group="${grp}"]`);
+    const groupEl = document.querySelector(`.mod-chips[data-group="${grp}"]`);
     if (groupEl) {
-      groupEl.querySelectorAll(".mod-chip").forEach((chip) => {
+      groupEl.querySelectorAll(".mod-chip").forEach(chip => {
         if (chip.getAttribute("data-val") === mods[grp]) {
           chip.classList.add("active");
         } else {
@@ -203,19 +402,630 @@ function applyModalities(mods) {
 }
 
 /**
- * Execute Query Pipeline
+ * Canvas Layout Rebuild Engine (Galaxy Clusters + Concentric Rings)
  */
-async function executeQuery() {
-  const queryText = elements.queryInput.value.trim();
+function resizeCanvas() {
+  const rect = canvas.parentElement.getBoundingClientRect();
+  width = rect.width || 960;
+  height = rect.height || 680;
+  dpr = window.devicePixelRatio || 1;
+  canvas.width = width * dpr;
+  canvas.height = height * dpr;
+}
+
+function hashStr(str) {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0) / 4294967295;
+}
+
+function rebuildGraphLayout() {
+  resizeCanvas();
+
+  // 1. Filter allowed nodes
+  let allowedIds = new Set();
+  if (selectedRemedy === "ALL") {
+    GRAPH_DATA.nodes.forEach(n => {
+      if (n.type === "Medicine" || n.type === "Cognitive Domain" || (n.weight || 1.0) >= minWeight) {
+        allowedIds.add(n.id);
+      }
+    });
+  } else {
+    allowedIds.add(selectedRemedy);
+    GRAPH_DATA.links.forEach(l => {
+      if (l.source === selectedRemedy) allowedIds.add(l.target);
+      if (l.target === selectedRemedy) allowedIds.add(l.source);
+    });
+    const firstHop = new Set(allowedIds);
+    GRAPH_DATA.links.forEach(l => {
+      if (firstHop.has(l.source)) {
+        const tgt = GRAPH_DATA.nodes.find(x => x.id === l.target);
+        if (tgt && tgt.type !== "Medicine") allowedIds.add(l.target);
+      }
+      if (firstHop.has(l.target)) {
+        const src = GRAPH_DATA.nodes.find(x => x.id === l.source);
+        if (src && src.type !== "Medicine") allowedIds.add(l.source);
+      }
+    });
+  }
+
+  simNodes = GRAPH_DATA.nodes
+    .filter(n => allowedIds.has(n.id) && !hiddenTypes.has(n.type))
+    .map(n => ({ ...n, x: 0, y: 0, vx: 0, vy: 0 }));
+
+  const nodeMap = new Map(simNodes.map(n => [n.id, n]));
+  simLinks = GRAPH_DATA.links
+    .filter(l => nodeMap.has(l.source) && nodeMap.has(l.target))
+    .map(l => ({ ...l, sourceNode: nodeMap.get(l.source), targetNode: nodeMap.get(l.target) }));
+
+  // 2. Compute Layout Coordinates
+  const meds = simNodes.filter(n => n.type === "Medicine");
+  const domains = simNodes.filter(n => n.type === "Cognitive Domain");
+  const regions = simNodes.filter(n => n.type === "Body Region" || n.type === "Clinical Condition");
+  const others = simNodes.filter(n => !["Medicine", "Cognitive Domain", "Body Region", "Clinical Condition"].includes(n.type));
+  const isSingleRemedy = (selectedRemedy !== "ALL" || meds.length <= 2);
+
+  if (layoutMode === "galaxy") {
+    if (isSingleRemedy) {
+      const centerRem = simNodes.find(n => n.id === selectedRemedy) || meds[0];
+      if (centerRem) { centerRem.x = 0; centerRem.y = 0; centerRem.pinned = true; }
+
+      const hubList = [...domains, ...regions];
+      hubList.forEach((h, idx) => {
+        const ang = (2 * Math.PI * idx) / Math.max(1, hubList.length);
+        const r = h.type === "Cognitive Domain" ? 360 : 540;
+        h.x = r * Math.cos(ang);
+        h.y = r * Math.sin(ang);
+      });
+
+      others.forEach((n, idx) => {
+        const connectedHubs = [];
+        const nbrs = neighborsMap.get(n.id) || [];
+        nbrs.forEach(nb => {
+          const target = nodeMap.get(nb.id);
+          if (target && target !== centerRem && (target.type === "Cognitive Domain" || target.type === "Body Region" || target.type === "Clinical Condition")) {
+            connectedHubs.push(target);
+          }
+        });
+
+        let cx = 0, cy = 0;
+        if (connectedHubs.length > 0) {
+          connectedHubs.forEach(h => { cx += h.x; cy += h.y; });
+          cx /= connectedHubs.length;
+          cy /= connectedHubs.length;
+        } else {
+          const ang = (2 * Math.PI * idx) / Math.max(1, others.length);
+          cx = 450 * Math.cos(ang);
+          cy = 450 * Math.sin(ang);
+        }
+
+        const orbitRadius = 85 + (idx % 4) * 35;
+        const orbitAngle = 2 * Math.PI * hashStr(n.id + ":" + idx);
+        n.x = cx + orbitRadius * Math.cos(orbitAngle);
+        n.y = cy + orbitRadius * Math.sin(orbitAngle);
+      });
+    } else {
+      // Multi-Remedy Galaxy Layout
+      domains.forEach((d, idx) => {
+        const ang = (2 * Math.PI * idx) / Math.max(1, domains.length);
+        d.x = 340 * Math.cos(ang);
+        d.y = 340 * Math.sin(ang);
+      });
+
+      regions.forEach((r, idx) => {
+        const ang = (2 * Math.PI * idx) / Math.max(1, regions.length);
+        r.x = 640 * Math.cos(ang);
+        r.y = 640 * Math.sin(ang);
+      });
+
+      const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+      meds.forEach((m, idx) => {
+        const r = 950 + 260 * Math.sqrt(idx + 1);
+        const theta = idx * goldenAngle;
+        m.x = r * Math.cos(theta);
+        m.y = r * Math.sin(theta);
+      });
+
+      others.forEach((n, idx) => {
+        const connectedHubs = [];
+        const nbrs = neighborsMap.get(n.id) || [];
+        nbrs.forEach(nb => {
+          const target = nodeMap.get(nb.id);
+          if (target && (target.type === "Medicine" || target.type === "Cognitive Domain" || target.type === "Body Region")) {
+            connectedHubs.push(target);
+          }
+        });
+
+        let cx = 0, cy = 0;
+        if (connectedHubs.length > 0) {
+          connectedHubs.forEach(h => { cx += h.x; cy += h.y; });
+          cx /= connectedHubs.length;
+          cy /= connectedHubs.length;
+        } else {
+          const ang = 2 * Math.PI * hashStr(n.id);
+          cx = 1600 * Math.cos(ang);
+          cy = 1600 * Math.sin(ang);
+        }
+
+        const orbitRadius = 115 + (idx % 5) * 42;
+        const orbitAngle = 2 * Math.PI * hashStr(n.id + ":" + idx);
+        n.x = cx + orbitRadius * Math.cos(orbitAngle);
+        n.y = cy + orbitRadius * Math.sin(orbitAngle);
+      });
+    }
+  } else {
+    // Concentric Semantic Rings Layout
+    const rings = [
+      { list: domains, r: 280 },
+      { list: meds, r: 720 },
+      { list: regions, r: 1120 },
+      { list: others.filter(n => n.type === "Affective Symptom"), r: 1520 },
+      { list: others.filter(n => n.type === "Sensation"), r: 1720 },
+      { list: others.filter(n => n.type === "Modality"), r: 1950 },
+      { list: others.filter(n => !["Affective Symptom", "Sensation", "Modality"].includes(n.type)), r: 2400 }
+    ];
+    rings.forEach(g => {
+      g.list.forEach((n, i) => {
+        const ang = (2 * Math.PI * i) / Math.max(1, g.list.length);
+        const jitter = (i % 2 === 0 ? 1 : -1) * 40;
+        n.x = (g.r + jitter) * Math.cos(ang);
+        n.y = (g.r + jitter) * Math.sin(ang);
+      });
+    });
+  }
+
+  // Fast Spatial-Grid Collision Relaxation
+  resolveNodeCollisions(simNodes, 6);
+
+  document.getElementById("act-total").textContent = simNodes.length;
+  if (activeNodes.size === 0) {
+    document.getElementById("act-kept").textContent = simNodes.length;
+    document.getElementById("act-pruned").textContent = "0";
+    document.getElementById("act-ratio").textContent = "0%";
+  }
+
+  fitToScreen();
+}
+
+function resolveNodeCollisions(nodes, iterations = 6) {
+  const minSep = 54;
+  const cellSize = minSep * 1.5;
+
+  for (let iter = 0; iter < iterations; iter++) {
+    const grid = new Map();
+    nodes.forEach((n, idx) => {
+      const gx = Math.floor(n.x / cellSize);
+      const gy = Math.floor(n.y / cellSize);
+      const key = `${gx},${gy}`;
+      if (!grid.has(key)) grid.set(key, []);
+      grid.get(key).push(idx);
+    });
+
+    nodes.forEach((a, i) => {
+      if (a.pinned) return;
+      const gx = Math.floor(a.x / cellSize);
+      const gy = Math.floor(a.y / cellSize);
+      for (let dx = -1; dx <= 1; dx++) {
+        for (let dy = -1; dy <= 1; dy++) {
+          const cell = grid.get(`${gx + dx},${gy + dy}`);
+          if (!cell) continue;
+          for (let k = 0; k < cell.length; k++) {
+            const j = cell[k];
+            if (j <= i) continue;
+            const b = nodes[j];
+            let vx = b.x - a.x;
+            let vy = b.y - a.y;
+            let distSq = vx * vx + vy * vy;
+            const reqDist = (a.type === "Medicine" || b.type === "Medicine") ? minSep * 1.45 : minSep;
+            if (distSq < reqDist * reqDist) {
+              let dist = Math.sqrt(distSq) || 0.1;
+              let overlap = (reqDist - dist) * 0.5;
+              let nx = vx / dist, ny = vy / dist;
+              a.x -= nx * overlap;
+              a.y -= ny * overlap;
+              if (!b.pinned) {
+                b.x += nx * overlap;
+                b.y += ny * overlap;
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+}
+
+/**
+ * Screen & Canvas Coordinate Utilities
+ */
+function fitToScreen() {
+  if (simNodes.length === 0) { drawCanvas(); return; }
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  const targetNodes = activeNodes.size > 0
+    ? simNodes.filter(n => activeNodes.has(n.id))
+    : simNodes;
+  const list = targetNodes.length > 0 ? targetNodes : simNodes;
+
+  list.forEach(n => {
+    if (n.x < minX) minX = n.x;
+    if (n.x > maxX) maxX = n.x;
+    if (n.y < minY) minY = n.y;
+    if (n.y > maxY) maxY = n.y;
+  });
+
+  const pad = 140;
+  const spanX = Math.max(300, (maxX - minX) + pad * 2);
+  const spanY = Math.max(300, (maxY - minY) + pad * 2);
+  scale = Math.min(2.2, Math.max(0.12, Math.min(width / spanX, height / spanY)));
+  const cx = (minX + maxX) / 2;
+  const cy = (minY + maxY) / 2;
+  panX = width / 2 - cx * scale;
+  panY = height / 2 - cy * scale;
+  drawCanvas();
+}
+
+function zoomBy(factor) {
+  const newScale = Math.min(4.5, Math.max(0.1, scale * factor));
+  panX = width / 2 - (width / 2 - panX) * (newScale / scale);
+  panY = height / 2 - (height / 2 - panY) * (newScale / scale);
+  scale = newScale;
+  drawCanvas();
+}
+
+function updateWeightFilter(val) {
+  minWeight = parseFloat(val);
+  document.getElementById("weight-val").textContent = minWeight.toFixed(1);
+  rebuildGraphLayout();
+}
+
+function toggleLayoutMode() {
+  layoutMode = layoutMode === "galaxy" ? "force" : "galaxy";
+  const btn = document.getElementById("layout-btn");
+  btn.textContent = layoutMode === "galaxy" ? "Layout: Galaxy Clusters" : "Layout: Concentric Rings";
+  btn.classList.toggle("active-toggle", layoutMode === "galaxy");
+  rebuildGraphLayout();
+}
+
+function toggleHoverEdgeMode() {
+  const modes = ["subgraph_and_outside", "subgraph_only", "all_unified"];
+  hoverEdgeMode = modes[(modes.indexOf(hoverEdgeMode) + 1) % modes.length];
+  const titles = {
+    subgraph_and_outside: "Hover: Subgraph + Outside",
+    subgraph_only: "Hover: Subgraph Only",
+    all_unified: "Hover: All Unified"
+  };
+  document.getElementById("hover-mode-btn").textContent = titles[hoverEdgeMode];
+  document.getElementById("act-hover-mode").textContent = titles[hoverEdgeMode].replace("Hover: ", "");
+  drawCanvas();
+}
+
+function toggleEdgeStyle() {
+  const styles = ["straight", "curved", "glow"];
+  edgeStyle = styles[(styles.indexOf(edgeStyle) + 1) % styles.length];
+  const titles = { straight: "Edge: Straight", curved: "Edge: Curved", glow: "Edge: Glow" };
+  document.getElementById("edge-style-btn").textContent = titles[edgeStyle];
+  document.getElementById("act-edge-style").textContent = titles[edgeStyle].replace("Edge: ", "");
+  drawCanvas();
+}
+
+function toggleAllLabels() {
+  const order = ["smart", "all", "hubs"];
+  labelMode = order[(order.indexOf(labelMode) + 1) % order.length];
+  const labels = { smart: "Labels: Smart Auto", all: "Labels: Always Show All", hubs: "Labels: Hubs Only" };
+  document.getElementById("labels-btn").textContent = labels[labelMode];
+  drawCanvas();
+}
+
+function nodeRadius(n) {
+  if (n.type === "Medicine") return 20;
+  if (n.type === "Cognitive Domain") return 17;
+  if (n.type === "Clinical Condition" || n.type === "Body Region") return 13;
+  if (n.type === "Sensation") return 12;
+  return Math.min(14, 7 + (n.weight || 1.0) * 2.1);
+}
+
+/**
+ * Canvas Rendering Loop
+ */
+function drawCanvas() {
+  ctx.save();
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, width, height);
+
+  ctx.translate(panX, panY);
+  ctx.scale(scale, scale);
+
+  const hasActivation = activeNodes.size > 0;
+  const hoveredNbrs = new Set();
+  if (hoveredNode) {
+    hoveredNbrs.add(hoveredNode.id);
+    (neighborsMap.get(hoveredNode.id) || []).forEach(nb => hoveredNbrs.add(nb.id));
+  } else if (inspectedNode) {
+    hoveredNbrs.add(inspectedNode.id);
+    (neighborsMap.get(inspectedNode.id) || []).forEach(nb => hoveredNbrs.add(nb.id));
+  }
+
+  // 1. Draw Links
+  simLinks.forEach(l => {
+    const a = l.sourceNode, b = l.targetNode;
+    if (!a || !b) return;
+
+    const isIncident = (hoveredNode && (a.id === hoveredNode.id || b.id === hoveredNode.id))
+                    || (!hoveredNode && inspectedNode && (a.id === inspectedNode.id || b.id === inspectedNode.id));
+    const bothActive = !hasActivation || (activeNodes.has(a.id) && activeNodes.has(b.id));
+
+    ctx.setLineDash([]);
+    let isGlowing = false;
+    let strokeColor = "#333e5c";
+    let strokeAlpha = simNodes.length > 400 ? 0.28 : 0.48;
+    let strokeWidth = 1.1 / Math.max(0.6, Math.sqrt(scale));
+    let showLabel = false;
+    let labelColor = "#98a6c4";
+    let labelPrefix = "";
+
+    if (hasActivation && isIncident) {
+      if (bothActive) {
+        strokeColor = "#06d6a0"; // Subgraph Internal Link (Emerald Green)
+        strokeAlpha = 0.96;
+        strokeWidth = 2.6 / Math.max(0.6, Math.sqrt(scale));
+        showLabel = true;
+        labelColor = "#06d6a0";
+        if (edgeStyle === "glow") isGlowing = true;
+      } else {
+        if (hoverEdgeMode === "subgraph_only") {
+          strokeColor = "#252c40";
+          strokeAlpha = 0.04;
+          strokeWidth = 1.0 / Math.max(0.6, Math.sqrt(scale));
+          showLabel = false;
+        } else if (hoverEdgeMode === "all_unified") {
+          strokeColor = "#58b8ff";
+          strokeAlpha = 0.90;
+          strokeWidth = 2.0 / Math.max(0.6, Math.sqrt(scale));
+          showLabel = true;
+          labelColor = "#58b8ff";
+          if (edgeStyle === "glow") isGlowing = true;
+        } else {
+          strokeColor = "#ff79c6"; // Subgraph External Bridge (Pink)
+          strokeAlpha = 0.92;
+          strokeWidth = 2.2 / Math.max(0.6, Math.sqrt(scale));
+          ctx.setLineDash([5, 3]);
+          showLabel = true;
+          labelColor = "#ff79c6";
+          labelPrefix = "[EXTERNAL] ";
+          if (edgeStyle === "glow") isGlowing = true;
+        }
+      }
+    } else if (isIncident) {
+      strokeColor = "#58b8ff";
+      strokeAlpha = 0.88;
+      strokeWidth = 2.0 / Math.max(0.6, Math.sqrt(scale));
+      showLabel = true;
+      labelColor = "#58b8ff";
+      if (edgeStyle === "glow") isGlowing = true;
+    } else if (hasActivation && bothActive) {
+      strokeColor = "#06d6a0";
+      strokeAlpha = 0.65;
+      strokeWidth = 1.6 / Math.max(0.6, Math.sqrt(scale));
+      if (edgeStyle === "glow") isGlowing = true;
+    } else if (hasActivation && !bothActive) {
+      strokeColor = "#252c40";
+      strokeAlpha = 0.06;
+      strokeWidth = 1.0 / Math.max(0.6, Math.sqrt(scale));
+    } else {
+      strokeColor = "#333e5c";
+      strokeAlpha = simNodes.length > 400 ? 0.28 : 0.48;
+      strokeWidth = 1.1 / Math.max(0.6, Math.sqrt(scale));
+    }
+
+    ctx.strokeStyle = strokeColor;
+    ctx.globalAlpha = strokeAlpha;
+    ctx.lineWidth = strokeWidth;
+
+    let midX = (a.x + b.x) / 2, midY = (a.y + b.y) / 2;
+
+    if (edgeStyle === "curved") {
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const dist = Math.hypot(dx, dy) || 1;
+      const nx = -dy / dist, ny = dx / dist;
+      const bend = Math.min(50, Math.max(16, dist * 0.12)) * (hashStr(a.id + b.id) > 0.5 ? 1 : -1);
+      const cx = midX + nx * bend, cy = midY + ny * bend;
+      midX = (midX + cx) / 2;
+      midY = (midY + cy) / 2;
+
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.quadraticCurveTo(cx, cy, b.x, b.y);
+      ctx.stroke();
+    } else {
+      if (isGlowing) {
+        ctx.save();
+        ctx.lineWidth = strokeWidth * 2.8;
+        ctx.globalAlpha = strokeAlpha * 0.32;
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+        ctx.restore();
+      }
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    if (showLabel && scale > 0.4) {
+      ctx.fillStyle = labelColor;
+      ctx.globalAlpha = 0.95;
+      ctx.font = `${Math.max(9, Math.round(10 / Math.sqrt(scale)))}px Inter, sans-serif`;
+      ctx.textAlign = "center";
+      const edgeText = labelPrefix ? `${labelPrefix}${l.label}` : l.label;
+      ctx.fillText(edgeText, midX, midY - 4);
+    }
+  });
+
+  // 2. Draw Nodes
+  simNodes.forEach(n => {
+    const isAct = !hasActivation || activeNodes.has(n.id);
+    const isFocus = hoveredNbrs.size === 0 || hoveredNbrs.has(n.id);
+    const r = nodeRadius(n) + (activeNodes.has(n.id) ? (activeNodes.get(n.id) || 1) * 3 : 0);
+    const color = COLORS[n.type] || COLORS.default;
+
+    ctx.globalAlpha = !isAct ? 0.10 : (hoveredNbrs.size > 0 && !isFocus ? 0.28 : 1.0);
+
+    // Outer glow for key nodes
+    if ((n.type === "Medicine" || n.type === "Cognitive Domain" || activeNodes.has(n.id)) && isAct) {
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, r + 5, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.globalAlpha *= 0.22;
+      ctx.fill();
+      ctx.globalAlpha = !isAct ? 0.10 : (hoveredNbrs.size > 0 && !isFocus ? 0.28 : 1.0);
+    }
+
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+
+    ctx.lineWidth = (n === hoveredNode || n === inspectedNode || activeNodes.has(n.id)) ? 2.5 : 1.4;
+    ctx.strokeStyle = (n === hoveredNode || n === inspectedNode || activeNodes.has(n.id)) ? "#ffffff" : "#07090e";
+    ctx.stroke();
+
+    // Labels
+    const isHub = n.type === "Medicine" || n.type === "Cognitive Domain" || n.type === "Clinical Condition";
+    let showLabel = false;
+    if (labelMode === "all") showLabel = true;
+    else if (labelMode === "hubs") showLabel = isHub || n === hoveredNode || n === inspectedNode;
+    else {
+      showLabel = isHub
+        || (hasActivation && isAct)
+        || (hoveredNbrs.size > 0 && isFocus)
+        || simNodes.length <= 120
+        || scale >= 0.65
+        || (scale >= 0.38 && (n.weight || 1) >= 2.2);
+    }
+
+    if (showLabel && isAct) {
+      const fontSize = isHub ? Math.max(11, Math.round(13 / Math.pow(scale, 0.35))) : Math.max(9.5, Math.round(11 / Math.pow(scale, 0.35)));
+      ctx.font = `${isHub ? 600 : 500} ${fontSize}px Inter, sans-serif`;
+      ctx.textAlign = "center";
+      const label = n.label.length > 34 && scale < 0.8 ? n.label.slice(0, 32) + "…" : n.label;
+      const textWidth = ctx.measureText(label).width;
+      const pillX = n.x - textWidth / 2 - 5;
+      const pillY = n.y + r + 4;
+      const pillH = fontSize + 5;
+
+      ctx.fillStyle = "rgba(10, 13, 22, 0.82)";
+      ctx.fillRect(pillX, pillY, textWidth + 10, pillH);
+
+      ctx.fillStyle = isHub ? "#ffffff" : "#dce3f2";
+      ctx.fillText(label, n.x, pillY + fontSize);
+    }
+  });
+
+  ctx.restore();
+}
+
+function screenToWorld(sx, sy) {
+  return {
+    x: (sx - panX) / scale,
+    y: (sy - panY) / scale
+  };
+}
+
+function findNodeAt(sx, sy) {
+  const pt = screenToWorld(sx, sy);
+  for (let i = simNodes.length - 1; i >= 0; i--) {
+    const n = simNodes[i];
+    const r = nodeRadius(n) + 4 / scale;
+    const dx = pt.x - n.x, dy = pt.y - n.y;
+    if (dx * dx + dy * dy <= r * r) return n;
+  }
+  return null;
+}
+
+/**
+ * Node Inspector Card Population
+ */
+function inspectNode(n) {
+  inspectedNode = n;
+  const act = activeNodes.get(n.id);
+  const v = n.valence !== undefined ? Math.round(n.valence * 100) : null;
+  const a = n.arousal !== undefined ? Math.round(n.arousal * 100) : null;
+  const d = n.dominance !== undefined ? Math.round(n.dominance * 100) : null;
+  const nbrs = neighborsMap.get(n.id) || [];
+
+  let html = `<h3>${n.type}</h3>
+    <div style="font-size:15px;font-weight:600;margin-bottom:8px;color:${COLORS[n.type] || '#fff'}">${n.label}</div>
+    <div class="stat-row"><span>Composite Weight</span><strong>${(n.weight || 1).toFixed(2)} / 3.00</strong></div>
+    <div class="stat-row"><span>Typography Grade</span><strong>${n.grade || "-"}</strong></div>
+    <div class="stat-row"><span>Section</span><strong>${n.section || "-"}</strong></div>
+    <div class="stat-row"><span>Connected Links</span><strong>${nbrs.length}</strong></div>`;
+
+  if (act !== undefined) {
+    html += `<div class="stat-row"><span>TIDE Activation</span><strong style="color:var(--green)">${act.toFixed(3)}</strong></div>`;
+  }
+  if (v !== null) {
+    html += `<div style="margin-top:8px;font-size:11.5px;color:var(--muted)">VAD Affect Profile (V:${v}% A:${a}% D:${d}%)</div>
+      <div class="bar-bg"><div class="bar-fill" style="width:${a}%;background:var(--purple)"></div></div>`;
+  }
+  if (n.quote) {
+    html += `<div class="quote-box">"${escapeHtml(n.quote)}"</div>`;
+  }
+  if (n.sources && n.sources.length) {
+    html += `<div style="margin-top:7px;font-size:11px;color:var(--muted)">Sources: ${escapeHtml(n.sources.join(", "))}</div>`;
+  }
+
+  if (nbrs.length > 0) {
+    html += `<div style="margin-top:9px;font-size:11px;color:var(--muted);text-transform:uppercase">Connected Concepts (${nbrs.length})</div>
+      <div style="margin-top:4px;max-height:140px;overflow-y:auto;">`;
+    nbrs.slice(0, 35).forEach(nb => {
+      const target = GRAPH_DATA.nodes.find(x => x.id === nb.id);
+      if (target) {
+        html += `<span class="neighbor-chip" onclick="focusNodeById('${target.id.replace(/'/g, "\\'")}')">
+          <span style="color:${COLORS[target.type] || '#fff'}">&bull;</span> ${target.label}
+        </span>`;
+      }
+    });
+    html += `</div>`;
+  }
+
+  document.getElementById("inspector").innerHTML = html;
+  drawCanvas();
+}
+
+function focusNodeById(id) {
+  const n = simNodes.find(x => x.id === id);
+  if (!n) return;
+  inspectNode(n);
+  scale = Math.max(scale, 0.85);
+  panX = width / 2 - n.x * scale;
+  panY = height / 2 - n.y * scale;
+  drawCanvas();
+}
+
+/**
+ * Execute Cognitive Loop Pipeline
+ * - Runs /api/query
+ * - Prunes graph visualizer down to active subgraph
+ * - Unhides and displays Stages 1 - 4 in the document flow section below canvas
+ * - Smoothly scrolls to the output
+ */
+async function executeCognitiveLoop() {
+  const queryText = document.getElementById("query-input").value.trim();
   if (!queryText) {
-    alert("Please enter a query or select an archetype scenario.");
+    alert("Please enter a clinical symptom query or select an archetype scenario.");
     return;
   }
 
-  // Set Loading State
-  elements.runBtn.disabled = true;
-  elements.runBtn.innerHTML = `<span>Deliberating...</span>`;
-  elements.emergencyBanner.classList.add("hidden");
+  const runBtn = document.getElementById("run-btn");
+  runBtn.disabled = true;
+  runBtn.innerHTML = `<span>Deliberating Cognitive Loop...</span>`;
+  document.getElementById("emergency-banner").classList.add("hidden");
 
   try {
     const payload = {
@@ -236,80 +1046,166 @@ async function executeQuery() {
 
     const data = await res.json();
     state.lastResponse = data;
-    renderResponse(data);
+
+    // 1. Prune Knowledge Graph to Active Subgraph
+    pruneGraphToResponse(data);
+
+    // 2. Render and Display Stages 1 - 4
+    renderPipelineResults(data);
+
+    // 3. Smoothly scroll to results section
+    setTimeout(() => {
+      scrollToResults();
+    }, 280);
+
   } catch (err) {
-    console.error("Query execution failed:", err);
+    console.error("Cognitive loop execution failed:", err);
     alert(`Cognitive execution error: ${err.message}`);
   } finally {
-    elements.runBtn.disabled = false;
-    elements.runBtn.innerHTML = `<span class="btn-icon">⚡</span><span>Execute Cognitive Loop</span>`;
+    runBtn.disabled = false;
+    runBtn.innerHTML = `<span class="btn-text">Execute Cognitive Loop</span>`;
   }
 }
 
 /**
- * Render Complete 4-Stage Response
+ * Prune Canvas Graph Based on API Response
  */
-function renderResponse(data) {
-  // 1. Emergency Red-Flag Banner Check
+function pruneGraphToResponse(data) {
+  activeNodes.clear();
+
+  (data.subgraph_nodes || []).forEach(n => {
+    activeNodes.set(n.id, n.score || 1.0);
+  });
+
+  const total = simNodes.length;
+  const kept = activeNodes.size;
+  const pruned = Math.max(0, total - kept);
+  const ratio = total > 0 ? ((pruned / total) * 100).toFixed(1) : "0";
+
+  updatePruningStats(`TIDE Subgraph (${data.persona.toUpperCase()})`, data.subgraph_nodes.length, kept, pruned, ratio);
+
+  // Focus and fit to active subgraph
+  fitToScreen();
+}
+
+function updatePruningStats(mode, seeded, kept, pruned, ratio = null) {
+  document.getElementById("act-mode").textContent = mode;
+  document.getElementById("act-seeded").textContent = seeded;
+  document.getElementById("act-kept").textContent = kept;
+  document.getElementById("act-pruned").textContent = pruned;
+
+  const total = kept + pruned;
+  const r = ratio !== null ? ratio : (total ? `${Math.round((pruned / total) * 100)}%` : "0%");
+  document.getElementById("act-ratio").textContent = r.toString().includes("%") ? r : `${r}%`;
+
+  let internalCount = 0, externalCount = 0;
+  simLinks.forEach(l => {
+    const inA = activeNodes.has(l.source);
+    const inB = activeNodes.has(l.target);
+    if (inA && inB) internalCount++;
+    else if (inA || inB) externalCount++;
+  });
+  document.getElementById("act-internal-edges").textContent = internalCount;
+  document.getElementById("act-external-edges").textContent = externalCount;
+
+  const keptBadge = document.getElementById("rail-kept-badge");
+  if (keptBadge) keptBadge.textContent = kept > 0 ? kept : `${(simNodes.length / 1000).toFixed(1)}k`;
+}
+
+/**
+ * Reset Graph Activation to Full Graph
+ */
+function resetActivation() {
+  activeNodes.clear();
+  inspectedNode = null;
+  document.getElementById("act-mode").textContent = "Full Graph";
+  document.getElementById("act-seeded").textContent = "0";
+  document.getElementById("act-kept").textContent = simNodes.length;
+  document.getElementById("act-pruned").textContent = "0";
+  document.getElementById("act-ratio").textContent = "0%";
+  document.getElementById("act-internal-edges").textContent = "0";
+  document.getElementById("act-external-edges").textContent = "0";
+
+  const keptBadge = document.getElementById("rail-kept-badge");
+  if (keptBadge) keptBadge.textContent = `${(GRAPH_DATA.nodes.length / 1000).toFixed(1)}k`;
+
+  fitToScreen();
+}
+
+/**
+ * Render Stages 1 - 4 in the Results Section below canvas
+ */
+function renderPipelineResults(data) {
+  const section = document.getElementById("results-section");
+  const scrollBtn = document.getElementById("btn-scroll-results");
+  const floatBtn = document.getElementById("float-scroll-btn");
+
+  // Emergency Check
+  const banner = document.getElementById("emergency-banner");
   if (data.is_emergency) {
-    elements.emergencyBanner.classList.remove("hidden");
-    elements.emergencyTitle.textContent = "🚨 CRITICAL EMERGENCY RED-FLAG DETECTED";
-    elements.emergencyMessage.textContent = data.emergency_warning;
-    elements.stage1Status.textContent = "REFLEX BLOCKED";
-    elements.stage1Status.className = "badge badge-danger";
+    banner.classList.remove("hidden");
+    document.getElementById("emergency-title").textContent = "CRITICAL EMERGENCY RED-FLAG DETECTED";
+    document.getElementById("emergency-message").textContent = data.emergency_warning;
+    document.getElementById("stage1-status").textContent = "REFLEX BLOCKED";
+    document.getElementById("stage1-status").className = "badge badge-danger";
   } else {
-    elements.emergencyBanner.classList.add("hidden");
-    elements.stage1Status.textContent = "SAFE DELIBERATION";
-    elements.stage1Status.className = "badge badge-success";
+    banner.classList.add("hidden");
+    document.getElementById("stage1-status").textContent = "SAFE DELIBERATION";
+    document.getElementById("stage1-status").className = "badge badge-success";
   }
 
-  // 2. Stage 1 Metrics (Safety & dlCBF)
-  elements.stage1Dlcbf.textContent = data.dlcbf_hit ? "SEEN VERBATIM" : "NOVEL ENCOUNTER";
-  elements.stage1DlcbfLat.textContent = `${data.dlcbf_latency_us} µs`;
-  elements.stage1TotalLat.textContent = `${data.total_latency_ms} ms`;
+  // Header Bar Meta
+  const actPill = document.getElementById("action-pill");
+  actPill.textContent = data.action.toUpperCase();
+  actPill.className = `action-pill ${data.action.toLowerCase()}`;
+  document.getElementById("tide-route-badge").textContent = `${data.tide_route} ROUTE`;
+  document.getElementById("policy-sub").textContent = `Policy: ${data.policy} · Step: ${data.step_index}`;
+  document.getElementById("stage1-total-lat").textContent = `${data.total_latency_ms} ms`;
 
-  // 3. Stage 2 Metrics (LocalRAG)
-  elements.stage2Pruning.textContent = `${data.pruning_ratio_pct.toFixed(1)}% Noise Cut`;
-  elements.stage2Nodecount.textContent = `${data.subgraph_nodes.length} Nodes · ${data.subgraph_edges.length} Edges`;
+  // Stage 01 Body
+  document.getElementById("stage1-dlcbf").textContent = data.dlcbf_hit ? "SEEN VERBATIM" : "NOVEL ENCOUNTER";
+  document.getElementById("stage1-dlcbf-lat").textContent = `${data.dlcbf_latency_us} us`;
+  document.getElementById("stage1-total-lat-body").textContent = `${data.total_latency_ms} ms`;
+
+  // Stage 02 Body
+  document.getElementById("stage2-pruning").textContent = `${data.pruning_ratio_pct.toFixed(1)}% Ambient Cut`;
+  document.getElementById("stage2-nodecount").textContent = `${data.subgraph_nodes.length} Nodes · ${data.subgraph_edges.length} Edges`;
   renderTopRemedies(data.top_remedies);
 
-  // 4. Stage 3 Metrics (MPCS Deliberation & Somatic Markers)
-  elements.actionPill.textContent = data.action.toUpperCase();
-  elements.actionPill.className = `action-pill ${data.action.toLowerCase()}`;
-  elements.policySub.textContent = `Policy: ${data.policy} · Step: ${data.step_index}`;
-  elements.tideRouteBadge.textContent = `${data.tide_route} ROUTE`;
-
-  // VAD Gauges
+  // Stage 03 Body
+  document.getElementById("stage3-route").textContent = `${data.tide_route} ROUTE`;
   const vad = data.somatic_vad || { valence: 0.5, arousal: 0.5, dominance: 0.5 };
-  elements.valValence.textContent = vad.valence.toFixed(2);
-  elements.fillValence.style.width = `${Math.max(0, Math.min(100, (vad.valence + 1.0) * 50))}%`;
+  document.getElementById("val-valence").textContent = vad.valence.toFixed(2);
+  document.getElementById("fill-valence").style.width = `${Math.max(0, Math.min(100, (vad.valence + 1.0) * 50))}%`;
 
-  elements.valArousal.textContent = vad.arousal.toFixed(2);
-  elements.fillArousal.style.width = `${Math.max(0, Math.min(100, vad.arousal * 100))}%`;
+  document.getElementById("val-arousal").textContent = vad.arousal.toFixed(2);
+  document.getElementById("fill-arousal").style.width = `${Math.max(0, Math.min(100, vad.arousal * 100))}%`;
 
-  elements.valDominance.textContent = vad.dominance.toFixed(2);
-  elements.fillDominance.style.width = `${Math.max(0, Math.min(100, vad.dominance * 100))}%`;
+  document.getElementById("val-dominance").textContent = vad.dominance.toFixed(2);
+  document.getElementById("fill-dominance").style.width = `${Math.max(0, Math.min(100, vad.dominance * 100))}%`;
 
-  // 5. Stage 4 Grounded Output
-  elements.diffAnalysis.innerHTML = formatMarkdown(data.differential_analysis);
+  // Stage 04 Body
+  document.getElementById("diff-analysis").innerHTML = formatMarkdown(data.differential_analysis);
   renderEvidence(data.grounded_evidence);
 
-  // 6. Subgraph Canvas Setup
-  setupCanvasGraph(data.subgraph_nodes, data.subgraph_edges);
+  // UNHIDE RESULTS SECTION & BUTTONS
+  section.classList.remove("hidden");
+  if (scrollBtn) {
+    scrollBtn.classList.remove("hidden");
+  }
+  if (floatBtn) {
+    floatBtn.classList.remove("hidden");
+  }
 }
 
-/**
- * Render Top Remedy Cards
- */
 function renderTopRemedies(remedies) {
+  const container = document.getElementById("top-remedies-container");
   if (!remedies || remedies.length === 0) {
-    elements.topRemediesContainer.innerHTML = `<div class="empty-hint">No remedies exceeded threshold for this query.</div>`;
+    container.innerHTML = `<div class="empty-hint">No remedies exceeded threshold for this query.</div>`;
     return;
   }
 
-  elements.topRemediesContainer.innerHTML = remedies
-    .map(
-      (r) => `
+  container.innerHTML = remedies.map(r => `
     <div class="remedy-item" data-id="${r.id}">
       <div class="rem-top">
         <span class="rem-name">${r.name}</span>
@@ -317,290 +1213,131 @@ function renderTopRemedies(remedies) {
       </div>
       <div class="rem-sub">
         <span>Grade ${r.grade}</span>
-        <span>•</span>
+        <span>&bull;</span>
         <span>${r.classification.replace("_", " ")}</span>
-        <span>•</span>
+        <span>&bull;</span>
         <span>VAD: (${r.valence}, ${r.arousal}, ${r.dominance})</span>
       </div>
-      ${
-        r.linked_symptoms && r.linked_symptoms.length > 0
-          ? `<div class="rem-rubrics" title="${r.linked_symptoms.join(', ')}">Rubrics: ${r.linked_symptoms.join(', ')}</div>`
-          : ""
-      }
+      ${r.linked_symptoms && r.linked_symptoms.length > 0
+        ? `<div class="rem-rubrics" title="${escapeHtml(r.linked_symptoms.join(', '))}">Rubrics: ${escapeHtml(r.linked_symptoms.join(', '))}</div>`
+        : ""}
     </div>
-  `
-    )
-    .join("");
+  `).join("");
 }
 
-/**
- * Render Materia Medica Proving Quotes
- */
 function renderEvidence(evidence) {
+  const container = document.getElementById("evidence-container");
   if (!evidence || evidence.length === 0) {
-    elements.evidenceContainer.innerHTML = `<div class="empty-hint">No occurrence quotes attached to active nodes.</div>`;
+    container.innerHTML = `<div class="empty-hint">No occurrence quotes attached to active nodes.</div>`;
     return;
   }
 
-  elements.evidenceContainer.innerHTML = evidence
-    .map(
-      (e) => `
+  container.innerHTML = evidence.map(e => `
     <div class="evidence-item">
       <div class="evidence-quote">"${escapeHtml(e.quote)}"</div>
       <div class="evidence-meta">
-        <strong>${e.label}</strong> (${e.section}) · Grade ${e.grade} · <em>${e.sources.join(', ')}</em>
+        <strong>${escapeHtml(e.label)}</strong> (${escapeHtml(e.section)}) &middot; Grade ${e.grade} &middot; <em>${escapeHtml(e.sources.join(', '))}</em>
       </div>
     </div>
-  `
-    )
-    .join("");
+  `).join("");
 }
 
 /**
- * Setup and Layout the Active Subgraph in HTML5 Canvas
+ * Canvas Mouse & Wheel Interaction Listeners
  */
-function setupCanvasGraph(nodes, edges) {
-  state.activeNodes = [];
-  state.activeEdges = edges || [];
+canvas.addEventListener("mousedown", e => {
+  const rect = canvas.getBoundingClientRect();
+  const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+  const hit = findNodeAt(sx, sy);
+  if (hit) {
+    draggedNode = hit;
+    inspectNode(hit);
+  } else {
+    isPanning = true;
+    startX = e.clientX - panX;
+    startY = e.clientY - panY;
+  }
+});
 
-  if (!nodes || nodes.length === 0) {
-    drawGraph();
+window.addEventListener("mousemove", e => {
+  const rect = canvas.getBoundingClientRect();
+  const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+
+  if (draggedNode) {
+    const pt = screenToWorld(sx, sy);
+    draggedNode.x = pt.x;
+    draggedNode.y = pt.y;
+    drawCanvas();
+    return;
+  }
+  if (isPanning) {
+    panX = e.clientX - startX;
+    panY = e.clientY - startY;
+    drawCanvas();
     return;
   }
 
-  const W = elements.canvas.width;
-  const H = elements.canvas.height;
-  const cx = W / 2;
-  const cy = H / 2;
-
-  // Layout Algorithm: Concentric Radial Mandala
-  // Layer 0: Center Percept Seed
-  // Layer 1: Remedies / Medicines (R = 150)
-  // Layer 2: Symptoms & Modalities (R = 240 - 280)
-  const remedies = nodes.filter(
-    (n) => n.type.toLowerCase() === "medicine" || n.id.startsWith("remedy:")
-  );
-  const others = nodes.filter(
-    (n) => n.type.toLowerCase() !== "medicine" && !n.id.startsWith("remedy:")
-  );
-
-  // Position Remedies in inner circle
-  remedies.forEach((rem, i) => {
-    const angle = (2 * Math.PI * i) / Math.max(1, remedies.length) - Math.PI / 2;
-    const r = remedies.length === 1 ? 0 : 130;
-    state.activeNodes.push({
-      ...rem,
-      x: cx + r * Math.cos(angle),
-      y: cy + r * Math.sin(angle),
-      radius: 18 + rem.score * 12,
-      color: COLORS.remedy,
-    });
-  });
-
-  // Position Symptoms in outer circle with golden angle distribution
-  others.forEach((node, i) => {
-    const angle = (2 * Math.PI * i) / Math.max(1, others.length) + 0.3;
-    const r = 240 + (i % 2) * 35;
-    let nodeColor = COLORS.default;
-    const t = node.type.toLowerCase();
-    if (t.includes("physical")) nodeColor = COLORS.physical;
-    else if (t.includes("affective")) nodeColor = COLORS.affective;
-    else if (t.includes("modality")) nodeColor = COLORS.modality;
-    else if (t.includes("condition")) nodeColor = COLORS.condition;
-    else if (t.includes("domain")) nodeColor = COLORS.domain;
-
-    state.activeNodes.push({
-      ...node,
-      x: cx + r * Math.cos(angle),
-      y: cy + r * Math.sin(angle),
-      radius: 8 + node.score * 8,
-      color: nodeColor,
-    });
-  });
-
-  drawGraph();
-}
-
-/**
- * Draw 60 FPS Canvas Graph
- */
-function drawGraph() {
-  const W = elements.canvas.width;
-  const H = elements.canvas.height;
-  ctx.clearRect(0, 0, W, H);
-
-  // Draw Background Grid
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.03)";
-  ctx.lineWidth = 1;
-  const gridSize = 40;
-  for (let x = 0; x < W; x += gridSize) {
-    ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, H);
-    ctx.stroke();
-  }
-  for (let y = 0; y < H; y += gridSize) {
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(W, y);
-    ctx.stroke();
-  }
-
-  const nodeMap = new Map(state.activeNodes.map((n) => [n.id, n]));
-
-  // Draw Edges
-  state.activeEdges.forEach((edge) => {
-    const src = nodeMap.get(edge.source);
-    const tgt = nodeMap.get(edge.target);
-    if (!src || !tgt) return;
-
-    ctx.beginPath();
-    ctx.moveTo(src.x, src.y);
-    ctx.lineTo(tgt.x, tgt.y);
-
-    if (edge.classification === "internal") {
-      ctx.strokeStyle = "rgba(16, 185, 129, 0.4)";
-      ctx.lineWidth = 1.5;
-      ctx.setLineDash([]);
-    } else {
-      ctx.strokeStyle = "rgba(236, 72, 153, 0.35)";
-      ctx.lineWidth = 1.2;
-      ctx.setLineDash([4, 4]);
+  if (sx >= 0 && sx <= width && sy >= 0 && sy <= height) {
+    const hit = findNodeAt(sx, sy);
+    if (hit !== hoveredNode) {
+      hoveredNode = hit;
+      canvas.style.cursor = hit ? "pointer" : "grab";
+      if (hit) {
+        tooltip.style.display = "block";
+        tooltip.innerHTML = `
+          <div style="color:${COLORS[hit.type] || '#fff'};font-weight:600">${hit.type}: ${escapeHtml(hit.label)}</div>
+          <div style="color:var(--muted);font-size:11px;margin-top:2px">Weight: ${(hit.weight || 1).toFixed(2)} &middot; Grade: ${hit.grade || 1} &middot; Section: ${escapeHtml(hit.section || 'General')}</div>
+          ${hit.quote ? `<div style="margin-top:4px;font-style:italic;color:#cbd5e8">"${escapeHtml(hit.quote.slice(0, 120))}${hit.quote.length > 120 ? '…' : ''}"</div>` : ''}
+        `;
+      } else {
+        tooltip.style.display = "none";
+      }
+      drawCanvas();
     }
-    ctx.stroke();
-    ctx.setLineDash([]);
-  });
-
-  // Draw Nodes
-  state.activeNodes.forEach((node) => {
-    const isHovered = state.hoveredNode && state.hoveredNode.id === node.id;
-
-    // Glowing Halo
-    if (isHovered || node.score > 0.7) {
-      ctx.beginPath();
-      ctx.arc(node.x, node.y, node.radius + 6, 0, Math.PI * 2);
-      ctx.fillStyle = `${node.color}33`;
-      ctx.fill();
-    }
-
-    // Node Circle
-    ctx.beginPath();
-    ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
-    ctx.fillStyle = node.color;
-    ctx.fill();
-    ctx.lineWidth = isHovered ? 2.5 : 1.5;
-    ctx.strokeStyle = isHovered ? "#ffffff" : "rgba(255, 255, 255, 0.3)";
-    ctx.stroke();
-
-    // Node Text Label
-    ctx.font = node.radius > 16 ? "600 11px Inter" : "500 9px Inter";
-    ctx.fillStyle = "#f8fafc";
-    ctx.textAlign = "center";
-    ctx.fillText(truncate(node.label, 20), node.x, node.y + node.radius + 12);
-  });
-}
-
-/**
- * Handle Canvas Mouse Hover Detection
- */
-function handleCanvasMouseMove(e) {
-  const rect = elements.canvas.getBoundingClientRect();
-  const mouseX = ((e.clientX - rect.left) / rect.width) * elements.canvas.width;
-  const mouseY = ((e.clientY - rect.top) / rect.height) * elements.canvas.height;
-
-  let found = null;
-  for (let i = state.activeNodes.length - 1; i >= 0; i--) {
-    const n = state.activeNodes[i];
-    const dx = mouseX - n.x;
-    const dy = mouseY - n.y;
-    if (dx * dx + dy * dy <= (n.radius + 6) * (n.radius + 6)) {
-      found = n;
-      break;
+    if (hit) {
+      tooltip.style.left = Math.min(width - 310, sx + 14) + "px";
+      tooltip.style.top = Math.max(10, sy - 14) + "px";
     }
   }
+});
 
-  if (found !== state.hoveredNode) {
-    state.hoveredNode = found;
-    drawGraph();
+window.addEventListener("mouseup", () => {
+  isPanning = false;
+  draggedNode = null;
+});
 
-    if (found) {
-      elements.tooltip.classList.remove("hidden");
-      elements.tooltip.style.left = `${e.clientX - rect.left + 15}px`;
-      elements.tooltip.style.top = `${e.clientY - rect.top + 10}px`;
-      elements.tooltip.innerHTML = `
-        <div style="font-weight:700;color:#93c5fd;margin-bottom:2px;">${found.label}</div>
-        <div style="font-size:0.7rem;color:#94a3b8;">${found.type} · Score: ${found.score.toFixed(3)}</div>
-        ${found.grade ? `<div style="font-size:0.7rem;color:#fbbf24;">Typographic Grade: ${found.grade}</div>` : ""}
-        ${found.section ? `<div style="font-size:0.7rem;color:#a78bfa;">Section: ${found.section}</div>` : ""}
-        ${found.quote ? `<div style="font-style:italic;font-size:0.68rem;color:#cbd5e1;margin-top:4px;">"${found.quote.slice(0, 120)}..."</div>` : ""}
-      `;
-    } else {
-      elements.tooltip.classList.add("hidden");
-    }
-  }
-}
+canvas.addEventListener("wheel", e => {
+  e.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+  const factor = e.deltaY < 0 ? 1.14 : 0.88;
+  const newScale = Math.min(4.5, Math.max(0.1, scale * factor));
+  panX = sx - (sx - panX) * (newScale / scale);
+  panY = sy - (sy - panY) * (newScale / scale);
+  scale = newScale;
+  drawCanvas();
+}, { passive: false });
 
-/**
- * Submit Feedback / Reinforcement
- */
-async function submitFeedback(reward, expertAction = null) {
-  if (!state.lastResponse) {
-    alert("Please execute a query first before submitting feedback.");
-    return;
-  }
-
-  try {
-    const payload = {
-      step: state.lastResponse.step_index,
-      reward: reward,
-      expert_action: expertAction,
-    };
-
-    const res = await fetch("/api/feedback", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      alert(`Feedback recorded! Status: ${data.status}. Adaptive action threshold adjusted.`);
-    }
-  } catch (err) {
-    console.error("Feedback submission error:", err);
-  }
-}
+window.addEventListener("resize", () => {
+  resizeCanvas();
+  rebuildGraphLayout();
+});
 
 /**
- * Resize Canvas for HiDPI
+ * Text Utilities
  */
-function resizeCanvas() {
-  const rect = elements.canvas.parentElement.getBoundingClientRect();
-  elements.canvas.width = rect.width || 1200;
-  elements.canvas.height = rect.height || 520;
-  if (state.activeNodes.length > 0) {
-    drawGraph();
-  }
-}
-
-/**
- * Utilities
- */
-function truncate(str, max) {
-  return str.length > max ? str.slice(0, max - 1) + "…" : str;
-}
-
 function escapeHtml(text) {
-  return text.replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[m]);
+  if (!text) return "";
+  return String(text).replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[m]);
 }
 
 function formatMarkdown(text) {
   if (!text) return "";
-  return text
+  return escapeHtml(text)
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-    .replace(/`(.*?)`/g, "<code class='mono'>$1</code>");
+    .replace(/`(.*?)`/g, "<code class='mono'>$1</code>")
+    .replace(/\n\n/g, "<br/><br/>");
 }
 
-// Boot application on DOM ready
+// Start application on DOM ready
 document.addEventListener("DOMContentLoaded", initApp);
-
