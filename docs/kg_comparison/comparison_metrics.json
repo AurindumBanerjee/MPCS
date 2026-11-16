@@ -1,0 +1,1506 @@
+{
+  "common_remedies": [
+    "Aconitum napellus",
+    "Arsenicum album",
+    "Belladonna",
+    "Bryonia alba",
+    "Chamomilla",
+    "Gelsemium sempervirens",
+    "Ignatia amara",
+    "Lachesis muta",
+    "Lycopodium clavatum",
+    "Natrum muriaticum",
+    "Nux vomica",
+    "Phosphorus",
+    "Pulsatilla pratensis",
+    "Rhus toxicodendron",
+    "Sepia officinalis",
+    "Silicea",
+    "Sulphur"
+  ],
+  "krag_only": [
+    "Calcarea carbonica",
+    "Staphysagria",
+    "Thuja occidentalis"
+  ],
+  "per_remedy": {
+    "Aconitum napellus": {
+      "krag_sections": [
+        "Head",
+        "Intro",
+        "Mind",
+        "Stomach"
+      ],
+      "localkg_sections": [
+        "Clinical Literature (PubMed)",
+        "Ears",
+        "Eyes",
+        "Mind",
+        "Mouth"
+      ],
+      "shared_sections": [
+        "Mind"
+      ],
+      "localkg_provenance": {
+        "Mixed": 1,
+        "Boericke": 12,
+        "Hahnemann": 33,
+        "PubMed": 3
+      },
+      "localkg_chunks": [
+        [
+          "boericke_pocket_manual",
+          "Mind",
+          21
+        ],
+        [
+          "boericke_pocket_manual",
+          "Mind",
+          23
+        ],
+        [
+          "boericke_pocket_manual",
+          "Mouth",
+          24
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Ears",
+          36
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Ears",
+          36
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Eyes",
+          49
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Generalities",
+          35
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Intro",
+          19
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Mind",
+          20
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Mind",
+          20
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Nose",
+          21
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Nose",
+          21
+        ]
+      ],
+      "modalities": {
+        "LocalKG": 3,
+        "Rule-based": 2,
+        "Model-only": 7,
+        "Hybrid": 2
+      },
+      "relationships": {
+        "Rule-based": 5,
+        "Model-only": 0,
+        "Hybrid": 4
+      },
+      "boericke_page_audit": {
+        "21": "other",
+        "23": "correct",
+        "24": "correct"
+      }
+    },
+    "Arsenicum album": {
+      "krag_sections": [
+        "Eyes",
+        "Head",
+        "Intro",
+        "Mind",
+        "Stomach"
+      ],
+      "localkg_sections": [
+        "Clinical Literature (PubMed)",
+        "Ears",
+        "Face",
+        "Mind",
+        "Urine"
+      ],
+      "shared_sections": [
+        "Mind"
+      ],
+      "localkg_provenance": {
+        "Boericke": 15,
+        "Mixed": 2,
+        "Hahnemann": 21,
+        "PubMed": 3
+      },
+      "localkg_chunks": [
+        [
+          "boericke_pocket_manual",
+          "Face",
+          93
+        ],
+        [
+          "boericke_pocket_manual",
+          "Mind",
+          91
+        ],
+        [
+          "boericke_pocket_manual",
+          "Relationship",
+          95
+        ],
+        [
+          "boericke_pocket_manual",
+          "Urine",
+          94
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Ears",
+          164
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Ears",
+          164
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Intro",
+          131
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Mind",
+          132
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Mind",
+          132
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Mind",
+          132
+        ]
+      ],
+      "modalities": {
+        "LocalKG": 8,
+        "Rule-based": 2,
+        "Model-only": 7,
+        "Hybrid": 3
+      },
+      "relationships": {
+        "Rule-based": 5,
+        "Model-only": 0,
+        "Hybrid": 4
+      },
+      "boericke_page_audit": {
+        "91": "correct",
+        "93": "correct",
+        "94": "correct",
+        "95": "correct"
+      }
+    },
+    "Belladonna": {
+      "krag_sections": [
+        "Head",
+        "Intro",
+        "Mind",
+        "Stomach"
+      ],
+      "localkg_sections": [
+        "Clinical Literature (PubMed)",
+        "Ears",
+        "Sleep",
+        "Urine"
+      ],
+      "shared_sections": [],
+      "localkg_provenance": {
+        "Boericke": 6,
+        "Hahnemann": 3,
+        "PubMed": 3
+      },
+      "localkg_chunks": [
+        [
+          "boericke_pocket_manual",
+          "Face",
+          124
+        ],
+        [
+          "boericke_pocket_manual",
+          "Mind",
+          123
+        ],
+        [
+          "boericke_pocket_manual",
+          "Sleep",
+          127
+        ],
+        [
+          "boericke_pocket_manual",
+          "Urine",
+          126
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Ears",
+          245
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Intro",
+          216
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Mind",
+          217
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Mind",
+          217
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Mind",
+          217
+        ]
+      ],
+      "modalities": {
+        "LocalKG": 3,
+        "Rule-based": 3,
+        "Model-only": 22,
+        "Hybrid": 13
+      },
+      "relationships": {
+        "Rule-based": 4,
+        "Model-only": 0,
+        "Hybrid": 3
+      },
+      "boericke_page_audit": {
+        "123": "correct",
+        "124": "correct",
+        "126": "correct",
+        "127": "none"
+      }
+    },
+    "Bryonia alba": {
+      "krag_sections": [
+        "Head",
+        "Intro",
+        "Mind",
+        "Stomach"
+      ],
+      "localkg_sections": [
+        "Clinical Literature (PubMed)",
+        "Ears",
+        "Extremities",
+        "Head",
+        "Mind"
+      ],
+      "shared_sections": [
+        "Head",
+        "Mind"
+      ],
+      "localkg_provenance": {
+        "Boericke": 10,
+        "Mixed": 2,
+        "Hahnemann": 51,
+        "PubMed": 3
+      },
+      "localkg_chunks": [
+        [
+          "boericke_pocket_manual",
+          "Extremities",
+          150
+        ],
+        [
+          "boericke_pocket_manual",
+          "Head",
+          149
+        ],
+        [
+          "boericke_pocket_manual",
+          "Mind",
+          147
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Ears",
+          277
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Ears",
+          277
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Head",
+          275
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Intro",
+          274
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Mind",
+          276
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Mind",
+          276
+        ]
+      ],
+      "modalities": {
+        "LocalKG": 8,
+        "Rule-based": 4,
+        "Model-only": 12,
+        "Hybrid": 12
+      },
+      "relationships": {
+        "Rule-based": 4,
+        "Model-only": 0,
+        "Hybrid": 3
+      },
+      "boericke_page_audit": {
+        "147": "correct",
+        "149": "other",
+        "150": "other"
+      }
+    },
+    "Chamomilla": {
+      "krag_sections": [
+        "Head",
+        "Intro",
+        "Mind",
+        "Stomach"
+      ],
+      "localkg_sections": [
+        "Clinical Literature (PubMed)",
+        "Eyes",
+        "Head",
+        "Mind"
+      ],
+      "shared_sections": [
+        "Head",
+        "Mind"
+      ],
+      "localkg_provenance": {
+        "Hahnemann": 43,
+        "Mixed": 1,
+        "PubMed": 1
+      },
+      "localkg_chunks": [
+        [
+          "boericke_pocket_manual",
+          "Fever",
+          205
+        ],
+        [
+          "boericke_pocket_manual",
+          "Intro",
+          203
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Ears",
+          431
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Ears",
+          431
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Eyes",
+          404
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Head",
+          419
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Intro",
+          403
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Mind",
+          405
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Mind",
+          405
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Nose",
+          432
+        ]
+      ],
+      "modalities": {
+        "LocalKG": 4,
+        "Rule-based": 2,
+        "Model-only": 7,
+        "Hybrid": 3
+      },
+      "relationships": {
+        "Rule-based": 4,
+        "Model-only": 0,
+        "Hybrid": 3
+      },
+      "boericke_page_audit": {
+        "203": "other",
+        "205": "other"
+      }
+    },
+    "Gelsemium sempervirens": {
+      "krag_sections": [
+        "Head",
+        "Intro",
+        "Mind",
+        "Stomach"
+      ],
+      "localkg_sections": [
+        "Abdomen",
+        "Clinical Literature (PubMed)",
+        "Mind"
+      ],
+      "shared_sections": [
+        "Mind"
+      ],
+      "localkg_provenance": {
+        "Mixed": 1,
+        "Boericke": 2,
+        "PubMed": 3
+      },
+      "localkg_chunks": [
+        [
+          "boericke_pocket_manual",
+          "Abdomen",
+          315
+        ],
+        [
+          "boericke_pocket_manual",
+          "Intro",
+          313
+        ]
+      ],
+      "modalities": {
+        "LocalKG": 0,
+        "Rule-based": 2,
+        "Model-only": 8,
+        "Hybrid": 2
+      },
+      "relationships": {
+        "Rule-based": 4,
+        "Model-only": 0,
+        "Hybrid": 3
+      },
+      "boericke_page_audit": {
+        "313": "correct",
+        "315": "other"
+      }
+    },
+    "Ignatia amara": {
+      "krag_sections": [
+        "Head",
+        "Intro",
+        "Mind",
+        "Throat"
+      ],
+      "localkg_sections": [
+        "Ears",
+        "Mind",
+        "Relationship"
+      ],
+      "shared_sections": [
+        "Mind"
+      ],
+      "localkg_provenance": {
+        "Mixed": 1,
+        "Boericke": 4,
+        "Hahnemann": 22
+      },
+      "localkg_chunks": [
+        [
+          "boericke_pocket_manual",
+          "Mind",
+          361
+        ],
+        [
+          "boericke_pocket_manual",
+          "Relationship",
+          363
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Ears",
+          566
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Head",
+          595
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Head",
+          595
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Intro",
+          565
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Mind",
+          567
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Mind",
+          567
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Stomach",
+          625
+        ],
+        [
+          "hahnemann_materia_medica_pura",
+          "Stomach",
+          625
+        ]
+      ],
+      "modalities": {
+        "LocalKG": 0,
+        "Rule-based": 2,
+        "Model-only": 7,
+        "Hybrid": 3
+      },
+      "relationships": {
+        "Rule-based": 4,
+        "Model-only": 0,
+        "Hybrid": 3
+      },
+      "boericke_page_audit": {
+        "361": "none",
+        "363": "other"
+      }
+    },
+    "Lachesis muta": {
+      "krag_sections": [
+        "Intro",
+        "Mind",
+        "Stomach",
+        "Throat"
+      ],
+      "localkg_sections": [
+        "Clinical Literature (PubMed)",
+        "Mind",
+        "Sleep"
+      ],
+      "shared_sections": [
+        "Mind"
+      ],
+      "localkg_provenance": {
+        "Boericke": 4,
+        "PubMed": 4
+      },
+      "localkg_chunks": [
+        [
+          "boericke_pocket_manual",
+          "Mind",
+          400
+        ],
+        [
+          "boericke_pocket_manual",
+          "Sleep",
+          402
+        ]
+      ],
+      "modalities": {
+        "LocalKG": 0,
+        "Rule-based": 3,
+        "Model-only": 7,
+        "Hybrid": 3
+      },
+      "relationships": {
+        "Rule-based": 4,
+        "Model-only": 0,
+        "Hybrid": 3
+      },
+      "boericke_page_audit": {
+        "400": "other",
+        "402": "other"
+      }
+    },
+    "Lycopodium clavatum": {
+      "krag_sections": [
+        "Intro",
+        "Mind",
+        "Stomach"
+      ],
+      "localkg_sections": [
+        "Extremities",
+        "Mind"
+      ],
+      "shared_sections": [
+        "Mind"
+      ],
+      "localkg_provenance": {
+        "Mixed": 1,
+        "Boericke": 8
+      },
+      "localkg_chunks": [
+        [
+          "boericke_pocket_manual",
+          "Extremities",
+          426
+        ],
+        [
+          "boericke_pocket_manual",
+          "Heart",
+          427
+        ],
+        [
+          "boericke_pocket_manual",
+          "Mind",
+          424
+        ]
+      ],
+      "modalities": {
+        "LocalKG": 0,
+        "Rule-based": 2,
+        "Model-only": 6,
+        "Hybrid": 6
+      },
+      "relationships": {
+        "Rule-based": 4,
+        "Model-only": 0,
+        "Hybrid": 3
+      },
+      "boericke_page_audit": {
+        "424": "other",
+        "426": "other",
+        "427": "other"
+      }
+    },
+    "Natrum muriaticum": {
+      "krag_sections": [
+        "Head",
+        "Intro",
+        "Mind",
+        "Stomach"
+      ],
+      "localkg_sections": [
+        "Mind",
+        "Relationship"
+      ],
+      "shared_sections": [
+        "Mind"
+      ],
+      "localkg_provenance": {
+        "Boericke": 12,
+        "Mixed": 1
+      },
+      "localkg_chunks": [
+        [
+          "boericke_pocket_manual",
+          "Intro",
+          474
+        ],
+        [
+          "boericke_pocket_manual",
+          "Mind",
+          477
+        ],
+        [
+          "boericke_pocket_manual",
+          "Relationship",
+          476
+        ]
+      ],
+      "modalities": {
+        "LocalKG": 0,
+        "Rule-based": 3,
+        "Model-only": 10,
+        "Hybrid": 6
+      },
+      "relationships": {
+        "Rule-based": 4,
+        "Model-only": 0,
+        "Hybrid": 3
+      },
+      "boericke_page_audit": {
+        "474": "none",
+        "476": "correct",
+        "477": "other"
+      }
+    },
+    "Nux vomica": {
+      "krag_sections": [
+        "Intro",
+        "Mind",
+        "Stomach"
+      ],
+      "localkg_sections": [
+        "Clinical Literature (PubMed)",
+        "Female",
+        "Intro"
+      ],
+      "shared_sections": [
+        "Intro"
+      ],
+      "localkg_provenance": {
+        "Boericke": 6,
+        "PubMed": 3
+      },
+      "localkg_chunks": [
+        [
+          "boericke_pocket_manual",
+          "Female",
+          495
+        ],
+        [
+          "boericke_pocket_manual",
+          "Intro",
+          493
+        ]
+      ],
+      "modalities": {
+        "LocalKG": 0,
+        "Rule-based": 3,
+        "Model-only": 11,
+        "Hybrid": 3
+      },
+      "relationships": {
+        "Rule-based": 5,
+        "Model-only": 0,
+        "Hybrid": 4
+      },
+      "boericke_page_audit": {
+        "493": "other",
+        "495": "other"
+      }
+    },
+    "Phosphorus": {
+      "krag_sections": [
+        "Intro",
+        "Mind",
+        "Respiratory",
+        "Stomach"
+      ],
+      "localkg_sections": [
+        "Eyes"
+      ],
+      "shared_sections": [],
+      "localkg_provenance": {
+        "Boericke": 3
+      },
+      "localkg_chunks": [
+        [
+          "boericke_pocket_manual",
+          "Eyes",
+          524
+        ],
+        [
+          "boericke_pocket_manual",
+          "Intro",
+          523
+        ],
+        [
+          "boericke_pocket_manual",
+          "Respiratory",
+          526
+        ]
+      ],
+      "modalities": {
+        "LocalKG": 0,
+        "Rule-based": 3,
+        "Model-only": 10,
+        "Hybrid": 12
+      },
+      "relationships": {
+        "Rule-based": 4,
+        "Model-only": 0,
+        "Hybrid": 3
+      },
+      "boericke_page_audit": {
+        "523": "correct",
+        "524": "other",
+        "526": "other"
+      }
+    },
+    "Pulsatilla pratensis": {
+      "krag_sections": [
+        "Intro",
+        "Mind",
+        "Stomach"
+      ],
+      "localkg_sections": [
+        "Eyes",
+        "Head",
+        "Intro",
+        "Mind"
+      ],
+      "shared_sections": [
+        "Intro",
+        "Mind"
+      ],
+      "localkg_provenance": {
+        "Boericke": 19,
+        "Mixed": 1
+      },
+      "localkg_chunks": [
+        [
+          "boericke_pocket_manual",
+          "Eyes",
+          555
+        ],
+        [
+          "boericke_pocket_manual",
+          "Intro",
+          552
+        ]
+      ],
+      "modalities": {
+        "LocalKG": 5,
+        "Rule-based": 2,
+        "Model-only": 9,
+        "Hybrid": 11
+      },
+      "relationships": {
+        "Rule-based": 4,
+        "Model-only": 0,
+        "Hybrid": 3
+      },
+      "boericke_page_audit": {
+        "552": "correct",
+        "555": "other"
+      }
+    },
+    "Rhus toxicodendron": {
+      "krag_sections": [
+        "Extremities",
+        "Intro",
+        "Mind"
+      ],
+      "localkg_sections": [
+        "Clinical Literature (PubMed)",
+        "Fever",
+        "Mind"
+      ],
+      "shared_sections": [
+        "Mind"
+      ],
+      "localkg_provenance": {
+        "Boericke": 4,
+        "PubMed": 3
+      },
+      "localkg_chunks": [
+        [
+          "boericke_pocket_manual",
+          "Fever",
+          570
+        ],
+        [
+          "boericke_pocket_manual",
+          "Mind",
+          569
+        ]
+      ],
+      "modalities": {
+        "LocalKG": 3,
+        "Rule-based": 5,
+        "Model-only": 9,
+        "Hybrid": 5
+      },
+      "relationships": {
+        "Rule-based": 4,
+        "Model-only": 0,
+        "Hybrid": 3
+      },
+      "boericke_page_audit": {
+        "569": "other",
+        "570": "other"
+      }
+    },
+    "Sepia officinalis": {
+      "krag_sections": [
+        "Intro",
+        "Mind",
+        "Stomach"
+      ],
+      "localkg_sections": [
+        "Abdomen",
+        "Extremities"
+      ],
+      "shared_sections": [],
+      "localkg_provenance": {
+        "Boericke": 28
+      },
+      "localkg_chunks": [
+        [
+          "boericke_pocket_manual",
+          "Abdomen",
+          599
+        ],
+        [
+          "boericke_pocket_manual",
+          "Extremities",
+          601
+        ],
+        [
+          "boericke_pocket_manual",
+          "Mind",
+          598
+        ]
+      ],
+      "modalities": {
+        "LocalKG": 0,
+        "Rule-based": 2,
+        "Model-only": 8,
+        "Hybrid": 5
+      },
+      "relationships": {
+        "Rule-based": 5,
+        "Model-only": 0,
+        "Hybrid": 4
+      },
+      "boericke_page_audit": {
+        "598": "correct",
+        "599": "other",
+        "601": "none"
+      }
+    },
+    "Silicea": {
+      "krag_sections": [
+        "Head",
+        "Intro",
+        "Mind"
+      ],
+      "localkg_sections": [
+        "Mind"
+      ],
+      "shared_sections": [
+        "Mind"
+      ],
+      "localkg_provenance": {
+        "Boericke": 1
+      },
+      "localkg_chunks": [
+        [
+          "boericke_pocket_manual",
+          "Mind",
+          606
+        ],
+        [
+          "boericke_pocket_manual",
+          "Modalities",
+          609
+        ]
+      ],
+      "modalities": {
+        "LocalKG": 0,
+        "Rule-based": 2,
+        "Model-only": 8,
+        "Hybrid": 3
+      },
+      "relationships": {
+        "Rule-based": 4,
+        "Model-only": 0,
+        "Hybrid": 3
+      },
+      "boericke_page_audit": {
+        "606": "other",
+        "609": "other"
+      }
+    },
+    "Sulphur": {
+      "krag_sections": [
+        "Head",
+        "Intro",
+        "Mind",
+        "Stomach"
+      ],
+      "localkg_sections": [
+        "Nose"
+      ],
+      "shared_sections": [],
+      "localkg_provenance": {
+        "Boericke": 11
+      },
+      "localkg_chunks": [
+        [
+          "boericke_pocket_manual",
+          "Intro",
+          634
+        ],
+        [
+          "boericke_pocket_manual",
+          "Nose",
+          636
+        ]
+      ],
+      "modalities": {
+        "LocalKG": 0,
+        "Rule-based": 3,
+        "Model-only": 9,
+        "Hybrid": 5
+      },
+      "relationships": {
+        "Rule-based": 5,
+        "Model-only": 0,
+        "Hybrid": 4
+      },
+      "boericke_page_audit": {
+        "634": "other",
+        "636": "other"
+      }
+    }
+  },
+  "per_section": [
+    {
+      "remedy": "Aconitum napellus",
+      "section": "Mind",
+      "LocalKG_n": 7,
+      "LocalKG_mental_pct": 100.0,
+      "LocalKG_origin": {
+        "Mixed": 1,
+        "Boericke": 6
+      },
+      "Rule-based_n": 12,
+      "Rule-based_matched": 1,
+      "Rule-based_mental_pct": 100.0,
+      "Model-only_n": 11,
+      "Model-only_matched": 2,
+      "Model-only_mental_pct": 100.0,
+      "Hybrid_n": 12,
+      "Hybrid_matched": 2,
+      "Hybrid_mental_pct": 100.0
+    },
+    {
+      "remedy": "Arsenicum album",
+      "section": "Mind",
+      "LocalKG_n": 7,
+      "LocalKG_mental_pct": 100.0,
+      "LocalKG_origin": {
+        "Boericke": 6,
+        "Mixed": 1
+      },
+      "Rule-based_n": 4,
+      "Rule-based_matched": 4,
+      "Rule-based_mental_pct": 100.0,
+      "Model-only_n": 10,
+      "Model-only_matched": 4,
+      "Model-only_mental_pct": 100.0,
+      "Hybrid_n": 8,
+      "Hybrid_matched": 3,
+      "Hybrid_mental_pct": 100.0
+    },
+    {
+      "remedy": "Bryonia alba",
+      "section": "Head",
+      "LocalKG_n": 20,
+      "LocalKG_mental_pct": 0.0,
+      "LocalKG_origin": {
+        "Mixed": 1,
+        "Boericke": 2,
+        "Hahnemann": 17
+      },
+      "Rule-based_n": 5,
+      "Rule-based_matched": 1,
+      "Rule-based_mental_pct": 0.0,
+      "Model-only_n": 3,
+      "Model-only_matched": 1,
+      "Model-only_mental_pct": 0.0,
+      "Hybrid_n": 3,
+      "Hybrid_matched": 1,
+      "Hybrid_mental_pct": 0.0
+    },
+    {
+      "remedy": "Bryonia alba",
+      "section": "Mind",
+      "LocalKG_n": 18,
+      "LocalKG_mental_pct": 100.0,
+      "LocalKG_origin": {
+        "Boericke": 4,
+        "Hahnemann": 14
+      },
+      "Rule-based_n": 2,
+      "Rule-based_matched": 0,
+      "Rule-based_mental_pct": 100.0,
+      "Model-only_n": 3,
+      "Model-only_matched": 0,
+      "Model-only_mental_pct": 100.0,
+      "Hybrid_n": 3,
+      "Hybrid_matched": 0,
+      "Hybrid_mental_pct": 100.0
+    },
+    {
+      "remedy": "Chamomilla",
+      "section": "Head",
+      "LocalKG_n": 2,
+      "LocalKG_mental_pct": 0.0,
+      "LocalKG_origin": {
+        "Hahnemann": 2
+      },
+      "Rule-based_n": 2,
+      "Rule-based_matched": 1,
+      "Rule-based_mental_pct": 0.0,
+      "Model-only_n": 3,
+      "Model-only_matched": 1,
+      "Model-only_mental_pct": 0.0,
+      "Hybrid_n": 3,
+      "Hybrid_matched": 1,
+      "Hybrid_mental_pct": 0.0
+    },
+    {
+      "remedy": "Chamomilla",
+      "section": "Mind",
+      "LocalKG_n": 18,
+      "LocalKG_mental_pct": 100.0,
+      "LocalKG_origin": {
+        "Hahnemann": 17,
+        "Mixed": 1
+      },
+      "Rule-based_n": 4,
+      "Rule-based_matched": 0,
+      "Rule-based_mental_pct": 100.0,
+      "Model-only_n": 7,
+      "Model-only_matched": 0,
+      "Model-only_mental_pct": 100.0,
+      "Hybrid_n": 7,
+      "Hybrid_matched": 0,
+      "Hybrid_mental_pct": 100.0
+    },
+    {
+      "remedy": "Gelsemium sempervirens",
+      "section": "Mind",
+      "LocalKG_n": 1,
+      "LocalKG_mental_pct": 100.0,
+      "LocalKG_origin": {
+        "Mixed": 1
+      },
+      "Rule-based_n": 7,
+      "Rule-based_matched": 0,
+      "Rule-based_mental_pct": 100.0,
+      "Model-only_n": 10,
+      "Model-only_matched": 0,
+      "Model-only_mental_pct": 100.0,
+      "Hybrid_n": 9,
+      "Hybrid_matched": 0,
+      "Hybrid_mental_pct": 100.0
+    },
+    {
+      "remedy": "Ignatia amara",
+      "section": "Mind",
+      "LocalKG_n": 9,
+      "LocalKG_mental_pct": 100.0,
+      "LocalKG_origin": {
+        "Mixed": 1,
+        "Boericke": 1,
+        "Hahnemann": 7
+      },
+      "Rule-based_n": 4,
+      "Rule-based_matched": 0,
+      "Rule-based_mental_pct": 100.0,
+      "Model-only_n": 7,
+      "Model-only_matched": 0,
+      "Model-only_mental_pct": 100.0,
+      "Hybrid_n": 6,
+      "Hybrid_matched": 0,
+      "Hybrid_mental_pct": 100.0
+    },
+    {
+      "remedy": "Lachesis muta",
+      "section": "Mind",
+      "LocalKG_n": 2,
+      "LocalKG_mental_pct": 100.0,
+      "LocalKG_origin": {
+        "Boericke": 2
+      },
+      "Rule-based_n": 4,
+      "Rule-based_matched": 0,
+      "Rule-based_mental_pct": 100.0,
+      "Model-only_n": 6,
+      "Model-only_matched": 0,
+      "Model-only_mental_pct": 100.0,
+      "Hybrid_n": 5,
+      "Hybrid_matched": 0,
+      "Hybrid_mental_pct": 100.0
+    },
+    {
+      "remedy": "Lycopodium clavatum",
+      "section": "Mind",
+      "LocalKG_n": 2,
+      "LocalKG_mental_pct": 100.0,
+      "LocalKG_origin": {
+        "Mixed": 1,
+        "Boericke": 1
+      },
+      "Rule-based_n": 6,
+      "Rule-based_matched": 0,
+      "Rule-based_mental_pct": 100.0,
+      "Model-only_n": 6,
+      "Model-only_matched": 0,
+      "Model-only_mental_pct": 100.0,
+      "Hybrid_n": 6,
+      "Hybrid_matched": 0,
+      "Hybrid_mental_pct": 100.0
+    },
+    {
+      "remedy": "Natrum muriaticum",
+      "section": "Mind",
+      "LocalKG_n": 5,
+      "LocalKG_mental_pct": 100.0,
+      "LocalKG_origin": {
+        "Mixed": 1,
+        "Boericke": 4
+      },
+      "Rule-based_n": 5,
+      "Rule-based_matched": 0,
+      "Rule-based_mental_pct": 100.0,
+      "Model-only_n": 6,
+      "Model-only_matched": 1,
+      "Model-only_mental_pct": 100.0,
+      "Hybrid_n": 6,
+      "Hybrid_matched": 1,
+      "Hybrid_mental_pct": 100.0
+    },
+    {
+      "remedy": "Nux vomica",
+      "section": "Intro",
+      "LocalKG_n": 1,
+      "LocalKG_mental_pct": 0.0,
+      "LocalKG_origin": {
+        "Boericke": 1
+      },
+      "Rule-based_n": 4,
+      "Rule-based_matched": 0,
+      "Rule-based_mental_pct": 0.0,
+      "Model-only_n": 0,
+      "Model-only_matched": 0,
+      "Model-only_mental_pct": null,
+      "Hybrid_n": 1,
+      "Hybrid_matched": 0,
+      "Hybrid_mental_pct": 0.0
+    },
+    {
+      "remedy": "Pulsatilla pratensis",
+      "section": "Intro",
+      "LocalKG_n": 13,
+      "LocalKG_mental_pct": 0.0,
+      "LocalKG_origin": {
+        "Boericke": 13
+      },
+      "Rule-based_n": 5,
+      "Rule-based_matched": 0,
+      "Rule-based_mental_pct": 0.0,
+      "Model-only_n": 0,
+      "Model-only_matched": 0,
+      "Model-only_mental_pct": null,
+      "Hybrid_n": 5,
+      "Hybrid_matched": 0,
+      "Hybrid_mental_pct": 0.0
+    },
+    {
+      "remedy": "Pulsatilla pratensis",
+      "section": "Mind",
+      "LocalKG_n": 1,
+      "LocalKG_mental_pct": 100.0,
+      "LocalKG_origin": {
+        "Boericke": 1
+      },
+      "Rule-based_n": 7,
+      "Rule-based_matched": 0,
+      "Rule-based_mental_pct": 100.0,
+      "Model-only_n": 9,
+      "Model-only_matched": 0,
+      "Model-only_mental_pct": 100.0,
+      "Hybrid_n": 8,
+      "Hybrid_matched": 0,
+      "Hybrid_mental_pct": 100.0
+    },
+    {
+      "remedy": "Rhus toxicodendron",
+      "section": "Mind",
+      "LocalKG_n": 1,
+      "LocalKG_mental_pct": 100.0,
+      "LocalKG_origin": {
+        "Boericke": 1
+      },
+      "Rule-based_n": 4,
+      "Rule-based_matched": 0,
+      "Rule-based_mental_pct": 100.0,
+      "Model-only_n": 4,
+      "Model-only_matched": 0,
+      "Model-only_mental_pct": 100.0,
+      "Hybrid_n": 4,
+      "Hybrid_matched": 0,
+      "Hybrid_mental_pct": 100.0
+    },
+    {
+      "remedy": "Silicea",
+      "section": "Mind",
+      "LocalKG_n": 1,
+      "LocalKG_mental_pct": 100.0,
+      "LocalKG_origin": {
+        "Boericke": 1
+      },
+      "Rule-based_n": 5,
+      "Rule-based_matched": 0,
+      "Rule-based_mental_pct": 100.0,
+      "Model-only_n": 8,
+      "Model-only_matched": 0,
+      "Model-only_mental_pct": 100.0,
+      "Hybrid_n": 7,
+      "Hybrid_matched": 0,
+      "Hybrid_mental_pct": 100.0
+    }
+  ],
+  "gold": {
+    "gold": 23,
+    "LocalKG": 2,
+    "Rule-based": 13,
+    "Model-only": 17,
+    "Hybrid": 16
+  },
+  "global": {
+    "boericke_audit_counts": {
+      "other": 25,
+      "correct": 15,
+      "none": 4
+    },
+    "shared_section_totals": {
+      "LocalKG_n": 108,
+      "Rule-based_n": 80,
+      "Rule-based_matched": 7,
+      "Model-only_n": 93,
+      "Model-only_matched": 9,
+      "Hybrid_n": 93,
+      "Hybrid_matched": 8
+    },
+    "n_shared_pairs": 16,
+    "whole_remedy_overlap": {
+      "Rule-based": {
+        "krag_n": 253,
+        "localkg_n": 329,
+        "matched": 13
+      },
+      "Model-only": {
+        "krag_n": 240,
+        "localkg_n": 329,
+        "matched": 12
+      },
+      "Hybrid": {
+        "krag_n": 271,
+        "localkg_n": 329,
+        "matched": 12
+      }
+    },
+    "localkg_quality": {
+      "symptom_links": 355,
+      "single_word_labels": 49,
+      "shared_symptom_nodes_pct_graph": 2.8,
+      "links_to_shared_nodes": 27,
+      "grade_dist": {
+        "1": 308,
+        "3": 24,
+        "2": 23
+      },
+      "origin": {
+        "Mixed": 11,
+        "Boericke": 145,
+        "Hahnemann": 173,
+        "PubMed": 26
+      }
+    },
+    "Rule-based_quality": {
+      "symptoms": 253,
+      "header_artifacts": 74,
+      "single_word_labels": 58,
+      "verbatim_pct": 100.0,
+      "grade_dist": {
+        "1": 103,
+        "3": 150
+      },
+      "mental_pct": 37.5
+    },
+    "Model-only_quality": {
+      "symptoms": 240,
+      "header_artifacts": 0,
+      "single_word_labels": 53,
+      "verbatim_pct": 95.0,
+      "grade_dist": {
+        "3": 63,
+        "1": 176,
+        "2": 1
+      },
+      "mental_pct": 52.9
+    },
+    "Hybrid_quality": {
+      "symptoms": 271,
+      "header_artifacts": 6,
+      "single_word_labels": 82,
+      "verbatim_pct": 94.8,
+      "grade_dist": {
+        "1": 224,
+        "3": 46,
+        "2": 1
+      },
+      "mental_pct": 42.4
+    },
+    "localkg_mental_pct": 22.5,
+    "mind_section_purity": {
+      "remedies": 12,
+      "LocalKG": {
+        "n": 72,
+        "bodily": 33
+      },
+      "Rule-based": {
+        "n": 64,
+        "bodily": 1
+      },
+      "Model-only": {
+        "n": 87,
+        "bodily": 1
+      },
+      "Hybrid": {
+        "n": 81,
+        "bodily": 1
+      }
+    }
+  }
+}

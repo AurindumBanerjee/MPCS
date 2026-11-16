@@ -1,0 +1,65 @@
+\documentclass[border=8pt]{standalone}
+\usepackage[T1]{fontenc}
+\usepackage{tgpagella}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,backgrounds}
+
+\definecolor{ink}{HTML}{16140F}
+\definecolor{mid}{HTML}{5C5849}
+\definecolor{navy}{HTML}{2E5B88}
+\definecolor{navybg}{HTML}{EBF1F6}
+\definecolor{ochre}{HTML}{B86B28}
+\definecolor{ochrebg}{HTML}{FAF2EA}
+\definecolor{paper}{HTML}{F7F5EE}
+
+\tikzset{
+  blk/.style={draw=ink,line width=0.6pt,rounded corners=2pt,fill=white,font=\small,align=center,inner sep=5pt},
+  blkg/.style={blk,fill=paper},
+  blkn/.style={blk,fill=navy!18},
+  blko/.style={blk,fill=ochre!22},
+  arr/.style={-{Stealth[length=2.2mm]},line width=0.6pt,draw=ink},
+  darr/.style={arr,dashed},
+  grp/.style={draw=mid,dashed,line width=0.5pt,rounded corners=3pt,inner sep=7pt},
+  lbl/.style={font=\scriptsize\itshape,text=mid},
+}
+
+\begin{document}
+\begin{tikzpicture}[node distance=5.5mm and 8mm]
+  % MPCS column
+  \node[blkg,minimum width=44mm] (perc) {Percept\\\scriptsize vision, audio, touch, smell};
+  \node[blk,below=of perc,minimum width=44mm] (refl) {Reflex rules};
+
+  % Expanded 2-layer retrieval matching cascade
+  \node[blkn,below=6mm of refl,minimum width=44mm] (ret_blue) {\textbf{Indexing \& Filtering}\\\scriptsize dlCBF, HMGI, HyST, SHMF};
+  \node[blko,below=6mm of ret_blue,minimum width=44mm] (ret_brown) {\textbf{Scoring, Spreading \& Routing}\\\scriptsize KERL, TIDE};
+
+  \node[blk,below=6mm of ret_brown,minimum width=44mm] (dec) {Deliberation\\\scriptsize score, explore, hesitate};
+  \node[blk,below=of dec,minimum width=44mm] (rew) {Reward and storage};
+  \node[blkg,right=22mm of ret_blue,yshift=-6.5mm,minimum width=24mm] (mem) {Episodic\\memory};
+
+  \draw[arr] (perc) -- (refl);
+  \draw[arr] (refl) -- node[lbl,right]{no rule fires} (ret_blue);
+  \draw[arr] (ret_blue) -- node[lbl,right]{filtered candidates} (ret_brown);
+  \draw[arr] (ret_brown) -- node[lbl,right]{ranked action + route} (dec);
+  \draw[arr] (dec) -- (rew);
+  \draw[arr] (mem.west) -| ([xshift=4mm]ret_blue.east) -- (ret_blue.east);
+  \draw[arr] (rew.east) -| (mem.south);
+  \draw[darr] (refl.west) -- ++(-6mm,0) |- node[lbl,pos=0.25,left=3pt,fill=white,inner sep=1pt]{reflex action} (rew.west);
+
+  \node[grp,fit=(perc)(refl)(ret_blue)(ret_brown)(dec)(rew)(mem),label={[font=\footnotesize\bfseries]above:MPCS agent}] (g1) {};
+
+  % LocalKG column
+  \node[blkg,right=22mm of g1.north east,anchor=north west,minimum width=38mm] (src) {Source texts\\\scriptsize Materia Medica, PubMed};
+  \node[blko,below=of src,minimum width=38mm] (ext) {Parse, chunk, extract};
+  \node[blko,below=of ext,minimum width=38mm] (aff) {Affect and weight};
+  \node[blkg,below=of aff,minimum width=38mm] (kg) {Typed graph\\\scriptsize 1,106 nodes, 2,024 edges};
+  \node[blk,below=of kg,minimum width=38mm] (qe) {Dual-persona\\query engine};
+  \draw[arr] (src)--(ext); \draw[arr] (ext)--(aff); \draw[arr] (aff)--(kg); \draw[arr] (kg)--(qe);
+  \node[grp,fit=(src)(ext)(aff)(kg)(qe),label={[font=\footnotesize\bfseries]above:LocalKG}] (g2) {};
+
+  % Bridge
+  \node[blk,below=8mm of g1.south,xshift=22mm,minimum width=76mm] (br) {Bridge: red-flag guard, percept mapping,\\action fusion, cited evidence};
+  \draw[arr] (qe.south) |- (br.east);
+  \draw[arr] (br.west) -| ([xshift=-12mm]perc.west) -- (perc.west);
+\end{tikzpicture}
+\end{document}
