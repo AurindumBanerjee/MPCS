@@ -29,7 +29,7 @@ import sys
 import time
 from pathlib import Path
 
-ROOT = Path(r"D:\MyStuff\GitHub\MPCS")
+ROOT = Path(__file__).resolve().parents[2]
 EXP = ROOT / "Model" / "experimental"
 sys.path.insert(0, str(ROOT / "Model" / "reference"))
 sys.path.insert(0, str(EXP / "01_baseline_z"))
