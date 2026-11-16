@@ -111,6 +111,12 @@ def health_check():
     })
 
 
+@app.route("/api/graph", methods=["GET"])
+def get_full_graph():
+    """Retrieve full knowledge graph data for continuous visualizer rendering."""
+    return jsonify(bridge.persona_engine.graph)
+
+
 @app.route("/api/sample_queries", methods=["GET"])
 def get_sample_queries():
     """Retrieve curated clinical and patient scenario queries."""
