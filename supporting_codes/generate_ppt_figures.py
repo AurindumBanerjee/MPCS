@@ -363,8 +363,8 @@ def plot_study_c_mmkg(data: dict[str, Any], out_path: Path) -> None:
     ds = data["dataset_stats"]
 
     label_map = {
-        "Full Exploratory Persona (theta=0.35)": "Full Exploratory (theta=0.35)",
-        "Full Confident Persona (theta=0.70)": "Full Confident (theta=0.70)",
+        "Full Exploratory Persona (theta=0.18)": "Full Exploratory (theta=0.18)",
+        "Full Confident Persona (theta=0.45)": "Full Confident (theta=0.45)",
         "w/o 2-Hop Spreading Activation (hops=0)": "w/o Spreading Act. (hops=0)",
         "w/o 2nd Hop (hops=1)": "w/o 2nd Hop (hops=1)",
         "w/o VAD Arousal & Grade Multiplier (mu_v=1.0)": "w/o VAD & Grade (mu_v=1.0)",
